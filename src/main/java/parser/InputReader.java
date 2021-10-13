@@ -242,6 +242,18 @@ public class InputReader {
     return readParameter(tree.getChild(0));
   }
 
+  private ParameterList readParameterList(ParseTree tree) {
+    ArrayList<Parameter> pars = new ArrayList<Parameter>();
+    verifyChildIsRule(tree, 0, "parameter", "a parameter");
+    pars.add(readParameter(tree.getChild(0)));
+    for (int i = 1; i < tree.getChildCount(); i += 2) {
+      verifyChildIsToken(tree, i, "COMMA", "a comma");
+      verifyChildIsRule(tree, i+1, "parameter", "a parameter");
+      pars.add(readParameter(tree.getChild(i+1)));
+    }
+    return new ParameterList(pars);
+  }
+
   /** ===== Static access functions ===== */
 
   private static LogicParser createParserFromString(String str, ErrorCollector collector) {

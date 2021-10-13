@@ -59,11 +59,14 @@ pconstraintrelation : pexpression GREATER pexpression
                     | pexpression NEQ pexpression
                     ;
 
-/********** Parameter **********/
+/********** Parameter and parameterlist **********/
 
 onlyparameter       : parameter EOF
                     ;
 
 parameter           : IDENTIFIER IN BRACEOPEN pexpression DOTS pexpression BRACECLOSE (WITH pconstraint)?
+                    ;
+
+parameterlist       : parameter (COMMA parameter)*
                     ;
 

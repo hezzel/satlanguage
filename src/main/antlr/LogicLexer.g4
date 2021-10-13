@@ -9,6 +9,8 @@ package language.parser;
 
 WITH                : 'with' ;
 
+FOR                 : 'for' ;
+
 IDENTIFIER          : [a-z] [a-z0-9A-Z_]* ;
 
 INTEGER             : '0' | [1-9] [0-9]* ;
@@ -22,6 +24,10 @@ BRACEOPEN           : '{' ;
 BRACECLOSE          : '}' ;
 
 IN                  : ('∈' | '\\in') ;
+
+DOT                 : '.' ;
+
+COMMA               : ',' ;
 
 PLUS                : '+' ;
 
