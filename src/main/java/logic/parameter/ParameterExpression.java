@@ -26,11 +26,6 @@ public class ParameterExpression implements PExpression {
     return assignment.get(_param);
   }
 
-  public PExpression substitute(Assignment assignment) {
-    if (!assignment.defines(_param)) return this;
-    return new ConstantExpression(assignment.get(_param));
-  }
-
   public PExpression substitute(Substitution substitution) {
     PExpression replacement = substitution.get(_param);
     if (replacement == null) return this;

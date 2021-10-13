@@ -17,12 +17,6 @@ public interface PExpression {
   public int evaluate(Assignment assignment);
 
   /**
-   * Given a assignment of zero or more of the parameters in the current expression, this
-   * evaluates the assignment as far as possible and returns the result.
-   */
-  public PExpression substitute(Assignment assignment);
-
-  /**
    * Given a substitution, this replaces the given parameters by the substituted ones and returns
    * the result.
    */

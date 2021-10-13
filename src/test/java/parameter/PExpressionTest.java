@@ -84,9 +84,9 @@ public class PExpressionTest {
   }
 
   @Test
-  public void testSubstituteAssignment() {
+  public void testSubstituteSimple() {
     Assignment ass = new Assignment("a", 12);
-    PExpression e = createExpr().substitute(ass);
+    PExpression e = createExpr().substitute(new Substitution(ass));
     assertTrue(e.toString().equals("b+49"));
   }
 

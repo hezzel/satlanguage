@@ -65,10 +65,6 @@ public class ProductExpression implements PExpression {
     return new ProductExpression(l, r);
   }
 
-  public PExpression substitute(Assignment assignment) {
-    return substitute(new Substitution(assignment));
-  }
-
   public boolean queryConstant() {
     return false;
   }
