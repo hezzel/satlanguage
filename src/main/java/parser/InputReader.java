@@ -153,6 +153,65 @@ public class InputReader {
     return readPExpression(tree.getChild(0));
   }
 
+  /** ===== Reading PConstraints ===== */
+
+  private PConstraint readPConstraint(ParseTree tree) {
+    verifyChildIsRule(tree, 0, "pconstraintunit", "a basic pconstraint");
+    if (tree.getChildCount() == 1)
+      return readPConstraintUnit(tree.getChild(0));
+    ArrayList<PConstraint> parts = new ArrayList<PConstraint>();
+    parts.add(readPConstraintUnit(tree.getChild(0)));
+    for (int i = 1; i < tree.getChildCount(); i++) {
+      ParseTree child = tree.getChild(i);
+      verifyChildIsRule(child, 1, "pconstraintunit", "a basic pconstraint");
+      parts.add(readPConstraintUnit(child.getChild(1)));
+    }
+    PConstraint ret = parts.get(parts.size()-1);
+    if (checkChild(tree, 1).equals("rule pconstraintand")) {
+      for (int i = parts.size()-2; i >= 0; i--) {
+        ret = new AndConstraint(parts.get(i), ret);
+      }
+    }
+    else {
+      for (int i = parts.size()-2; i >= 0; i--) {
+        ret = new OrConstraint(parts.get(i), ret);
+      }
+    }
+    return ret;
+  }
+
+  private PConstraint readPConstraintUnit(ParseTree tree) {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("token TOP")) return new TrueConstraint();
+    if (kind.equals("token BOTTOM")) return new FalseConstraint();
+    if (kind.equals("token BRACKETOPEN")) {
+      verifyChildIsRule(tree, 1, "pconstraint", "a PConstraint");
+      verifyChildIsToken(tree, 2, "BRACKETCLOSE", "closing bracket ')'");
+      return readPConstraint(tree.getChild(1));
+    }
+    verifyChildIsRule(tree, 0, "pconstraintrelation", "a relation");
+    return readPConstraintRelation(tree.getChild(0));
+  }
+
+  private PConstraint readPConstraintRelation(ParseTree tree) {
+    verifyChildIsRule(tree, 0, "pexpression", "a parameter expression");
+    verifyChildIsRule(tree, 2, "pexpression", "a parameter expression");
+    PExpression left = readPExpression(tree.getChild(0));
+    PExpression right = readPExpression(tree.getChild(2));
+    String kind = checkChild(tree, 1);
+    if (kind.equals("token SMALLER")) return new SmallerConstraint(left, right);
+    if (kind.equals("token GREATER")) return new SmallerConstraint(right, left);
+    if (kind.equals("token LEQ")) return new SmallerConstraint(left, right.add(1));
+    if (kind.equals("token GEQ")) return new SmallerConstraint(right, left.add(1));
+    verifyChildIsToken(tree, 1, "NEQ", "comparison or inequality symbol");
+    return new NeqConstraint(left, right);
+  }
+
+  private PConstraint readFullPConstraint(ParseTree tree) {
+    verifyChildIsRule(tree, 0, "pconstraint", "a parameter expression");
+    verifyChildIsToken(tree, 1, "EOF", "end of input");
+    return readPConstraint(tree.getChild(0));
+  }
   /** ===== Static access functions ===== */
 
   private static LogicParser createParserFromString(String str, ErrorCollector collector) {
@@ -172,6 +231,15 @@ public class InputReader {
     ParseTree tree = parser.onlypexpression();
     collector.throwCollectedExceptions();
     return reader.readFullPExpression(tree);
+  }
+
+  public static PConstraint readPConstraintFromString(String str) throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.onlypconstraint();
+    collector.throwCollectedExceptions();
+    return reader.readFullPConstraint(tree);
   }
 }
 

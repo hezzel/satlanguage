@@ -24,6 +24,14 @@ public class AndConstraint implements PConstraint {
     return PConstraint.AND;
   }
 
+  public PConstraint queryLeft() {
+    return _left;
+  }
+
+  public PConstraint queryRight() {
+    return _right;
+  }
+
   public PConstraint substitute(Substitution subst) {
     PConstraint fst = _left.substitute(subst);
     if (fst.isTop()) return _right.substitute(subst);

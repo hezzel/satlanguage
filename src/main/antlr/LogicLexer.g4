@@ -21,5 +21,23 @@ MINUS               : '-' ;
 
 TIMES               : '*' ;
 
-WHITESPACE          : [ \t\r\n]+ -> channel(HIDDEN) ;
+AND                 : '∧' | '/' '\\' | '\\' 'a' 'n' 'd' ;
+
+OR                  : '∨' | '\\' '/' | '\\' 'o' 'r' ;
+
+GREATER             : '>' ;
+
+SMALLER             : '<' ;
+
+GEQ                 : '≥' | '>' '=' | '\\' 'g' 'e' 'q' ;
+
+LEQ                 : '≤' | '<' '=' | '\\' 'l' 'e' 'q' ;
+
+NEQ                 : '≠' | '!' '=' | '\\' 'n' 'e' 'q' ;
+
+TOP                 : '⊤' | '\\' 't' 'o' 'p' ;
+
+BOTTOM              : '⊥' | '\\' 'b' 'o' 't' ;
+
+WHITESPACE          : [ \t\r]+ -> channel(HIDDEN) ;
 

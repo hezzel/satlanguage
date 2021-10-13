@@ -8,6 +8,8 @@ options {
   tokenVocab = LogicLexer;
 }
 
+/********** PExpression **********/
+
 onlypexpression     : pexpression EOF
                     ;
 
@@ -29,3 +31,30 @@ pexpressionplus     : pexpressiontimes PLUS pexpression
                     | pexpressiontimes MINUS pexpression
                     ;
 
+/********** PConstraint **********/
+
+onlypconstraint     : pconstraint EOF
+                    ;
+
+pconstraint         : pconstraintunit pconstraintand*
+                    | pconstraintunit pconstraintor*
+                    ;
+
+pconstraintunit     : BRACKETOPEN pconstraint BRACKETCLOSE
+                    | TOP
+                    | BOTTOM
+                    | pconstraintrelation
+                    ;
+
+pconstraintand      : AND pconstraintunit
+                    ;
+
+pconstraintor       : OR pconstraintunit
+                    ;
+
+pconstraintrelation : pexpression GREATER pexpression
+                    | pexpression SMALLER pexpression
+                    | pexpression GEQ pexpression
+                    | pexpression LEQ pexpression
+                    | pexpression NEQ pexpression
+                    ;
