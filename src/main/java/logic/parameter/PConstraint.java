@@ -2,6 +2,10 @@ package logic.parameter;
 
 import java.util.Set;
 
+/**
+ * A PConstraint describes a restriction on parameters as used by quantified formulas.
+ * PConstraints are immutable.
+ */
 public interface PConstraint {
   static final int CONSTANT = 0;
   static final int RELATION = 1;

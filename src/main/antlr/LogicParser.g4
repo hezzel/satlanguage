@@ -58,3 +58,12 @@ pconstraintrelation : pexpression GREATER pexpression
                     | pexpression LEQ pexpression
                     | pexpression NEQ pexpression
                     ;
+
+/********** Parameter **********/
+
+onlyparameter       : parameter EOF
+                    ;
+
+parameter           : IDENTIFIER IN BRACEOPEN pexpression DOTS pexpression BRACECLOSE (WITH pconstraint)?
+                    ;
+

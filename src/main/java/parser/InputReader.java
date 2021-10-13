@@ -212,6 +212,36 @@ public class InputReader {
     verifyChildIsToken(tree, 1, "EOF", "end of input");
     return readPConstraint(tree.getChild(0));
   }
+  
+  /** ===== Reading Parameters ===== */
+
+  private Parameter readParameter(ParseTree tree) {
+    verifyChildIsToken(tree, 0, "IDENTIFIER", "a parameter name");
+    String name = tree.getChild(0).getText();
+    verifyChildIsToken(tree, 1, "IN", "set inclusion symbol ∈");
+    verifyChildIsToken(tree, 2, "BRACEOPEN", "set opening brace {");
+    verifyChildIsRule(tree, 3, "pexpression", "a parameter expression");
+    PExpression minimum = readPExpression(tree.getChild(3));
+    verifyChildIsToken(tree, 4, "DOTS", "two dots ..");
+    verifyChildIsRule(tree, 5, "pexpression", "a parameter expression");
+    PExpression maximum = readPExpression(tree.getChild(5));
+    verifyChildIsToken(tree, 6, "BRACECLOSE", "set closing brace }");
+    PConstraint constraint;
+    if (tree.getChildCount() > 7) {
+      verifyChildIsToken(tree, 7, "WITH", "keyword 'with'");
+      verifyChildIsRule(tree, 8, "pconstraint", "a parameter constraint");
+      constraint = readPConstraint(tree.getChild(8));
+    }
+    else constraint = new TrueConstraint();
+    return new Parameter(name, minimum, maximum, constraint);
+  }
+
+  private Parameter readFullParameter(ParseTree tree) {
+    verifyChildIsRule(tree, 0, "parameter", "a parameter");
+    verifyChildIsToken(tree, 1, "EOF", "end of input");
+    return readParameter(tree.getChild(0));
+  }
+
   /** ===== Static access functions ===== */
 
   private static LogicParser createParserFromString(String str, ErrorCollector collector) {
@@ -240,6 +270,15 @@ public class InputReader {
     ParseTree tree = parser.onlypconstraint();
     collector.throwCollectedExceptions();
     return reader.readFullPConstraint(tree);
+  }
+
+  public static Parameter readParameterFromString(String str) throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.onlyparameter();
+    collector.throwCollectedExceptions();
+    return reader.readFullParameter(tree);
   }
 }
 

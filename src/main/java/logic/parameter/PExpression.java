@@ -2,6 +2,10 @@ package logic.parameter;
 
 import java.util.Set;
 
+/**
+ * A PExpression defines an integer function based on a set of integer parameters, as used by
+ * quantified formulas.  PExpressions are immutable.
+ */
 public interface PExpression {
   static final int CONSTANT  = 0;
   static final int PARAMETER = 1;

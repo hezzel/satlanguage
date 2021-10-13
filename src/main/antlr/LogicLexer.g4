@@ -7,6 +7,8 @@ package language.parser;
 
 /* Lexer */
 
+WITH                : 'with' ;
+
 IDENTIFIER          : [a-z] [a-z0-9A-Z_]* ;
 
 INTEGER             : '0' | [1-9] [0-9]* ;
@@ -15,29 +17,37 @@ BRACKETOPEN         : '(' ;
 
 BRACKETCLOSE        : ')' ;
 
+BRACEOPEN           : '{' ;
+
+BRACECLOSE          : '}' ;
+
+IN                  : ('∈' | '\\in') ;
+
 PLUS                : '+' ;
 
 MINUS               : '-' ;
 
 TIMES               : '*' ;
 
-AND                 : '∧' | '/' '\\' | '\\' 'a' 'n' 'd' ;
-
-OR                  : '∨' | '\\' '/' | '\\' 'o' 'r' ;
-
 GREATER             : '>' ;
 
 SMALLER             : '<' ;
 
-GEQ                 : '≥' | '>' '=' | '\\' 'g' 'e' 'q' ;
+GEQ                 : ('≥' | '>=' | '\\geq') ;
 
-LEQ                 : '≤' | '<' '=' | '\\' 'l' 'e' 'q' ;
+LEQ                 : ('≤' | '<=' | '\\leq') ;
 
-NEQ                 : '≠' | '!' '=' | '\\' 'n' 'e' 'q' ;
+NEQ                 : ('≠' | '!=' | '\\neq') ;
 
-TOP                 : '⊤' | '\\' 't' 'o' 'p' ;
+TOP                 : ('⊤' | '\\top') ;
 
-BOTTOM              : '⊥' | '\\' 'b' 'o' 't' ;
+BOTTOM              : ('⊥' | '\\bot') ;
+
+AND                 : ('∧' | '/\\' | '\\and') ;
+
+OR                  : ('∨' | '\\/' | '\\or') ;
+
+DOTS                : '..' ;
 
 WHITESPACE          : [ \t\r]+ -> channel(HIDDEN) ;
 
