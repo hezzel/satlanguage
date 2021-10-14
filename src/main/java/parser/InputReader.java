@@ -1,6 +1,8 @@
 package language.parser;
 
+import logic.sat.Variable;
 import logic.parameter.*;
+import logic.formula.*;
 import logic.VariableList;
 
 import java.io.FileInputStream;
@@ -327,6 +329,50 @@ public class InputReader {
     lst.registerParametrisedBooleanVariable(name, params);
   }
 
+  /** ===== Reading a Formula ===== */
+
+  private Formula readFormula(ParseTree tree, VariableList lst) throws ParserException {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("rule unitformula")) return readUnitFormula(tree.getChild(0), lst);
+    else return readJunction(tree.getChild(0), lst);
+  }
+
+  private Formula readUnitFormula(ParseTree tree, VariableList lst) throws ParserException {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("token IDENTIFIER")) {
+      String name = tree.getText();
+      Variable v = lst.queryBooleanVariable(name);
+      if (v != null) return new AtomicFormula(v, true);
+      if (lst.isDeclared(name)) {
+        throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
+          "as a stand-alone boolean variable but was not declared as such.");
+      }
+      else throw new ParserException(firstToken(tree), "Undeclared boolean variable: " + name);
+    }
+    if (kind.equals("token NOT") || kind.equals("token MINUS")) {
+      verifyChildIsRule(tree, 1, "unitformula", "a unit formula");
+      return readUnitFormula(tree.getChild(1), lst).negate();
+    }
+    verifyChildIsToken(tree, 0, "BRACKETOPEN", "opening bracket (");
+    verifyChildIsToken(tree, 2, "BRACKETCLOSE", "closing bracket )");
+    verifyChildIsRule(tree, 1, "formula", "any formula");
+    return readFormula(tree.getChild(1), lst);
+  }
+
+  private Formula readJunction(ParseTree tree, VariableList lst) throws ParserException {
+    ArrayList<Formula> parts = new ArrayList<Formula>();
+    if (tree.getChildCount() < 3) {
+      throw buildError(tree, "Encountered conjunction / disjunction with only " +
+        tree.getChildCount() + " children!");
+    }
+    for (int i = 0; i < tree.getChildCount(); i += 2) {
+      verifyChildIsRule(tree, i, "unitformula", "a unit formula");
+      parts.add(readUnitFormula(tree.getChild(i), lst));
+    }
+    if (checkChild(tree, 1).equals("token AND")) return new And(parts);
+    else return new Or(parts);
+  }
+
   /** ===== Static access functions ===== */
 
   private static LogicParser createParserFromString(String str, ErrorCollector collector) {
@@ -379,6 +425,20 @@ public class InputReader {
     ParseTree tree = parser.declaration();
     collector.throwCollectedExceptions();
     reader.readDeclaration(tree, lst);
+  }
+
+  /**
+   * This method reads a formula from string and returns it.
+   * The formula is allowed to have free parameters.  However, all variables that are used are
+   * required to be in vs, otherwise a ParserException will be thrown.
+   */
+  public static Formula readFormulaFromString(String str, VariableList vs) throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.requirement();
+    collector.throwCollectedExceptions();
+    return reader.readFormula(tree.getChild(0), vs);
   }
 }
 

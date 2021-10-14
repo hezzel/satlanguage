@@ -100,3 +100,25 @@ end                 : NEWLINE
                     | EOF
                     ;
 
+/********** Formula **********/
+
+formula             : unitformula
+                    | conjunction
+                    | disjunction
+                    ;
+
+unitformula         : BRACKETOPEN formula BRACKETCLOSE
+                    | IDENTIFIER
+                    | NOT unitformula
+                    | MINUS unitformula
+                    ;
+
+conjunction         : unitformula (AND unitformula)+
+                    ;
+
+disjunction         : unitformula (OR unitformula)+
+                    ;
+
+requirement         : formula end
+                    ;
+

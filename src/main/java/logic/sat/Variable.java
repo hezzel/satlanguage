@@ -40,7 +40,7 @@ public class Variable implements Comparable<Variable> {
   }
 
   /** This returns whether a variable by the given name already exists. */
-  public boolean exists(String name) {
+  public static boolean exists(String name) {
     return _nameToId.containsKey(name);
   }
 
