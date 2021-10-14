@@ -64,9 +64,39 @@ pconstraintrelation : pexpression GREATER pexpression
 onlyparameter       : parameter EOF
                     ;
 
-parameter           : IDENTIFIER IN BRACEOPEN pexpression DOTS pexpression BRACECLOSE (WITH pconstraint)?
+parameter           : IDENTIFIER IN range
+                    ;
+
+range               : BRACEOPEN pexpression DOTS pexpression BRACECLOSE (WITH pconstraint)?
                     ;
 
 parameterlist       : parameter (COMMA parameter)*
+                    ;
+
+/********** ParamBoolVar **********/
+
+paramvar            : IDENTIFIER SBRACKETOPEN pexprlist SBRACKETCLOSE
+                    ;
+
+pexprlist           :
+                    | pexpression (COMMA pexpression)*
+                    ;
+
+boolvardec          : IDENTIFIER TYPEOF BOOLTYPE
+                    ;
+
+paramboolvardec     : paramvar TYPEOF BOOLTYPE FOR parameterlist
+                    ;
+
+declaration         : DECLARE boolvardec end
+                    | DECLARE paramboolvardec end
+                    ;
+
+type                : BOOLTYPE
+                    | RANGETYPE IN range
+                    ;
+
+end                 : NEWLINE
+                    | EOF
                     ;
 

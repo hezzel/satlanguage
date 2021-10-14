@@ -1,6 +1,7 @@
 package language.parser;
 
 import logic.parameter.*;
+import logic.VariableList;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -219,21 +220,26 @@ public class InputReader {
     verifyChildIsToken(tree, 0, "IDENTIFIER", "a parameter name");
     String name = tree.getChild(0).getText();
     verifyChildIsToken(tree, 1, "IN", "set inclusion symbol ∈");
-    verifyChildIsToken(tree, 2, "BRACEOPEN", "set opening brace {");
+    verifyChildIsRule(tree, 2, "range", "a range { min .. max}");
+    return readParameterRange(name, tree.getChild(2));
+  }
+
+  private Parameter readParameterRange(String paramname, ParseTree tree) {
+    verifyChildIsToken(tree, 0, "BRACEOPEN", "set opening brace {");
+    verifyChildIsRule(tree, 1, "pexpression", "a parameter expression");
+    PExpression minimum = readPExpression(tree.getChild(1));
+    verifyChildIsToken(tree, 2, "DOTS", "two dots ..");
     verifyChildIsRule(tree, 3, "pexpression", "a parameter expression");
-    PExpression minimum = readPExpression(tree.getChild(3));
-    verifyChildIsToken(tree, 4, "DOTS", "two dots ..");
-    verifyChildIsRule(tree, 5, "pexpression", "a parameter expression");
-    PExpression maximum = readPExpression(tree.getChild(5));
-    verifyChildIsToken(tree, 6, "BRACECLOSE", "set closing brace }");
+    PExpression maximum = readPExpression(tree.getChild(3));
+    verifyChildIsToken(tree, 4, "BRACECLOSE", "set closing brace }");
     PConstraint constraint;
-    if (tree.getChildCount() > 7) {
-      verifyChildIsToken(tree, 7, "WITH", "keyword 'with'");
-      verifyChildIsRule(tree, 8, "pconstraint", "a parameter constraint");
-      constraint = readPConstraint(tree.getChild(8));
+    if (tree.getChildCount() > 5) {
+      verifyChildIsToken(tree, 5, "WITH", "keyword 'with'");
+      verifyChildIsRule(tree, 6, "pconstraint", "a parameter constraint");
+      constraint = readPConstraint(tree.getChild(6));
     }
     else constraint = new TrueConstraint();
-    return new Parameter(name, minimum, maximum, constraint);
+    return new Parameter(paramname, minimum, maximum, constraint);
   }
 
   private Parameter readFullParameter(ParseTree tree) {
@@ -242,7 +248,7 @@ public class InputReader {
     return readParameter(tree.getChild(0));
   }
 
-  private ParameterList readParameterList(ParseTree tree) {
+  private ParameterList readParameterList(ParseTree tree) throws ParserException {
     ArrayList<Parameter> pars = new ArrayList<Parameter>();
     verifyChildIsRule(tree, 0, "parameter", "a parameter");
     pars.add(readParameter(tree.getChild(0)));
@@ -251,7 +257,74 @@ public class InputReader {
       verifyChildIsRule(tree, i+1, "parameter", "a parameter");
       pars.add(readParameter(tree.getChild(i+1)));
     }
-    return new ParameterList(pars);
+    try {
+      ParameterList ret = new ParameterList(pars);
+      return ret;
+    }
+    catch (Error err) {
+      throw new ParserException(firstToken(tree),err.getMessage());
+    }
+  }
+
+  /** ===== Reading a variable declaration ===== */
+
+  private void readDeclaration(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsToken(tree, 0, "DECLARE", "declare keyword");
+    verifyChildIsRule(tree, 2, "end", "end of line (or end of input)");
+    String kind = checkChild(tree, 1);
+    if (kind.equals("rule boolvardec")) readBoolVarDec(tree.getChild(1), lst);
+    else if (kind.equals("rule paramboolvardec")) readParamBoolVarDec(tree.getChild(1), lst);
+    else throw buildError(tree, "encountered " + kind +
+      ", expected rule boolvardec or rule paramboolvardec");
+  }
+
+  private void readBoolVarDec(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsToken(tree, 0, "IDENTIFIER", "an identifier (variable name)");
+    verifyChildIsToken(tree, 1, "TYPEOF", "typeof symbol ::");
+    verifyChildIsToken(tree, 2, "BOOLTYPE", "Bool");
+    String name = tree.getChild(0).getText();
+    if (lst.isDeclared(name)) throw new ParserException(firstToken(tree),
+      "declaring variable " + name + " which was previously declared!");
+    lst.registerBooleanVariable(name);
+  }
+
+  private void readParamBoolVarDec(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsRule(tree, 0, "paramvar", "a parametrised variable x[i1,...,in]");
+    verifyChildIsToken(tree, 1, "TYPEOF", "typeof symbol ::");
+    verifyChildIsToken(tree, 2, "BOOLTYPE", "Bool");
+    verifyChildIsToken(tree, 3, "FOR", "keyword 'for'");
+    verifyChildIsRule(tree, 4, "parameterlist", "a list of parameters");
+    ParameterList params = readParameterList(tree.getChild(4));
+    readParamBoolVarForDeclaration(tree.getChild(0), params, lst);
+  }
+
+  private void readParamBoolVarForDeclaration(ParseTree tree, ParameterList params,
+                                              VariableList lst) throws ParserException {
+    verifyChildIsToken(tree, 0, "IDENTIFIER", "an identifer (variable name)");
+    verifyChildIsToken(tree, 1, "SBRACKETOPEN", "square opening bracket [");
+    verifyChildIsRule(tree, 2, "pexprlist", "a list of parameter names");
+    verifyChildIsToken(tree, 3, "SBRACKETCLOSE", "square closing bracket ]");
+    
+    // find the name and check that it's allowed
+    String name = tree.getChild(0).getText();
+    if (lst.isDeclared(name)) throw new ParserException(firstToken(tree),
+      "declaring (parametrised) variable " + name + " which was previously declared!");
+
+    // check that the parameters are declared in the same order as in params
+    ParseTree exprlist = tree.getChild(2);
+    if (exprlist.getChildCount() != 2 * params.size() - 1) {
+      throw new ParserException(firstToken(tree), "parameters to the declared variable should be" +
+        " the same as the ones after the 'for' keyword");
+    }
+    for (int i = 0; i < params.size(); i++) {
+      if (!exprlist.getChild(2*i).getText().equals(params.get(i).queryName())) {
+        throw new ParserException(firstToken(exprlist), "parameters to the declared variable " +
+          "should be the same (and in the same order) as the ones after the 'for' keyword " +
+          "(mismatch: " + params.get(i).queryName() + ")");
+      }
+    }
+
+    lst.registerParametrisedBooleanVariable(name, params);
   }
 
   /** ===== Static access functions ===== */
@@ -291,6 +364,21 @@ public class InputReader {
     ParseTree tree = parser.onlyparameter();
     collector.throwCollectedExceptions();
     return reader.readFullParameter(tree);
+  }
+
+  /**
+   * This method reads a variable declaration from string and stores it in the given variable list.
+   * Note that this will also give errors if the declaration is well-formed, but the variable was
+   * previously declared.
+   */
+  public static void readDeclarationFromString(String str, VariableList lst)
+                                                                      throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.declaration();
+    collector.throwCollectedExceptions();
+    reader.readDeclaration(tree, lst);
   }
 }
 
