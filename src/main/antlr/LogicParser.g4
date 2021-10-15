@@ -102,21 +102,35 @@ end                 : NEWLINE
 
 /********** Formula **********/
 
-formula             : unitformula
+formula             : formula2
+                    ;
+
+formula0            : BRACKETOPEN formula BRACKETCLOSE
+                    | IDENTIFIER
+                    | NOT formula0
+                    | MINUS formula0
+                    ;
+
+conjunction         : formula0 (AND formula0)+
+                    ;
+
+disjunction         : formula0 (OR formula0)+
+                    ;
+
+formula1            : formula0
                     | conjunction
                     | disjunction
                     ;
 
-unitformula         : BRACKETOPEN formula BRACKETCLOSE
-                    | IDENTIFIER
-                    | NOT unitformula
-                    | MINUS unitformula
+implication         : formula1 IMPLIES formula1
                     ;
 
-conjunction         : unitformula (AND unitformula)+
+iff                 : formula1 IFF formula1
                     ;
 
-disjunction         : unitformula (OR unitformula)+
+formula2            : formula1
+                    | implication
+                    | iff
                     ;
 
 requirement         : formula end

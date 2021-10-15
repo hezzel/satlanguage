@@ -332,8 +332,21 @@ public class InputReader {
   /** ===== Reading a Formula ===== */
 
   private Formula readFormula(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsRule(tree, 0, "formula2", "a formula");
+    return readFormulaLevelTwo(tree.getChild(0), lst);
+  }
+
+  private Formula readFormulaLevelTwo(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
-    if (kind.equals("rule unitformula")) return readUnitFormula(tree.getChild(0), lst);
+    if (kind.equals("rule implication")) return readImplication(tree.getChild(0), lst);
+    if (kind.equals("rule iff")) return readIff(tree.getChild(0), lst);
+    verifyChildIsRule(tree, 0, "formula1", "a formula of level at most 1");
+    return readFormulaLevelOne(tree.getChild(0), lst);
+  }
+
+  private Formula readFormulaLevelOne(ParseTree tree, VariableList lst) throws ParserException {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("rule formula0")) return readUnitFormula(tree.getChild(0), lst);
     else return readJunction(tree.getChild(0), lst);
   }
 
@@ -350,7 +363,7 @@ public class InputReader {
       else throw new ParserException(firstToken(tree), "Undeclared boolean variable: " + name);
     }
     if (kind.equals("token NOT") || kind.equals("token MINUS")) {
-      verifyChildIsRule(tree, 1, "unitformula", "a unit formula");
+      verifyChildIsRule(tree, 1, "formula0", "a unit formula");
       return readUnitFormula(tree.getChild(1), lst).negate();
     }
     verifyChildIsToken(tree, 0, "BRACKETOPEN", "opening bracket (");
@@ -366,11 +379,27 @@ public class InputReader {
         tree.getChildCount() + " children!");
     }
     for (int i = 0; i < tree.getChildCount(); i += 2) {
-      verifyChildIsRule(tree, i, "unitformula", "a unit formula");
+      verifyChildIsRule(tree, i, "formula0", "a unit formula");
       parts.add(readUnitFormula(tree.getChild(i), lst));
     }
     if (checkChild(tree, 1).equals("token AND")) return new And(parts);
     else return new Or(parts);
+  }
+
+  private Formula readImplication(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsRule(tree, 0, "formula1", "a formula of level 1");
+    verifyChildIsRule(tree, 2, "formula1", "a formula of level 1");
+    verifyChildIsToken(tree, 1, "IMPLIES", "implication symbol →");
+    return new Implication(readFormulaLevelOne(tree.getChild(0), lst),
+                           readFormulaLevelOne(tree.getChild(2), lst));
+  }
+
+  private Formula readIff(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsRule(tree, 0, "formula1", "a formula of level 1");
+    verifyChildIsRule(tree, 2, "formula1", "a formula of level 1");
+    verifyChildIsToken(tree, 1, "IFF", "if-and-only-if symbol <->");
+    return new Iff(readFormulaLevelOne(tree.getChild(0), lst),
+                   readFormulaLevelOne(tree.getChild(2), lst));
   }
 
   /** ===== Static access functions ===== */
@@ -433,11 +462,14 @@ public class InputReader {
    * required to be in vs, otherwise a ParserException will be thrown.
    */
   public static Formula readFormulaFromString(String str, VariableList vs) throws ParserException {
+    System.out.println("Hoi!");
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
     ParseTree tree = parser.requirement();
+    System.out.println("Kijk hier eens.");
     collector.throwCollectedExceptions();
+    System.out.println("O?");
     return reader.readFormula(tree.getChild(0), vs);
   }
 }

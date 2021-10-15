@@ -8,6 +8,7 @@ import logic.formula.Formula;
 import logic.formula.AtomicFormula;
 import logic.formula.And;
 import logic.formula.Or;
+import logic.formula.Iff;
 import java.util.ArrayList;
 
 public class OrTest {
@@ -31,7 +32,6 @@ public class OrTest {
     assertTrue(str.equals("x1 ∨ x2 ∨ ¬x3 ∨ (x4 ∧ x2) ∨ ¬x5"));
   }
 
-  /*
   @Test
   public void testIffString() {
     Formula x = new AtomicFormula(new Atom(new Variable("x"), true));
@@ -40,7 +40,6 @@ public class OrTest {
     Formula form = new Or(x, new Iff(y, z));
     assertTrue(form.toString().equals("x ∨ (y ↔ z)"));
   }
-  */
 
   @Test
   public void testNegation() {

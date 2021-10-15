@@ -57,17 +57,31 @@ LEQ                 : ('≤' | '<=' | '\\leq') ;
 
 NEQ                 : ('≠' | '!=' | '\\neq') ;
 
+EQUALS              : '=' ;
+
 TOP                 : ('⊤' | '\\top') ;
 
 BOTTOM              : ('⊥' | '\\bot') ;
 
-AND                 : ('∧' | '/\\' | '\\and') ;
+AND                 : ('∧' | '/\\' | '\\and' | '\\wedge') ;
 
-OR                  : ('∨' | '\\/' | '\\or') ;
+OR                  : ('∨' | '\\/' | '\\or' | '\\vee') ;
 
 NOT                 : ('¬' | '\\neg') ;
 
+IMPLIES             : ('→' | '->' | '\\rightarrow') ;
+
+IFF                 : ('↔' | '<->' | '\\leftrightarrow') ;
+
+QUESTION            : '?' ;
+
+COLON               : ':' ;
+
 DOTS                : '..' ;
+
+FORALL              : ('∀' | '?A' | '\\forall') ;
+
+EXISTS              : ('∃' | '?E' | '\\exists') ;
 
 NEWLINE             : '\n' ;
 
