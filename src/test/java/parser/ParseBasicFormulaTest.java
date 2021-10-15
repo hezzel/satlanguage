@@ -7,7 +7,7 @@ import logic.VariableList;
 import language.parser.InputReader;
 import language.parser.ParserException;
 
-public class ParseFormulaTest {
+public class ParseBasicFormulaTest {
   @Test
   public void testReadPositiveAtom() {
     VariableList vars = new VariableList();

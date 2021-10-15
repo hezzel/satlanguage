@@ -102,19 +102,32 @@ end                 : NEWLINE
 
 /********** Formula **********/
 
-formula             : formula2
+formula             : formula3
+                    ;
+
+variable            : IDENTIFIER
+                    | paramvar
                     ;
 
 formula0            : BRACKETOPEN formula BRACKETCLOSE
+                    | variable
                     | IDENTIFIER
                     | NOT formula0
                     | MINUS formula0
                     ;
 
+quantification      : FORALL parameter DOT formula
+                    | EXISTS parameter DOT formula
+                    | NOT quantification
+                    | MINUS quantification
+                    ;
+
 conjunction         : formula0 (AND formula0)+
+                    | formula0 (AND formula0)* AND quantification
                     ;
 
 disjunction         : formula0 (OR formula0)+
+                    | formula0 (OR formula0)* OR quantification
                     ;
 
 formula1            : formula0
@@ -122,13 +135,17 @@ formula1            : formula0
                     | disjunction
                     ;
 
-implication         : formula1 IMPLIES formula1
-                    ;
-
-iff                 : formula1 IFF formula1
-                    ;
-
 formula2            : formula1
+                    | quantification
+                    ;
+
+implication         : formula1 IMPLIES formula2
+                    ;
+
+iff                 : formula1 IFF formula2
+                    ;
+
+formula3            : formula2
                     | implication
                     | iff
                     ;

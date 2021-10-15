@@ -4,10 +4,13 @@ import static org.junit.Assert.*;
 import logic.sat.Variable;
 import logic.sat.Atom;
 import logic.sat.Clause;
+import logic.parameter.Assignment;
 import logic.formula.Formula;
 import logic.formula.AtomicFormula;
 import logic.formula.And;
 import logic.formula.Or;
+import logic.VariableList;
+import language.parser.InputReader;
 import java.util.ArrayList;
 
 public class AndTest {
@@ -121,6 +124,23 @@ public class AndTest {
     assertTrue(coll.contains("¬x2 ∨ ⟦x4 ∨ x2⟧"));
     assertTrue(coll.contains("¬x4 ∨ ⟦x4 ∨ x2⟧"));
     assertTrue(coll.contains("x2 ∨ x4 ∨ ¬⟦x4 ∨ x2⟧"));
+  }
+
+  @Test
+  public void testInstantiate() throws language.parser.ParserException {
+    VariableList vars = new VariableList();
+    InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+    Formula x1 = InputReader.readFormulaFromString("x[a]", vars);
+    Formula x2 = InputReader.readFormulaFromString("x[b]", vars);
+    Formula conjunction = new And(x1, x2);
+    assertFalse(conjunction.queryClosed());
+    assertTrue(conjunction.toString().equals("x[a] ∧ x[b]"));
+    Formula inst1 = conjunction.instantiate(new Assignment("a", 1));
+    Formula inst2 = conjunction.instantiate(new Assignment("a", 1, "b", 2));
+    assertFalse(inst1.queryClosed());
+    assertTrue(inst1.toString().equals("x[1] ∧ x[b]"));
+    assertTrue(inst2.queryClosed());
+    assertTrue(inst2.toString().equals("x[1] ∧ x[2]"));
   }
 }
 

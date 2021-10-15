@@ -35,16 +35,18 @@ public class SumExpression implements PExpression {
       if (r.queryConstant()) return new ConstantExpression(l.evaluate(null) + r.evaluate(null));
       if (r.queryKind() == PExpression.SUM && r.queryRight().queryKind() == PExpression.CONSTANT) {
         PExpression ll = r.queryLeft();
-        PExpression rr = new ConstantExpression(l.evaluate(null) + r.queryRight().evaluate(null));
-        return new SumExpression(ll, rr);
+        int k = l.evaluate(null) + r.queryRight().evaluate(null);
+        if (k == 0) return ll;
+        return new SumExpression(ll, new ConstantExpression(k));
       }
       else return new SumExpression(r, l);
     }
     if (r.queryConstant()) {
       if (l.queryKind() == PExpression.SUM && l.queryRight().queryKind() == PExpression.CONSTANT) {
         PExpression ll = l.queryLeft();
-        PExpression rr = new ConstantExpression(r.evaluate(null) + l.queryRight().evaluate(null));
-        return new SumExpression(ll, rr);
+        int k = r.evaluate(null) + l.queryRight().evaluate(null);
+        if (k == 0) return ll;
+        return new SumExpression(ll, new ConstantExpression(k));
       }
     }
     if (l.queryKind() == PExpression.SUM && l.queryRight().queryConstant()) {
