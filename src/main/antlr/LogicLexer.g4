@@ -13,6 +13,14 @@ WITH                : 'with' ;
 
 FOR                 : 'for' ;
 
+IF                  : 'if' ;
+
+THEN                : 'then' ;
+
+PRINT               : 'print' ;
+
+PRINTLN             : 'println' ;
+
 BOOLTYPE            : 'Bool' ;
 
 RANGETYPE           : 'Int' ;
@@ -84,6 +92,8 @@ FORALL              : ('∀' | '?A' | '\\forall') ;
 EXISTS              : ('∃' | '?E' | '\\exists') ;
 
 NEWLINE             : '\n' ;
+
+STRING              : '"' (~[\n\r"])* '"' ;
 
 WHITESPACE          : [ \t\r]+ -> channel(HIDDEN) ;
 

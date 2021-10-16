@@ -332,42 +332,27 @@ public class InputReader {
   /** ===== Reading a Formula ===== */
 
   private Formula readFormula(ParseTree tree, VariableList lst) throws ParserException {
-    verifyChildIsRule(tree, 0, "formula3", "a formula of level at most 3");
-    return readFormulaLevelThree(tree.getChild(0), lst);
-  }
-
-  private Formula readFormulaLevelThree(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
-    if (kind.equals("rule implication")) return readImplication(tree.getChild(0), lst);
-    if (kind.equals("rule iff")) return readIff(tree.getChild(0), lst);
-    verifyChildIsRule(tree, 0, "formula2", "a formula of level at most 2");
-    return readFormulaLevelTwo(tree.getChild(0), lst);
-  }
-
-  private Formula readFormulaLevelTwo(ParseTree tree, VariableList lst) throws ParserException {
-    String kind = checkChild(tree, 0);
+    if (kind.equals("rule smallformula")) return readSmallFormula(tree.getChild(0), lst);
+    if (kind.equals("rule junction")) return readJunction(tree.getChild(0), lst);
+    if (kind.equals("rule arrow")) return readArrow(tree.getChild(0), lst);
     if (kind.equals("rule quantification")) return readQuantification(tree.getChild(0), lst);
-    verifyChildIsRule(tree, 0, "formula1", "a formula of level at most 1");
-    return readFormulaLevelOne(tree.getChild(0), lst);
+    throw buildError(tree, "not sure what this formula kind is supposed to be: " + kind);
   }
 
-  private Formula readFormulaLevelOne(ParseTree tree, VariableList lst) throws ParserException {
+  private Formula readSmallFormula(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
-    if (kind.equals("rule formula0")) return readUnitFormula(tree.getChild(0), lst);
-    else return readJunction(tree.getChild(0), lst);
-  }
-
-  private Formula readUnitFormula(ParseTree tree, VariableList lst) throws ParserException {
-    String kind = checkChild(tree, 0);
-    if (kind.equals("rule variable")) return readVariable(tree.getChild(0), lst);
-    if (kind.equals("token NOT") || kind.equals("token MINUS")) {
-      verifyChildIsRule(tree, 1, "formula0", "a unit formula");
-      return readUnitFormula(tree.getChild(1), lst).negate();
+    if (kind.equals("token BRACKETOPEN")) {
+      verifyChildIsRule(tree, 1, "formula", "a formula");
+      verifyChildIsToken(tree, 2, "BRACKETCLOSE", "closing bracket )");
+      return readFormula(tree.getChild(1), lst);
     }
-    verifyChildIsToken(tree, 0, "BRACKETOPEN", "opening bracket (");
-    verifyChildIsToken(tree, 2, "BRACKETCLOSE", "closing bracket )");
-    verifyChildIsRule(tree, 1, "formula", "any formula");
-    return readFormula(tree.getChild(1), lst);
+    if (kind.equals("token NOT") || kind.equals("token MINUS")) {
+      verifyChildIsRule(tree, 1, "smallformula", "opening bracket or variable");
+      return readSmallFormula(tree.getChild(1), lst).negate();
+    }
+    verifyChildIsRule(tree, 0, "variable", "a variable");
+    return readVariable(tree.getChild(0), lst);
   }
 
   private Formula readVariable(ParseTree tree, VariableList lst) throws ParserException {
@@ -416,45 +401,55 @@ public class InputReader {
     return new QuantifiedAtom(x, true, given);
   }
 
+  private String getRootOperator(ParseTree tree) {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("rule smallformula") || kind.equals("rule quantification")) {
+      return checkChild(tree.getChild(0), 0);
+    }
+    return checkChild(tree.getChild(0), 1);
+  }
+
   private Formula readJunction(ParseTree tree, VariableList lst) throws ParserException {
-    ArrayList<Formula> parts = new ArrayList<Formula>();
-    if (tree.getChildCount() < 3) {
-      throw buildError(tree, "Encountered conjunction / disjunction with only " +
-        tree.getChildCount() + " children!");
+    verifyChildIsRule(tree, 0, "smallformula", "a basic formula (brackets or no operators)");
+    verifyChildIsRule(tree, 2, "formula", "a formula");
+    Formula left = readSmallFormula(tree.getChild(0), lst);
+    Formula right = readFormula(tree.getChild(2), lst);
+    boolean isAnd = checkChild(tree, 1).equals("token AND");
+    String childkind = getRootOperator(tree.getChild(2));
+    if ( (childkind.equals("token AND") && !isAnd) || (childkind.equals("token OR") && isAnd) ) {
+      throw new ParserException(firstToken(tree), "No precedence is defined between AND and OR; " +
+        "please use brackets.");
     }
-    for (int i = 0; i < tree.getChildCount(); i += 2) {
-      if (checkChild(tree, i).equals("rule quantification")) {
-        parts.add(readQuantification(tree.getChild(i), lst));
-      }
-      else {
-        verifyChildIsRule(tree, i, "formula0", "a unit formula");
-        parts.add(readUnitFormula(tree.getChild(i), lst));
-      }
-    }
-    if (checkChild(tree, 1).equals("token AND")) return new And(parts);
-    else return new Or(parts);
+    if (isAnd) return new And(left, right);
+    else return new Or(left, right);
   }
 
-  private Formula readImplication(ParseTree tree, VariableList lst) throws ParserException {
-    verifyChildIsRule(tree, 0, "formula1", "a formula of level 1");
-    verifyChildIsRule(tree, 2, "formula2", "a formula of level 2");
-    verifyChildIsToken(tree, 1, "IMPLIES", "implication symbol →");
-    return new Implication(readFormulaLevelOne(tree.getChild(0), lst),
-                           readFormulaLevelTwo(tree.getChild(2), lst));
-  }
+  private Formula readArrow(ParseTree tree, VariableList lst) throws ParserException {
+    Formula left, right;
 
-  private Formula readIff(ParseTree tree, VariableList lst) throws ParserException {
-    verifyChildIsRule(tree, 0, "formula1", "a formula of level 1");
-    verifyChildIsRule(tree, 2, "formula2", "a formula of level 2");
-    verifyChildIsToken(tree, 1, "IFF", "if-and-only-if symbol <->");
-    return new Iff(readFormulaLevelOne(tree.getChild(0), lst),
-                   readFormulaLevelTwo(tree.getChild(2), lst));
+    verifyChildIsRule(tree, 2, "formula", "a formula");
+    right = readFormula(tree.getChild(2), lst);
+    String childkind = getRootOperator(tree.getChild(2));
+    if (childkind.equals("token IMPLIES") || childkind.equals("token IFF")) {
+      throw new ParserException(firstToken(tree), "No associativity is defined for implication " +
+        "and if-and-only-if; please use brackets.");
+    }
+    
+    String kind = checkChild(tree, 0);
+    if (kind.equals("rule junction")) left = readJunction(tree.getChild(0), lst);
+    else {
+      verifyChildIsRule(tree, 0, "smallformula", "a basic formula (brackets or no operators)");
+      left = readSmallFormula(tree.getChild(0), lst);
+    }
+
+    if (checkChild(tree, 1).equals("token IMPLIES")) return new Implication(left, right);
+    else return new Iff(left, right);
   }
 
   private Formula readQuantification(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
     if (kind.equals("token NOT") || kind.equals("token MINUS")) {
-      verifyChildIsRule(tree, 1, "quantification", "a quantification");
+    verifyChildIsRule(tree, 1, "quantification", "a quantification");
       return readQuantification(tree.getChild(1), lst).negate();
     }
     verifyChildIsRule(tree, 1, "parameter", "a parameter");

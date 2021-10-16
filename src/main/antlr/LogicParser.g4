@@ -102,52 +102,32 @@ end                 : NEWLINE
 
 /********** Formula **********/
 
-formula             : formula3
+formula             : smallformula
+                    | arrow
+                    | junction
+                    | quantification
+                    ;
+
+smallformula        : BRACKETOPEN formula BRACKETCLOSE
+                    | (NOT | MINUS) smallformula
+                    | variable
                     ;
 
 variable            : IDENTIFIER
                     | paramvar
                     ;
 
-formula0            : BRACKETOPEN formula BRACKETCLOSE
-                    | variable
-                    | IDENTIFIER
-                    | NOT formula0
-                    | MINUS formula0
+junction            : smallformula AND formula
+                    | smallformula OR formula
                     ;
 
 quantification      : FORALL parameter DOT formula
                     | EXISTS parameter DOT formula
-                    | NOT quantification
-                    | MINUS quantification
+                    | (NOT | MINUS) quantification
                     ;
 
-conjunction         : formula0 (AND formula0)+
-                    | formula0 (AND formula0)* AND quantification
-                    ;
-
-disjunction         : formula0 (OR formula0)+
-                    | formula0 (OR formula0)* OR quantification
-                    ;
-
-formula1            : formula0
-                    | conjunction
-                    | disjunction
-                    ;
-
-formula2            : formula1
-                    | quantification
-                    ;
-
-implication         : formula1 IMPLIES formula2
-                    ;
-
-iff                 : formula1 IFF formula2
-                    ;
-
-formula3            : formula2
-                    | implication
-                    | iff
+arrow               : (smallformula | junction) IMPLIES formula
+                    | (smallformula | junction) IFF formula
                     ;
 
 requirement         : formula end
