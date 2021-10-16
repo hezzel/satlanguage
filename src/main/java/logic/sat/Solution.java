@@ -16,7 +16,7 @@ public class Solution {
    */
   public Solution(TreeSet<Integer> trueVariables) {
     if (trueVariables == null) _vars = null;
-    else _vars = new TreeSet(trueVariables);
+    else _vars = new TreeSet<Integer>(trueVariables);
   }
 
   /**

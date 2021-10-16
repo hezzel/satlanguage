@@ -4,6 +4,7 @@ import logic.sat.Variable;
 import logic.parameter.*;
 import logic.formula.*;
 import logic.VariableList;
+import language.execution.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -92,6 +93,58 @@ public class InputReader {
     }
   }
 
+  /** ===== Reading Variables ===== */
+
+  /**
+   * Returns the variable represented by the identifier in the current tree, or throws a
+   * ParserException if there is no boolean variable declared by the given name.
+   */
+  private Variable readBooleanVariable(ParseTree tree, VariableList lst) throws ParserException {
+    String name = tree.getText();
+    Variable v = lst.queryBooleanVariable(name);
+    if (v != null) return v;
+    if (lst.isDeclared(name)) {
+      throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
+        "as a stand-alone boolean variable but was not declared as such.");
+    }
+    else throw new ParserException(firstToken(tree), "Undeclared boolean variable: " + name);
+  }
+
+  /**
+   * Returns the parametrised boolean variable represented by the identifier starting the tree,
+   * and updates the given arguments list to add all the pexpressions in the arguments list to the
+   * variable.  If there is no ParamBoolVar declared with that name, or if the length of the
+   * arguments list does not match the expected number of parameters, a ParserException is thrown
+   * instead.
+   */
+  private ParamBoolVar readQuantifiedBooleanVariable(ParseTree tree, VariableList lst,
+                                           ArrayList<PExpression> args) throws ParserException {
+    verifyChildIsToken(tree, 0, "IDENTIFIER", "the name of a ParamBoolVar");
+    verifyChildIsToken(tree, 1, "SBRACKETOPEN", "indexing opening bracket [");
+    verifyChildIsRule(tree, 2, "pexprlist", "a list of PExpressions");
+    verifyChildIsToken(tree, 3, "SBRACKETCLOSE", "indexing closing bracket ]");
+    String name = tree.getChild(0).getText();
+    ParamBoolVar x = lst.queryParametrisedBooleanVariable(name);
+    if (x == null) {
+      if (lst.isDeclared(name)) {
+        throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
+          "as a parametrised boolean variable but was not declared as such.");
+      }
+      else {
+        throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
+      }
+    }
+    ParameterList expected = x.queryParameters();
+    ParseTree pexprs = tree.getChild(2);
+    if (pexprs.getChildCount() != 2 * expected.size() - 1) {
+      throw new ParserException(firstToken(tree), "Illegal use of variable " + name + " declared " +
+        "with " + expected.size() + " parameters, but used with " + ((pexprs.getChildCount()-1)/2)
+        + " parameters.");
+    }
+    for (int i = 0; i < expected.size(); i++) args.add(readPExpression(pexprs.getChild(2*i)));
+    return x;
+  }
+
   /** ===== Reading PExpressions ===== */
 
   private PExpression readPExpression(ParseTree tree) {
@@ -158,16 +211,21 @@ public class InputReader {
 
   /** ===== Reading PConstraints ===== */
 
-  private PConstraint readPConstraint(ParseTree tree) {
+  /**
+   * If the variable list is given, then we are reading an *extended* PConstraint, and can use the
+   * list to look up variables occurring in the PConstraint.
+   * If not, then this is a normal PConstraint (as occurs in the requirements part).
+   */
+  private PConstraint readPConstraint(ParseTree tree, VariableList lst) throws ParserException {
     verifyChildIsRule(tree, 0, "pconstraintunit", "a basic pconstraint");
     if (tree.getChildCount() == 1)
-      return readPConstraintUnit(tree.getChild(0));
+      return readPConstraintUnit(tree.getChild(0), lst);
     ArrayList<PConstraint> parts = new ArrayList<PConstraint>();
-    parts.add(readPConstraintUnit(tree.getChild(0)));
+    parts.add(readPConstraintUnit(tree.getChild(0), lst));
     for (int i = 1; i < tree.getChildCount(); i++) {
       ParseTree child = tree.getChild(i);
       verifyChildIsRule(child, 1, "pconstraintunit", "a basic pconstraint");
-      parts.add(readPConstraintUnit(child.getChild(1)));
+      parts.add(readPConstraintUnit(child.getChild(1), lst));
     }
     PConstraint ret = parts.get(parts.size()-1);
     if (checkChild(tree, 1).equals("rule pconstraintand")) {
@@ -183,17 +241,42 @@ public class InputReader {
     return ret;
   }
 
-  private PConstraint readPConstraintUnit(ParseTree tree) {
+  private PConstraint readPConstraintUnit(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
     if (kind.equals("token TOP")) return new TrueConstraint();
     if (kind.equals("token BOTTOM")) return new FalseConstraint();
     if (kind.equals("token BRACKETOPEN")) {
       verifyChildIsRule(tree, 1, "pconstraint", "a PConstraint");
       verifyChildIsToken(tree, 2, "BRACKETCLOSE", "closing bracket ')'");
-      return readPConstraint(tree.getChild(1));
+      return readPConstraint(tree.getChild(1), lst);
     }
-    verifyChildIsRule(tree, 0, "pconstraintrelation", "a relation");
-    return readPConstraintRelation(tree.getChild(0));
+    if (kind.equals("token NOT") || kind.equals("token MINUS")) {
+      verifyChildIsRule(tree, 1, "pconstraintunit", "a basic pconstraint");
+      return readPConstraintUnit(tree.getChild(1), lst).negate();
+    }
+    if (kind.equals("rule pconstraintrelation")) {
+      return readPConstraintRelation(tree.getChild(0));
+    }
+    verifyChildIsRule(tree, 0, "variable", "a boolean variable");
+    return readPConstraintVariable(tree.getChild(0), lst);
+  }
+
+  public PConstraint readPConstraintVariable(ParseTree tree, VariableList lst)
+                                                                          throws ParserException {
+    if (lst == null) {
+      throw new ParserException(firstToken(tree), "Encountered variable " + tree.getText() +
+        " which is not allowed as part of a constraint in the requirements part of the program.");
+    }
+    String kind = checkChild(tree, 0);
+    if (kind.equals("token IDENTIFIER")) {
+      return new VariableConstraint(readBooleanVariable(tree.getChild(0), lst), true);
+    }
+    else {
+      verifyChildIsRule(tree, 0, "paramvar", "a boolean variable or ranged variable");
+      ArrayList<PExpression> exprs = new ArrayList<PExpression>();
+      ParamBoolVar x = readQuantifiedBooleanVariable(tree.getChild(0), lst, exprs);
+      return new ParamBoolVarConstraint(x, exprs, true);
+    }
   }
 
   private PConstraint readPConstraintRelation(ParseTree tree) {
@@ -206,19 +289,20 @@ public class InputReader {
     if (kind.equals("token GREATER")) return new SmallerConstraint(right, left);
     if (kind.equals("token LEQ")) return new SmallerConstraint(left, right.add(1));
     if (kind.equals("token GEQ")) return new SmallerConstraint(right, left.add(1));
-    verifyChildIsToken(tree, 1, "NEQ", "comparison or inequality symbol");
+    if (kind.equals("token EQUALS")) return new EqualConstraint(left, right);
+    verifyChildIsToken(tree, 1, "NEQ", "comparison or (in)equality symbol");
     return new NeqConstraint(left, right);
   }
 
-  private PConstraint readFullPConstraint(ParseTree tree) {
+  private PConstraint readFullPConstraint(ParseTree tree, VariableList lst) throws ParserException {
     verifyChildIsRule(tree, 0, "pconstraint", "a parameter expression");
     verifyChildIsToken(tree, 1, "EOF", "end of input");
-    return readPConstraint(tree.getChild(0));
+    return readPConstraint(tree.getChild(0), lst);
   }
   
   /** ===== Reading Parameters ===== */
 
-  private Parameter readParameter(ParseTree tree) {
+  private Parameter readParameter(ParseTree tree) throws ParserException {
     verifyChildIsToken(tree, 0, "IDENTIFIER", "a parameter name");
     String name = tree.getChild(0).getText();
     verifyChildIsToken(tree, 1, "IN", "set inclusion symbol ∈");
@@ -226,7 +310,7 @@ public class InputReader {
     return readParameterRange(name, tree.getChild(2));
   }
 
-  private Parameter readParameterRange(String paramname, ParseTree tree) {
+  private Parameter readParameterRange(String paramname, ParseTree tree) throws ParserException {
     verifyChildIsToken(tree, 0, "BRACEOPEN", "set opening brace {");
     verifyChildIsRule(tree, 1, "pexpression", "a parameter expression");
     PExpression minimum = readPExpression(tree.getChild(1));
@@ -238,13 +322,13 @@ public class InputReader {
     if (tree.getChildCount() > 5) {
       verifyChildIsToken(tree, 5, "WITH", "keyword 'with'");
       verifyChildIsRule(tree, 6, "pconstraint", "a parameter constraint");
-      constraint = readPConstraint(tree.getChild(6));
+      constraint = readPConstraint(tree.getChild(6), null);
     }
     else constraint = new TrueConstraint();
     return new Parameter(paramname, minimum, maximum, constraint);
   }
 
-  private Parameter readFullParameter(ParseTree tree) {
+  private Parameter readFullParameter(ParseTree tree) throws ParserException {
     verifyChildIsRule(tree, 0, "parameter", "a parameter");
     verifyChildIsToken(tree, 1, "EOF", "end of input");
     return readParameter(tree.getChild(0));
@@ -352,20 +436,13 @@ public class InputReader {
       return readSmallFormula(tree.getChild(1), lst).negate();
     }
     verifyChildIsRule(tree, 0, "variable", "a variable");
-    return readVariable(tree.getChild(0), lst);
+    return readVariableFormula(tree.getChild(0), lst);
   }
 
-  private Formula readVariable(ParseTree tree, VariableList lst) throws ParserException {
+  private Formula readVariableFormula(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
     if (kind.equals("token IDENTIFIER")) {
-      String name = tree.getText();
-      Variable v = lst.queryBooleanVariable(name);
-      if (v != null) return new AtomicFormula(v, true);
-      if (lst.isDeclared(name)) {
-        throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
-          "as a stand-alone boolean variable but was not declared as such.");
-      }
-      else throw new ParserException(firstToken(tree), "Undeclared boolean variable: " + name);
+      return new AtomicFormula(readBooleanVariable(tree, lst), true);
     }
     else {
       verifyChildIsRule(tree, 0, "paramvar", "a boolean variable or ranged variable");
@@ -374,30 +451,8 @@ public class InputReader {
   }
 
   private Formula readQuantifiedBoolVar(ParseTree tree, VariableList lst) throws ParserException {
-    verifyChildIsToken(tree, 0, "IDENTIFIER", "the name of a ParamBoolVar");
-    verifyChildIsToken(tree, 1, "SBRACKETOPEN", "indexing opening bracket [");
-    verifyChildIsRule(tree, 2, "pexprlist", "a list of PExpressions");
-    verifyChildIsToken(tree, 3, "SBRACKETCLOSE", "indexing closing bracket ]");
-    String name = tree.getChild(0).getText();
-    ParamBoolVar x = lst.queryParametrisedBooleanVariable(name);
-    if (x == null) {
-      if (lst.isDeclared(name)) {
-        throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
-          "as a parametrised boolean variable but was not declared as such.");
-      }
-      else {
-        throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
-      }
-    }
-    ParameterList expected = x.queryParameters();
-    ParseTree pexprs = tree.getChild(2);
-    if (pexprs.getChildCount() != 2 * expected.size() - 1) {
-      throw new ParserException(firstToken(tree), "Illegal use of variable " + name + " declared " +
-        "with " + expected.size() + " parameters, but used with " + ((pexprs.getChildCount()-1)/2)
-        + " parameters.");
-    }
     ArrayList<PExpression> given = new ArrayList<PExpression>();
-    for (int i = 0; i < expected.size(); i++) given.add(readPExpression(pexprs.getChild(2*i)));
+    ParamBoolVar x = readQuantifiedBooleanVariable(tree, lst, given);
     return new QuantifiedAtom(x, true, given);
   }
 
@@ -483,13 +538,25 @@ public class InputReader {
     return reader.readFullPExpression(tree);
   }
 
+  /** Yields a PConstraint without variables in it. */
   public static PConstraint readPConstraintFromString(String str) throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
     ParseTree tree = parser.onlypconstraint();
     collector.throwCollectedExceptions();
-    return reader.readFullPConstraint(tree);
+    return reader.readFullPConstraint(tree, null);
+  }
+
+  /** Yields a PConstraint which may have variables in it. */
+  public static PConstraint readExtendedPConstraintFromString(String str, VariableList vars)
+                                                                          throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.onlypconstraint();
+    collector.throwCollectedExceptions();
+    return reader.readFullPConstraint(tree, vars);
   }
 
   public static Parameter readParameterFromString(String str) throws ParserException {

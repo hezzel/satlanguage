@@ -2,12 +2,12 @@ package logic.parameter;
 
 import java.util.Set;
 
-/** A Constraint of the form expr1 != expr2. */
-public class NeqConstraint implements PConstraint {
+/** A Constraint of the form expr1 = expr2. */
+public class EqualConstraint implements PConstraint {
   private PExpression _left;
   private PExpression _right;
 
-  public NeqConstraint(PExpression l, PExpression r) {
+  public EqualConstraint(PExpression l, PExpression r) {
     _left = l;
     _right = r;
   }
@@ -28,15 +28,15 @@ public class NeqConstraint implements PConstraint {
     PExpression l = _left.substitute(subst);
     PExpression r = _right.substitute(subst);
     if (l.queryConstant() && r.queryConstant()) {
-      if (l.evaluate(null) == r.evaluate(null)) return new FalseConstraint();
-      else return new TrueConstraint();
+      if (l.evaluate(null) == r.evaluate(null)) return new TrueConstraint();
+      else return new FalseConstraint();
     }
     if (_left == l && _right == r) return this;
-    return new NeqConstraint(_left.substitute(subst), _right.substitute(subst));
+    return new EqualConstraint(_left.substitute(subst), _right.substitute(subst));
   }
 
   public PConstraint negate() {
-    return new EqualConstraint(_left, _right);
+    return new NeqConstraint(_left, _right);
   }
 
   public Set<String> queryParameters() {
@@ -46,7 +46,7 @@ public class NeqConstraint implements PConstraint {
   }
 
   public String toString() {
-    return _left.toString() + " ≠ " + _right.toString();
+    return _left.toString() + " = " + _right.toString();
   }
 }
 

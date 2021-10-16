@@ -43,6 +43,10 @@ public class AndConstraint implements PConstraint {
     return new AndConstraint(fst, snd);
   }
 
+  public PConstraint negate() {
+    return new OrConstraint(_left.negate(), _right.negate());
+  }
+
   public Set<String> queryParameters() {
     Set<String> ret = _left.queryParameters();
     ret.addAll(_right.queryParameters());

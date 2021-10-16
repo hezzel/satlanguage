@@ -24,6 +24,36 @@ public class SmallerConstraint implements PConstraint {
     return PConstraint.RELATION;
   }
 
+  private static PConstraint rebalance(PExpression left, PExpression right) {
+    PExpression ll = left, rr = right;
+    int lc = 0, rc = 0;
+
+    if (left.queryConstant()) { ll = null; lc = left.evaluate(null); }
+    else if (left.queryKind() == PExpression.SUM) {
+      PExpression a = left.queryLeft();
+      PExpression b = left.queryRight();
+      if (b.queryConstant()) { ll = a; lc = b.evaluate(null); }
+    }
+
+    if (right.queryConstant()) { rr = null; rc = right.evaluate(null); }
+    if (right.queryKind() == PExpression.SUM) {
+      PExpression a = right.queryLeft();
+      PExpression b = right.queryRight();
+      if (b.queryConstant()) { rr = a; rc = b.evaluate(null); }
+    }
+
+    // both sides are constants
+    if (ll == null && rr == null) {
+      if (lc < rc) return new TrueConstraint();
+      else return new FalseConstraint();
+    }
+    // only one side is a constant -- move all constants there
+    if (ll == null) return new SmallerConstraint(new ConstantExpression(lc - rc), rr);
+    if (rr == null) return new SmallerConstraint(ll, new ConstantExpression(rc - lc));
+    // neither side is a constant; move both additions to the right
+    return new SmallerConstraint(ll, rr.add(rc - lc));
+  }
+
   public PConstraint substitute(Substitution subst) {
     PExpression l = _left.substitute(subst);
     PExpression r = _right.substitute(subst);
@@ -31,8 +61,13 @@ public class SmallerConstraint implements PConstraint {
       if (l.evaluate(null) < r.evaluate(null)) return new TrueConstraint();
       else return new FalseConstraint();
     }   
-    if (_left == l && _right == r) return this;
-    return new SmallerConstraint(_left.substitute(subst), _right.substitute(subst));
+    return rebalance(l, r);
+  }
+
+  public PConstraint negate() {
+    // x < y <--> y < x + 1
+    Substitution empty = new Substitution();  // substitute(empty) gives a simplification
+    return rebalance(_right.substitute(empty), _left.substitute(empty).add(1));
   }
 
   public Set<String> queryParameters() {

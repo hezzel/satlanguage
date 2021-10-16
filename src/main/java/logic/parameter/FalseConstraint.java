@@ -9,6 +9,7 @@ public class FalseConstraint implements PConstraint {
   public boolean isTop() { return false; }
   public int queryKind() { return PConstraint.CONSTANT; }
   public PConstraint substitute(Substitution substitution) { return this; }
+  public PConstraint negate() { return new TrueConstraint(); }
   public TreeSet<String> queryParameters() { return new TreeSet<String>(); }
   public String toString() { return "⊥"; }
 }

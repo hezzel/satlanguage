@@ -43,7 +43,9 @@ pconstraint         : pconstraintunit pconstraintand*
 pconstraintunit     : BRACKETOPEN pconstraint BRACKETCLOSE
                     | TOP
                     | BOTTOM
+                    | (NOT | MINUS) pconstraintunit
                     | pconstraintrelation
+                    | variable
                     ;
 
 pconstraintand      : AND pconstraintunit
@@ -57,6 +59,7 @@ pconstraintrelation : pexpression GREATER pexpression
                     | pexpression GEQ pexpression
                     | pexpression LEQ pexpression
                     | pexpression NEQ pexpression
+                    | pexpression EQUALS pexpression
                     ;
 
 /********** Parameter and parameterlist **********/

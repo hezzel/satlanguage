@@ -93,6 +93,38 @@ public class ParsePConstraintTest {
   }
 
   @Test
+  public void testReadEqual() {
+    try {
+      PConstraint c = InputReader.readPConstraintFromString("i = j + 1");
+      assertTrue(c.queryKind() == PConstraint.RELATION);
+      assertTrue(c.toString().equals("i = j+1"));
+    }
+    catch (ParserException exc) {
+      assertTrue(exc.toString(), false);
+    }
+  }
+
+  public void testReadNegation() {
+    try {
+      PConstraint c = InputReader.readPConstraintFromString("¬(a = b ∧ j >= i)");
+      assertTrue(c.toString().equals("a ≠ b ∨ j < i"));
+    }
+    catch (ParserException exc) {
+      assertTrue(exc.toString(), false);
+    }
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testUseVariable() throws ParserException {
+    InputReader.readPConstraintFromString("a = b ∧ c");
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testUseParamBoolVar() throws ParserException {
+    InputReader.readPConstraintFromString("a < 0 ∨ x[3]");
+  }
+
+  @Test
   public void testReadNestedConjunctionAndDisjunction() {
     try {
       PConstraint c = InputReader.readPConstraintFromString("a < b ∧ b != 3 \\and (a ≥ 4 ∨ ⊤)");

@@ -48,7 +48,7 @@ public class PConstraintTest {
   public void testSubstituteSimple() {
     Assignment ass = new Assignment("a", 12);
     PConstraint c = createConstr().substitute(new Substitution(ass));
-    assertTrue(c.toString().equals("13 < b+3 ∧ (b ≠ c ∨ 12 ≠ c)"));
+    assertTrue(c.toString().equals("10 < b ∧ (b ≠ c ∨ 12 ≠ c)"));
   }
 
   @Test
@@ -66,7 +66,7 @@ public class PConstraintTest {
     Substitution subst = new Substitution("a", new ConstantExpression(12),
                                           "b", new ParameterExpression("a"));
     PConstraint c = createConstr().substitute(subst);
-    assertTrue(c.toString().equals("13 < a+3 ∧ (a ≠ c ∨ 12 ≠ c)"));
+    assertTrue(c.toString().equals("10 < a ∧ (a ≠ c ∨ 12 ≠ c)"));
   }
 
   @Test
@@ -85,7 +85,7 @@ public class PConstraintTest {
   public void testSubstituteOrPart() {
     Substitution subst = new Substitution("a", new ConstantExpression(1),
                                           "c", new ConstantExpression(0));
-    assertTrue(createConstr().substitute(subst).toString().equals("2 < b+3"));
+    assertTrue(createConstr().substitute(subst).toString().equals("-1 < b"));
   }
 
   @Test
@@ -95,6 +95,23 @@ public class PConstraintTest {
     assertTrue(params.contains("b"));
     assertTrue(params.contains("c"));
     assertTrue(params.size() == 3);
+  }
+
+  @Test
+  public void testNegate() {
+    PConstraint a = new SmallerConstraint((new ParameterExpression("i")).add(1),
+                                          (new ParameterExpression("j").add(2)));
+    PConstraint b = new EqualConstraint(new ConstantExpression(2),
+                                        new ParameterExpression("k"));
+    PConstraint c = new NeqConstraint(new ParameterExpression("j"),
+                                      new ParameterExpression("a"));
+    PConstraint d = new TrueConstraint();
+    PConstraint e = new FalseConstraint();
+    // form = i+1 < j+2 ∧ ((2 = k ∧ j ≠ a) ∨ ⊤) ∧ ⊥
+    PConstraint form = new AndConstraint(a, new AndConstraint(
+      new OrConstraint(new AndConstraint(b,c),d), e));
+    PConstraint constr = form.negate();
+    assertTrue(constr.toString().equals("j < i ∨ ((2 ≠ k ∨ j = a) ∧ ⊥) ∨ ⊤"));
   }
 }
 
