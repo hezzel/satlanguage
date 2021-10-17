@@ -91,12 +91,16 @@ boolvardec          : IDENTIFIER TYPEOF BOOLTYPE
 paramboolvardec     : paramvar TYPEOF BOOLTYPE FOR parameterlist
                     ;
 
-declaration         : DECLARE boolvardec EOF
-                    | DECLARE paramboolvardec EOF
-                    ;
-
 type                : BOOLTYPE
                     | RANGETYPE IN range
+                    ;
+
+declaration         : DECLARE boolvardec
+                    | DECLARE paramboolvardec
+                    ;
+
+internaldeclaration : boolvardec EOF
+                    | paramboolvardec EOF
                     ;
 
 /********** Formula **********/
@@ -129,7 +133,7 @@ arrow               : (smallformula | junction) IMPLIES formula
                     | (smallformula | junction) IFF formula
                     ;
 
-requirement         : formula EOF
+onlyformula         : formula EOF
                     ;
 
 /********** The execution language **********/
@@ -158,5 +162,10 @@ printstatement      : PRINT BRACKETOPEN BRACKETCLOSE
                     ;
 
 block               : BRACEOPEN statement* BRACECLOSE
+                    ;
+
+/********** Full programs **********/
+
+program             : declaration* formula* SEPARATOR statement* EOF
                     ;
 

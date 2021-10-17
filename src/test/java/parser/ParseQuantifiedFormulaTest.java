@@ -11,7 +11,7 @@ public class ParseQuantifiedFormulaTest {
   public void testReadSimpleParametrisedBooleanVariable() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
       Formula form = InputReader.readFormulaFromString("x[b]", vars);
       assertTrue(form instanceof QuantifiedAtom);
       assertFalse(form.queryClosed());
@@ -27,7 +27,7 @@ public class ParseQuantifiedFormulaTest {
   public void testReadClosedParametrisedBooleanVariable() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
       Formula form = InputReader.readFormulaFromString("x[2]", vars);
       assertTrue(form instanceof QuantifiedAtom);
       assertTrue(form.queryClosed());
@@ -42,8 +42,7 @@ public class ParseQuantifiedFormulaTest {
   public void testReadParametrisedBooleanVariableWithExpressions() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}",
-                                            vars);
+      InputReader.declare("x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}", vars);
       Formula form = InputReader.readFormulaFromString("x[i - 1, a]", vars);
       assertTrue(form instanceof QuantifiedAtom);
       assertFalse(form.queryClosed());
@@ -58,8 +57,7 @@ public class ParseQuantifiedFormulaTest {
   public void testBasicForall() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}",
-                                            vars);
+      InputReader.declare("x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}", vars);
       Formula form = InputReader.readFormulaFromString("∀ i ∈ {2..5}.x[i- 1, a]", vars);
       assertTrue(form instanceof Forall);
       assertFalse(form.queryClosed());
@@ -74,7 +72,7 @@ public class ParseQuantifiedFormulaTest {
   public void testBasicExists() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
       Formula form = InputReader.readFormulaFromString("∃ i ∈ {1..6}.x[i]", vars);
       assertTrue(form instanceof Exists);
       assertTrue(form.queryClosed());
@@ -89,7 +87,7 @@ public class ParseQuantifiedFormulaTest {
   public void testNestedQuantifiers() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}",
+      InputReader.declare("x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}",
                                             vars);
       Formula form = InputReader.readFormulaFromString(
         "∀ j ∈ {1..4}.∃ i ∈ {j-1..4}.x[j,i] ∧ x[i,j]", vars);
@@ -106,7 +104,7 @@ public class ParseQuantifiedFormulaTest {
   public void testQuantifierNegation() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
       Formula form = InputReader.readFormulaFromString("¬∃ i ∈ {1..6}.x[i]", vars);
       assertTrue(form instanceof Forall);
       assertTrue(form.toString().equals("∀ i ∈ {1..6}. ¬x[i]"));
@@ -120,7 +118,7 @@ public class ParseQuantifiedFormulaTest {
   public void testDoubleQuantifierNegation() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
       Formula form = InputReader.readFormulaFromString("--∃ i ∈ {1..6}.x[i]", vars);
       assertTrue(form instanceof Exists);
       assertTrue(form.toString().equals("∃ i ∈ {1..6}. x[i]"));
@@ -134,8 +132,8 @@ public class ParseQuantifiedFormulaTest {
   public void testOccurrenceOnRightOfImplication() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
-      InputReader.readDeclarationFromString("declare y    :: Bool", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("y    :: Bool", vars);
       Formula form = InputReader.readFormulaFromString("y → ∃ i ∈ {1..6}.x[i]", vars);
       assertTrue(form instanceof Implication);
       assertTrue(form.toString().equals("y → (∃ i ∈ {1..6}. x[i])"));
@@ -149,8 +147,8 @@ public class ParseQuantifiedFormulaTest {
   public void testOccurrenceOnLeftOfImplication() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
-      InputReader.readDeclarationFromString("declare y    :: Bool", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("y    :: Bool", vars);
       Formula form = InputReader.readFormulaFromString("∃ i ∈ {1..6}.x[i] → y", vars);
       assertTrue(form instanceof Exists);
     }
@@ -163,8 +161,8 @@ public class ParseQuantifiedFormulaTest {
   public void testOccurrenceOnRightOfAnd() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
-      InputReader.readDeclarationFromString("declare y    :: Bool", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("y    :: Bool", vars);
       Formula form = InputReader.readFormulaFromString("y ∧ ∀ i ∈ {1..6}.x[i]", vars);
       assertTrue(form instanceof And);
       assertTrue(form.toString().equals("y ∧ (∀ i ∈ {1..6}. x[i])"));
@@ -178,8 +176,8 @@ public class ParseQuantifiedFormulaTest {
   public void testOccurrenceOnMiddleOfOr() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
-      InputReader.readDeclarationFromString("declare y    :: Bool", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("y    :: Bool", vars);
       Formula form = InputReader.readFormulaFromString("¬y ∨ ∀ i ∈ {1..6}.x[i] ∨ y", vars);
       assertTrue(form instanceof Or);
       assertTrue(form.toString().equals("¬y ∨ (∀ i ∈ {1..6}. x[i] ∨ y)"));

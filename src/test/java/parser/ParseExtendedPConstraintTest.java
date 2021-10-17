@@ -13,7 +13,7 @@ public class ParseExtendedPConstraintTest {
   public void testReadBooleanVariable() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x :: Bool", vars);
+      InputReader.declare("x :: Bool", vars);
       PConstraint c = InputReader.readExtendedPConstraintFromString("x", vars);
       assertTrue(c instanceof VariableConstraint);
       assertTrue(c.toString().equals("x"));
@@ -33,7 +33,7 @@ public class ParseExtendedPConstraintTest {
   public void testReadParamBoolVar() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
       PConstraint c = InputReader.readExtendedPConstraintFromString("x[ j+ 1]", vars);
       assertTrue(c instanceof ParamBoolVarConstraint);
       assertTrue(c.toString().equals("x[j+1]"));
@@ -53,8 +53,8 @@ public class ParseExtendedPConstraintTest {
   public void testReadExtendedPConstraint() {
     VariableList vars = new VariableList();
     try {
-      InputReader.readDeclarationFromString("declare y :: Bool", vars);
-      InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+      InputReader.declare("y :: Bool", vars);
+      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
       PConstraint c = InputReader.readExtendedPConstraintFromString("i < j ∧ (y ∨ x[i+j])", vars);
       assertTrue(c.toString().equals("i < j ∧ (y ∨ x[i+j])"));
     }

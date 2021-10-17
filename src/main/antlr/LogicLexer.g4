@@ -99,7 +99,9 @@ FORALL              : ('∀' | '?A' | '\\forall') ;
 
 EXISTS              : ('∃' | '?E' | '\\exists') ;
 
-STRING              : '"' (~[\n\r"])* '"' ;
+STRING              : ('"' (~[\n\r"])* '"') | ('\'' (~[\n\r'])* '\'') ;
+
+SEPARATOR           : '==' '='+ ;
 
 WHITESPACE          : [ \t\r\n]+ -> skip ;
 

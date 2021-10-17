@@ -356,7 +356,6 @@ public class InputReader {
 
   private void readDeclaration(ParseTree tree, VariableList lst) throws ParserException {
     verifyChildIsToken(tree, 0, "DECLARE", "declare keyword");
-    verifyChildIsToken(tree, 2, "EOF", "end of input");
     String kind = checkChild(tree, 1);
     if (kind.equals("rule boolvardec")) readBoolVarDec(tree.getChild(1), lst);
     else if (kind.equals("rule paramboolvardec")) readParamBoolVarDec(tree.getChild(1), lst);
@@ -411,6 +410,19 @@ public class InputReader {
     }
 
     lst.registerParametrisedBooleanVariable(name, params);
+  }
+
+  /**
+   * Meant for internal use in the program: reading a declaration from string.  This means the
+   * declare keyword is omitted, and the input ends after the declaration.
+   */
+  private void readInternalDeclaration(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsToken(tree, 1, "EOF", "end of input");
+    String kind = checkChild(tree, 0);
+    if (kind.equals("rule boolvardec")) readBoolVarDec(tree.getChild(0), lst);
+    else if (kind.equals("rule paramboolvardec")) readParamBoolVarDec(tree.getChild(0), lst);
+    else throw buildError(tree, "encountered " + kind +
+      ", expected rule boolvardec or rule paramboolvardec");
   }
 
   /** ===== Reading a Formula ===== */
@@ -515,6 +527,15 @@ public class InputReader {
     if (kind.equals("token FORALL")) return new Forall(p, form);
     if (kind.equals("token EXISTS")) return new Exists(p, form);
     throw buildError(tree, "Expected token FORALL or EXISTS");
+  }
+
+  private Formula readClosedFormula(ParseTree tree, VariableList lst) throws ParserException {
+    Formula ret = readFormula(tree, lst);
+    if (!ret.queryClosed()) {
+      throw new ParserException(firstToken(tree),
+        "Formula " + ret.toString() + " has unbound parameters.");
+    }
+    return ret;
   }
 
   /** ===== Reading a String expression (for the execution language) ===== */
@@ -644,18 +665,18 @@ public class InputReader {
   }
 
   /**
-   * This method reads a variable declaration from string and stores it in the given variable list.
+   * This method reads a variable declaration from string (without the "declare" keyword) and
+   * stores it in the given variable list.
    * Note that this will also give errors if the declaration is well-formed, but the variable was
    * previously declared.
    */
-  public static void readDeclarationFromString(String str, VariableList lst)
-                                                                      throws ParserException {
+  public static void declare(String str, VariableList lst) throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
-    ParseTree tree = parser.declaration();
+    ParseTree tree = parser.internaldeclaration();
     collector.throwCollectedExceptions();
-    reader.readDeclaration(tree, lst);
+    reader.readInternalDeclaration(tree, lst);
   }
 
   /**
@@ -667,12 +688,28 @@ public class InputReader {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
-    ParseTree tree = parser.requirement();
+    ParseTree tree = parser.onlyformula();
     collector.throwCollectedExceptions();
     return reader.readFormula(tree.getChild(0), vs);
   }
 
-  public static Statement readStatement(String str, VariableList vs) throws ParserException {
+  /**
+   * This method reads a formula from string and returns it.
+   * The formula is allowed to have free parameters.  However, all variables that are used are
+   * required to be in vs, otherwise a ParserException will be thrown.
+   */
+  public static Formula readClosedFormulaFromString(String str, VariableList vs)
+                                                                          throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.onlyformula();
+    collector.throwCollectedExceptions();
+    return reader.readClosedFormula(tree.getChild(0), vs);
+  }
+
+  public static Statement readStatementFromString(String str, VariableList vs)
+                                                                          throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();

@@ -14,7 +14,7 @@ public class ParseDeclarationTest {
   public void testReadBasicBooleanDeclaration() {
     try {
       VariableList lst = new VariableList();
-      InputReader.readDeclarationFromString("declare myvar :: Bool", lst);
+      InputReader.declare("myvar :: Bool", lst);
       assertTrue(lst.isDeclared("myvar"));
       assertTrue(lst.queryBooleanVariable("myvar").toString().equals("myvar"));
     }
@@ -27,7 +27,7 @@ public class ParseDeclarationTest {
   public void testReadEasyParamBoolVarDeclaration() {
     try {
       VariableList lst = new VariableList();
-      InputReader.readDeclarationFromString("declare pv[i] :: Bool for i ∈ {1..10}", lst);
+      InputReader.declare("pv[i] :: Bool for i ∈ {1..10}", lst);
       assertTrue(lst.isDeclared("pv"));
       ParamBoolVar v = lst.queryParametrisedBooleanVariable("pv");
       ParameterList params = v.queryParameters();
@@ -47,7 +47,7 @@ public class ParseDeclarationTest {
   public void testReadComplexParamBoolVarDeclaration() {
     try {
       VariableList lst = new VariableList();
-      InputReader.readDeclarationFromString("declare pv[i, j, k] :: Bool for " +
+      InputReader.declare("pv[i, j, k] :: Bool for " +
         "i ∈ {1..10}, j ∈ {0..i+1} with j != 2, k ∈ {i-2..7}", lst);
       assertTrue(lst.isDeclared("pv"));
       ParamBoolVar v = lst.queryParametrisedBooleanVariable("pv");
@@ -74,41 +74,39 @@ public class ParseDeclarationTest {
   @Test(expected = language.parser.ParserException.class)
   public void testDeclareVariableTwice() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.readDeclarationFromString("declare myvar :: Bool", lst);
-    InputReader.readDeclarationFromString("declare myvar[i] :: Bool for i ∈ {1..5}", lst);
+    InputReader.declare("myvar :: Bool", lst);
+    InputReader.declare("myvar[i] :: Bool for i ∈ {1..5}", lst);
   }
 
   @Test(expected = language.parser.ParserException.class)
   public void testInappropriateDependency() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.readDeclarationFromString("declare pv[i, j, k] :: Bool for " +
+    InputReader.declare("pv[i, j, k] :: Bool for " +
       "j ∈ {0..i+1} with j != 2, i ∈ {1..10}, k ∈ {i-3..7}", lst);
   }
 
   @Test(expected = language.parser.ParserException.class)
   public void testInappropriateParameterorder() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.readDeclarationFromString("declare bing[a,b] :: Bool for " +
-      "b ∈ {1..10}, a ∈ {1..5}", lst);
+    InputReader.declare("bing[a,b] :: Bool for b ∈ {1..10}, a ∈ {1..5}", lst);
   }
 
   @Test(expected = language.parser.ParserException.class)
   public void testMissingSomeParameters() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.readDeclarationFromString("declare bing[a,b] :: Bool for " +
-      "a ∈ {1..5}", lst);
+    InputReader.declare("bing[a,b] :: Bool for a ∈ {1..5}", lst);
   }
 
   @Test(expected = language.parser.ParserException.class)
   public void testMissingAllParameters() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.readDeclarationFromString("declare bing[a,b] :: Bool", lst);
+    InputReader.declare("bing[a,b] :: Bool", lst);
   }
 
   @Test(expected = language.parser.ParserException.class)
   public void testExpressionsInDeclaration() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.readDeclarationFromString("declare hello[i+1] :: Bool for i ∈ {0..3}", lst);
+    InputReader.declare("hello[i+1] :: Bool for i ∈ {0..3}", lst);
   }
 }
 

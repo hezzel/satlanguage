@@ -11,35 +11,35 @@ public class ParseStatementTest {
   @Test
   public void testReadPrint() throws ParserException {
     VariableList vars = new VariableList();
-    Statement stat = InputReader.readStatement("print(\"Hello world!\")", vars);
+    Statement stat = InputReader.readStatementFromString("print(\"Hello world!\")", vars);
     assertTrue(stat.toString().equals("print(\"Hello world!\")"));
   }
 
   @Test
   public void testReadEmptyPrintln() throws ParserException {
     VariableList vars = new VariableList();
-    Statement stat = InputReader.readStatement("println()", vars);
+    Statement stat = InputReader.readStatementFromString("println()", vars);
     assertTrue(stat.toString().equals("print(\"\\n\")"));
   }
 
   @Test
   public void testReadMultiPrint() throws ParserException {
     VariableList vars = new VariableList();
-    Statement stat = InputReader.readStatement("println(\"bing\", i, 1)", vars);
+    Statement stat = InputReader.readStatementFromString("println(\"bing\", i, 1)", vars);
     assertTrue(stat.toString().equals("print(\"bing\", i, 1, \"\\n\")"));
   }
 
   @Test
   public void testSimpleIf() throws ParserException {
     VariableList vars = new VariableList();
-    Statement stat = InputReader.readStatement("if i > 0 then println()", vars);
+    Statement stat = InputReader.readStatementFromString("if i > 0 then println()", vars);
     assertTrue(stat.toString().equals("if 0 < i then print(\"\\n\")"));
   }
 
   @Test
   public void testIfOrder() throws ParserException {
     VariableList vars = new VariableList();
-    Statement stat = InputReader.readStatement(
+    Statement stat = InputReader.readStatementFromString(
       "if i > 0 then if j != 0 then print(i) else print(j)", vars);
     Statement t = ((If)stat).queryThenStatement();
     Statement e = ((If)stat).queryElseStatement();
@@ -50,21 +50,21 @@ public class ParseStatementTest {
   @Test
   public void testIfThenElse() throws ParserException {
     VariableList vars = new VariableList();
-    Statement stat = InputReader.readStatement("if i = j then println() else print(\"x\")", vars);
+    Statement stat = InputReader.readStatementFromString("if i = j then println() else print(\"x\")", vars);
     assertTrue(stat.toString().equals("if i = j then print(\"\\n\")\nelse print(\"x\")"));
   }
 
   @Test
   public void testFor() throws ParserException {
     VariableList vars = new VariableList();
-    Statement stat = InputReader.readStatement("for i := 1 to k + 1 do println(i)", vars);
+    Statement stat = InputReader.readStatementFromString("for i := 1 to k + 1 do println(i)", vars);
     assertTrue(stat.toString().equals("for i := 1 to k+1 do print(i, \"\\n\")"));
   }
 
   @Test
   public void testBlock() throws ParserException {
     VariableList vars = new VariableList();
-    Statement stat = InputReader.readStatement(
+    Statement stat = InputReader.readStatementFromString(
       "{ print(i) print(j) if i < 0 then {println() } else println() println(\"Hello\") }", vars);
     assertTrue(stat.toString().equals("{\n" +
       "  print(i)\n" +
@@ -80,8 +80,7 @@ public class ParseStatementTest {
   @Test
   public void testComplex() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.readDeclarationFromString("declare queen[x,y] :: Bool for x ∈ {1..8}, y ∈ {1..8}",
-                                          vars);
+    InputReader.declare("queen[x,y] :: Bool for x ∈ {1..8}, y ∈ {1..8}", vars);
     String txt =
       "for y := 1 to 8 do {\n" +
       "  for x := 1 to 8 do {\n" +
@@ -90,7 +89,7 @@ public class ParseStatementTest {
       "  }\n" +
       "  print(\"\\n\")\n" +
       "}";
-    Statement stat = InputReader.readStatement(txt, vars);
+    Statement stat = InputReader.readStatementFromString(txt, vars);
     assertTrue(stat.toString().equals(txt));
   }
 }

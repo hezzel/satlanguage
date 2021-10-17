@@ -129,7 +129,7 @@ public class AndTest {
   @Test
   public void testInstantiate() throws language.parser.ParserException {
     VariableList vars = new VariableList();
-    InputReader.readDeclarationFromString("declare x[i] :: Bool for i ∈ {1..10}", vars);
+    InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
     Formula x1 = InputReader.readFormulaFromString("x[a]", vars);
     Formula x2 = InputReader.readFormulaFromString("x[b]", vars);
     Formula conjunction = new And(x1, x2);
