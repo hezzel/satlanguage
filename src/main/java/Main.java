@@ -3,6 +3,7 @@ package language;
 public class Main {
   public static void main(String[] args) {
     Program program = new Program();
+    /*
     program.declare("queen[x,y] :: Bool for x ∈ {1..8}, y ∈ {1..8}");
     // there is a queen in every row
     program.require("∀ y ∈ {1..8}.∃ x ∈ {1..8}.queen[x,y]");
@@ -21,6 +22,8 @@ public class Main {
       "  }" +
       "  println()" +
       "}");
+    */
+    program.readFromFile("inputs/queens.log");
     program.execute();
     //program.debugOutput();
   }

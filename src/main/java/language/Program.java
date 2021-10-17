@@ -10,7 +10,7 @@ import language.execution.Statement;
 
 /**
  * A Program is the combination of a requirements list and an output statement, which can easily be
- * set up from inside Java.
+ * set up from inside Java, or be read from an input file.
  */
 public class Program {
   private VariableList _vars;
@@ -21,6 +21,11 @@ public class Program {
     _vars = new VariableList();
     _reqs = new RequirementsList(_vars);
     _statement = null;
+  }
+
+  public void readFromFile(String filename) {
+    try { _statement = InputReader.readProgramFromFile(filename, _reqs); }
+    catch (Exception e) { throw new Error(e); }
   }
 
   public void declare(String declaration) {

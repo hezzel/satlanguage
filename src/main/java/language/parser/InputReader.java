@@ -4,11 +4,13 @@ import logic.sat.Variable;
 import logic.parameter.*;
 import logic.formula.*;
 import logic.VariableList;
+import logic.RequirementsList;
 import language.execution.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -613,6 +615,35 @@ public class InputReader {
     return new Block(parts);
   }
 
+  /** ===== A full program ===== */
+
+  private Statement readProgram(ParseTree tree, RequirementsList lst) throws ParserException {
+    int i = 0;
+    VariableList vars = lst.queryVariables();
+    // read declarations and requirements
+    for (; i < tree.getChildCount(); i++) {
+      String kind = checkChild(tree, i);
+      if (kind.equals("token SEPARATOR")) break;
+      if (kind.equals("rule statement")) {
+        throw new ParserException(firstToken(tree.getChild(i)),
+          "Encountered a statement before the program separator ===.");
+      }
+      if (kind.equals("rule declaration")) readDeclaration(tree.getChild(i), vars);
+      else if (kind.equals("rule formula")) lst.add(readClosedFormula(tree.getChild(i), vars));
+      else {
+        throw buildError(tree.getChild(i), "unexpected: " + kind);
+      }
+    }
+    // read statements
+    ArrayList<Statement> stats = new ArrayList<Statement>();
+    for (i++; i < tree.getChildCount()-1; i++) {
+      verifyChildIsRule(tree, i, "statement", "a statement");
+      stats.add(readStatement(tree.getChild(i), vars));
+    }
+    if (stats.size() == 1) return stats.get(0);
+    return new Block(stats);
+  }
+
   /** ===== Static access functions ===== */
 
   private static LogicParser createParserFromString(String str, ErrorCollector collector) {
@@ -716,6 +747,23 @@ public class InputReader {
     ParseTree tree = parser.statement();
     collector.throwCollectedExceptions();
     return reader.readStatement(tree, vs);
+  }
+
+  /** Sets up a (lexer and) parser from the given file, using the given error collector. */
+  public static Statement readProgramFromFile(String filename, RequirementsList lst)
+                                                             throws IOException, ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
+    LogicLexer lexer = new LogicLexer(input);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(collector);
+    LogicParser parser = new LogicParser(new CommonTokenStream(lexer));
+    parser.removeErrorListeners();
+    parser.addErrorListener(collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.program();
+    collector.throwCollectedExceptions();
+    return reader.readProgram(tree, lst);
   }
 }
 

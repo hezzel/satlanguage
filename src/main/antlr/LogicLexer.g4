@@ -103,5 +103,7 @@ STRING              : ('"' (~[\n\r"])* '"') | ('\'' (~[\n\r'])* '\'') ;
 
 SEPARATOR           : '==' '='+ ;
 
+COMMENT             : '%' (~[\n\r])* -> skip ;
+
 WHITESPACE          : [ \t\r\n]+ -> skip ;
 
