@@ -34,8 +34,8 @@ public class ParamBoolVarConstraint implements PConstraint {
       indexes.put(params.get(i).queryName(), _arguments.get(i).evaluate(ass));
     }
     Variable v = _var.queryVar(indexes);
-    if (ass instanceof ProofState) return ((ProofState)ass).queryValue(v);
-    throw new Error("Evaluating ParamBoolVarConstraint with Assignment that is not a ProofState.");
+    if (ass instanceof ProgramState) return ((ProgramState)ass).queryValue(v);
+    throw new Error("Evaluating ParamBoolVarConstraint with Assignment that is not a ProgramState.");
   }
 
   public PConstraint negate() {

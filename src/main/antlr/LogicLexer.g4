@@ -17,6 +17,8 @@ IF                  : 'if' ;
 
 THEN                : 'then' ;
 
+ELSE                : 'else' ;
+
 PRINT               : 'print' ;
 
 PRINTLN             : 'println' ;
@@ -24,6 +26,10 @@ PRINTLN             : 'println' ;
 BOOLTYPE            : 'Bool' ;
 
 RANGETYPE           : 'Int' ;
+
+TO                  : 'to' ;
+
+DO                  : 'do' ;
 
 IDENTIFIER          : [a-z] [a-z0-9A-Z_]* ;
 
@@ -67,6 +73,8 @@ NEQ                 : ('≠' | '!=' | '\\neq') ;
 
 EQUALS              : '=' ;
 
+INITIATE            : ':=' ;
+
 TOP                 : ('⊤' | '\\top') ;
 
 BOTTOM              : ('⊥' | '\\bot') ;
@@ -91,9 +99,7 @@ FORALL              : ('∀' | '?A' | '\\forall') ;
 
 EXISTS              : ('∃' | '?E' | '\\exists') ;
 
-NEWLINE             : '\n' ;
-
 STRING              : '"' (~[\n\r"])* '"' ;
 
-WHITESPACE          : [ \t\r]+ -> channel(HIDDEN) ;
+WHITESPACE          : [ \t\r\n]+ -> skip ;
 

@@ -356,7 +356,7 @@ public class InputReader {
 
   private void readDeclaration(ParseTree tree, VariableList lst) throws ParserException {
     verifyChildIsToken(tree, 0, "DECLARE", "declare keyword");
-    verifyChildIsRule(tree, 2, "end", "end of line (or end of input)");
+    verifyChildIsToken(tree, 2, "EOF", "end of input");
     String kind = checkChild(tree, 1);
     if (kind.equals("rule boolvardec")) readBoolVarDec(tree.getChild(1), lst);
     else if (kind.equals("rule paramboolvardec")) readParamBoolVarDec(tree.getChild(1), lst);
@@ -517,6 +517,81 @@ public class InputReader {
     throw buildError(tree, "Expected token FORALL or EXISTS");
   }
 
+  /** ===== Reading a String expression (for the execution language) ===== */
+
+  private Statement readStatement(ParseTree tree, VariableList lst) throws ParserException {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("rule printstatement")) return readPrint(tree.getChild(0), lst);
+    if (kind.equals("rule ifstatement")) return readIf(tree.getChild(0), lst);
+    if (kind.equals("rule forstatement")) return readFor(tree.getChild(0), lst);
+    verifyChildIsRule(tree, 0, "block", "a block");
+    return readBlock(tree.getChild(0), lst);
+  }
+
+  private StringExpression readStringExpression(ParseTree tree) {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("rule pexpression")) {
+      return new StringExpression(readPExpression(tree.getChild(0)));
+    }
+    verifyChildIsToken(tree, 0, "STRING", "a string");
+    String s = tree.getText();
+    return new StringExpression(s.substring(1,s.length()-1));
+  }
+
+  private Statement readPrint(ParseTree tree, VariableList lst) {
+    ArrayList<StringExpression> parts = new ArrayList<StringExpression>();
+    verifyChildIsToken(tree, 1, "BRACKETOPEN", "opening bracket (");
+    verifyChildIsToken(tree, tree.getChildCount()-1, "BRACKETCLOSE", "closing bracket )");
+    for (int i = 2; i < tree.getChildCount()-1; i += 2) {
+      verifyChildIsRule(tree, i, "stringexpr", "a string or pexpression");
+      parts.add(readStringExpression(tree.getChild(i)));
+    }
+    if (checkChild(tree, 0).equals("token PRINTLN")) parts.add(new StringExpression("\\n"));
+    return new Print(parts);
+  }
+
+  private Statement readIf(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsToken(tree, 0, "IF", "if keyword");
+    verifyChildIsRule(tree, 1, "pconstraint", "pconstraint");
+    verifyChildIsToken(tree, 2, "THEN", "then keyword");
+    verifyChildIsRule(tree, 3, "statement", "a statement");
+    PConstraint constr = readPConstraint(tree.getChild(1), lst);
+    Statement th = readStatement(tree.getChild(3), lst);
+    Statement el = null;
+    if (tree.getChildCount() == 6) {
+      verifyChildIsToken(tree, 4, "ELSE", "else keyword");
+      verifyChildIsRule(tree, 5, "statement", "a statement");
+      el = readStatement(tree.getChild(5), lst);
+    }
+    return new If(constr, th, el);
+  }
+
+  private Statement readFor(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsToken(tree, 0, "FOR", "for keyword");
+    verifyChildIsToken(tree, 1, "IDENTIFIER", "an identifier (the counter)");
+    verifyChildIsToken(tree, 2, "INITIATE", "intiation token :=");
+    verifyChildIsRule(tree, 3, "pexpression", "a pexression (the minimum)");
+    verifyChildIsToken(tree, 4, "TO", "to keyword");
+    verifyChildIsRule(tree, 5, "pexpression", "a pexression (the maximum)");
+    verifyChildIsToken(tree, 6, "DO", "do keyword");
+    verifyChildIsRule(tree, 7, "statement", "a statement");
+    String name = tree.getChild(1).getText();
+    PExpression minimum = readPExpression(tree.getChild(3));
+    PExpression maximum = readPExpression(tree.getChild(5));
+    Statement statement = readStatement(tree.getChild(7), lst);
+    return new For(name, minimum, maximum, statement);
+  }
+
+  private Statement readBlock(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsToken(tree, 0, "BRACEOPEN", "opening brace {");
+    verifyChildIsToken(tree, tree.getChildCount()-1, "BRACECLOSE", "closing brace }");
+    ArrayList<Statement> parts = new ArrayList<Statement>();
+    for (int i = 1; i < tree.getChildCount()-1; i++) {
+      parts.add(readStatement(tree.getChild(i), lst));
+    }
+    return new Block(parts);
+  }
+
   /** ===== Static access functions ===== */
 
   private static LogicParser createParserFromString(String str, ErrorCollector collector) {
@@ -595,6 +670,15 @@ public class InputReader {
     ParseTree tree = parser.requirement();
     collector.throwCollectedExceptions();
     return reader.readFormula(tree.getChild(0), vs);
+  }
+
+  public static Statement readStatement(String str, VariableList vs) throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.statement();
+    collector.throwCollectedExceptions();
+    return reader.readStatement(tree, vs);
   }
 }
 

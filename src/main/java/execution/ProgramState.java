@@ -11,10 +11,10 @@ import logic.parameter.ParamBoolVar;
 import java.util.Set;
 import java.util.ArrayList;
 
-public class ProofState extends Assignment {
+public class ProgramState extends Assignment {
   private Solution _solution;
 
-  public ProofState(Solution sol) {
+  public ProgramState(Solution sol) {
     _solution = sol;
   }
 

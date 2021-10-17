@@ -6,7 +6,7 @@ import logic.sat.Solution;
 import logic.parameter.*;
 import logic.VariableList;
 import language.execution.UndeclaredVariableError;
-import language.execution.ProofState;
+import language.execution.ProgramState;
 import language.execution.VariableConstraint;
 import language.execution.ParamBoolVarConstraint;
 import java.util.ArrayList;
@@ -66,12 +66,12 @@ public class ExtendedPConstraintTest {
     // evaluate constraint with x := false
     TreeSet<Integer> truevars = new TreeSet<Integer>();
     Solution sol = new Solution(truevars);
-    ProofState state = new ProofState(sol);
+    ProgramState state = new ProgramState(sol);
     assertFalse(c.evaluate(state));
     // evaluate constraint with x := true
     truevars.add(x(vars).queryIndex());
     sol = new Solution(truevars);
-    state = new ProofState(sol);
+    state = new ProgramState(sol);
     assertTrue(c.evaluate(state));
   }
 
@@ -111,7 +111,7 @@ public class ExtendedPConstraintTest {
     truevars.add( (new Variable("y[0,2]")).queryIndex() );
     truevars.add( (new Variable("y[1,2]")).queryIndex() );
     Solution sol = new Solution(truevars);
-    ProofState state = new ProofState(sol);
+    ProgramState state = new ProgramState(sol);
 
     // evaluate 0 < 1 ∨ y[0,1]
     state.put("a", 0); state.put("b", 1);
@@ -132,7 +132,7 @@ public class ExtendedPConstraintTest {
     PConstraint constr = new SmallerConstraint(new ParameterExpression("i"),
                                                new ConstantExpression(1));
     Solution sol = new Solution(new TreeSet<Integer>());
-    ProofState state = new ProofState(sol);
+    ProgramState state = new ProgramState(sol);
     state.evaluate(constr);
   }
 }

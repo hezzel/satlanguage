@@ -21,8 +21,8 @@ public class VariableConstraint implements PConstraint {
   }
 
   public boolean evaluate(Assignment ass) {
-    if (ass instanceof ProofState) return ((ProofState)ass).queryValue(_var);
-    throw new Error("Evaluating VariableConstraint with an Assignment that is not a ProofState.");
+    if (ass instanceof ProgramState) return ((ProgramState)ass).queryValue(_var);
+    throw new Error("Evaluating VariableConstraint with an Assignment that is not a ProgramState.");
   }
 
   public PConstraint negate() {

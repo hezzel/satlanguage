@@ -13,7 +13,7 @@ public class EqualConstraint implements PConstraint {
   }
 
   public boolean evaluate(Assignment assignment) {
-    return _left.evaluate(assignment) != _right.evaluate(assignment);
+    return _left.evaluate(assignment) == _right.evaluate(assignment);
   }
 
   public boolean isTop() {

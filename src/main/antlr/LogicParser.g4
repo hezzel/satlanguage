@@ -91,16 +91,12 @@ boolvardec          : IDENTIFIER TYPEOF BOOLTYPE
 paramboolvardec     : paramvar TYPEOF BOOLTYPE FOR parameterlist
                     ;
 
-declaration         : DECLARE boolvardec end
-                    | DECLARE paramboolvardec end
+declaration         : DECLARE boolvardec EOF
+                    | DECLARE paramboolvardec EOF
                     ;
 
 type                : BOOLTYPE
                     | RANGETYPE IN range
-                    ;
-
-end                 : NEWLINE
-                    | EOF
                     ;
 
 /********** Formula **********/
@@ -133,6 +129,34 @@ arrow               : (smallformula | junction) IMPLIES formula
                     | (smallformula | junction) IFF formula
                     ;
 
-requirement         : formula end
+requirement         : formula EOF
+                    ;
+
+/********** The execution language **********/
+
+stringexpr          : STRING
+                    | pexpression
+                    ;
+
+statement           : ifstatement
+                    | forstatement
+                    | printstatement
+                    | block
+                    ;
+
+ifstatement         : IF pconstraint THEN statement
+                    | IF pconstraint THEN statement ELSE statement
+                    ;
+
+forstatement        : FOR IDENTIFIER INITIATE pexpression TO pexpression DO statement
+                    ;
+
+printstatement      : PRINT BRACKETOPEN BRACKETCLOSE
+                    | PRINTLN BRACKETOPEN BRACKETCLOSE
+                    | PRINT BRACKETOPEN stringexpr ( COMMA stringexpr)* BRACKETCLOSE
+                    | PRINTLN BRACKETOPEN stringexpr ( COMMA stringexpr)* BRACKETCLOSE
+                    ;
+
+block               : BRACEOPEN statement* BRACECLOSE
                     ;
 
