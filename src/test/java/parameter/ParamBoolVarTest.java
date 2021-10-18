@@ -15,7 +15,7 @@ public class ParamBoolVarTest {
     Parameter a = new Parameter("a", 0, 3); 
     Parameter b = new Parameter("b", 2, 4, constr); 
     ParameterList params = new ParameterList(a, b);
-    return new ParamBoolVar(name, falseVariable(), params);
+    return new ParamBoolVar(name, params, falseVariable());
   }
 
   @Test
@@ -46,7 +46,7 @@ public class ParamBoolVarTest {
     PExpression ap2 = new SumExpression(new ParameterExpression("a"), new ConstantExpression(2));
     Parameter a = new Parameter("a", 0, 3); 
     Parameter b = new Parameter("b", ap2, new ConstantExpression(4), new TrueConstraint()); 
-    ParamBoolVar test = new ParamBoolVar("qqq", falseVariable(), new ParameterList(a, b));
+    ParamBoolVar test = new ParamBoolVar("qqq", new ParameterList(a, b), falseVariable());
     assertTrue(test.queryVar(ass).equals(falseVariable()));
   }
 
