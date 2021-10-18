@@ -89,6 +89,7 @@ public class OrTest {
 
   @Test
   public void testAddClausesImplies() {
+    Variable.reset();
     ClauseCollector coll = new ClauseCollector();
     Formula sample = sampleOr();
     Atom myatom = new Atom(new Variable("myvar"), true);

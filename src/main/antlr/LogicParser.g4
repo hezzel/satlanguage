@@ -113,6 +113,7 @@ formula             : smallformula
 
 smallformula        : BRACKETOPEN formula BRACKETCLOSE
                     | (NOT | MINUS) smallformula
+                    | ITE BRACKETOPEN formula COMMA formula COMMA formula BRACKETCLOSE
                     | variable
                     ;
 

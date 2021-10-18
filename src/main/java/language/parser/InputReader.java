@@ -449,6 +449,17 @@ public class InputReader {
       verifyChildIsRule(tree, 1, "smallformula", "opening bracket or variable");
       return readSmallFormula(tree.getChild(1), lst).negate();
     }
+    if (kind.equals("token ITE")) {
+      verifyChildIsToken(tree, 1, "BRACKETOPEN", "opening bracket");
+      verifyChildIsToken(tree, 3, "COMMA", "a comma");
+      verifyChildIsToken(tree, 5, "COMMA", "a comma");
+      verifyChildIsToken(tree, 7, "BRACKETCLOSE", "closing bracket");
+      verifyChildIsRule(tree, 2, "formula", "a formula");
+      verifyChildIsRule(tree, 4, "formula", "a formula");
+      verifyChildIsRule(tree, 6, "formula", "a formula");
+      return new IfThenElse(readFormula(tree.getChild(2), lst), readFormula(tree.getChild(4), lst),
+                            readFormula(tree.getChild(6), lst));
+    }
     verifyChildIsRule(tree, 0, "variable", "a variable");
     return readVariableFormula(tree.getChild(0), lst);
   }

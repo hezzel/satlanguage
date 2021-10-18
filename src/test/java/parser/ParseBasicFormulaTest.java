@@ -117,6 +117,22 @@ public class ParseBasicFormulaTest {
   }
 
   @Test
+  public void testReadSimpleIfThenElse() {
+    VariableList vars = new VariableList();
+    vars.registerBooleanVariable("x");
+    vars.registerBooleanVariable("y");
+    vars.registerBooleanVariable("z");
+    try {
+      Formula form = InputReader.readFormulaFromString("ite(x,y,-z /\\ x)", vars);
+      assertTrue(form instanceof IfThenElse);
+      assertTrue(form.toString().equals("ite(x, y, ¬z ∧ x)"));
+    }
+    catch (ParserException exc) {
+      assertTrue(exc.toString(), false);
+    }
+  }
+
+  @Test
   public void testReadDisjunctionWithBrackets() {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");

@@ -16,7 +16,7 @@ public class QuantifiedAtomTest {
     Parameter b = new Parameter("b", (new ParameterExpression("a")).add(1),
                                      new ConstantExpression(10), constr); 
     ParameterList params = new ParameterList(a, b); 
-    return new ParamBoolVar("qat", new Variable("FALSE"), params);
+    return new ParamBoolVar("qat", params, new Variable("FALSE"));
   }
 
   private QuantifiedAtom makeQAtom() {  // qat[i,j+1]

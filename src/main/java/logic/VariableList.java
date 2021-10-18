@@ -51,7 +51,7 @@ public class VariableList {
 
   public ParamBoolVar registerParametrisedBooleanVariable(String name, ParameterList params) {
     checkAcceptableName(name);
-    ParamBoolVar v = new ParamBoolVar(name, _boolvars.get("FALSE"), params);
+    ParamBoolVar v = new ParamBoolVar(name, params, _boolvars.get("FALSE"));
     _paramboolvars.put(name, v);
     _usednames.add(name);
     return v;

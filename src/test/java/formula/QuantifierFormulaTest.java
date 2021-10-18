@@ -14,7 +14,7 @@ public class QuantifierFormulaTest {
     Parameter a = new Parameter("a", 0, 4); 
     Parameter b = new Parameter("b", 0, 5, constr); 
     ParameterList params = new ParameterList(a, b); 
-    return new ParamBoolVar("ft", new Variable("FALSE"), params);
+    return new ParamBoolVar("ft", params, new Variable("FALSE"));
   }
 
   private QuantifiedAtom makeQAtom() {    // ft[i+1,j]
