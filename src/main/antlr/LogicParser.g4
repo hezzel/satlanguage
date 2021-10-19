@@ -88,7 +88,13 @@ pexprlist           :
 boolvardec          : IDENTIFIER TYPEOF BOOLTYPE
                     ;
 
+intvardec           : IDENTIFIER TYPEOF RANGETYPE IN range
+                    ;
+
 paramboolvardec     : paramvar TYPEOF BOOLTYPE FOR parameterlist
+                    ;
+
+paramintvardec      : paramvar TYPEOF RANGETYPE IN range FOR parameterlist
                     ;
 
 type                : BOOLTYPE
@@ -96,11 +102,15 @@ type                : BOOLTYPE
                     ;
 
 declaration         : DECLARE boolvardec
+                    | DECLARE intvardec
                     | DECLARE paramboolvardec
+                    | DECLARE paramintvardec
                     ;
 
 internaldeclaration : boolvardec EOF
+                    | intvardec EOF
                     | paramboolvardec EOF
+                    | paramintvardec EOF
                     ;
 
 /********** Formula **********/

@@ -16,11 +16,5 @@ public interface RangeInteger {
 
   /** a variable representing x ≥ i */
   public Variable queryGeqVariable(int i);
-
-  /**
-   * For the integer to be well-defined, it might be necessary for some clauses on the corresponding
-   * variables to be satisfied. This method adds these clauses to the ClauseCollector.
-   */
-  public void addWelldefinednessClauses(ClauseCollection col);
 }
 

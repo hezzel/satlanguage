@@ -3,15 +3,15 @@ package logic.range;
 import logic.sat.Variable;
 import logic.sat.ClauseCollection;
 
-public class ConstantInteger implements RangeInteger {
+public class RangeConstant implements RangeInteger {
   private int _value;
-  private Variable _truevar;
   private Variable _falsevar;
+  private Variable _truevar;
 
-  public ConstantInteger(int value, Variable truevar, Variable falsevar) {
+  public RangeConstant(int value, Variable falsevar, Variable truevar) {
     _value = value;
-    _truevar = truevar;
     _falsevar = falsevar;
+    _truevar = truevar;
   }
 
   public int queryMinimum() {

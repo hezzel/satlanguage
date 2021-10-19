@@ -38,6 +38,7 @@ public class RequirementsList {
    */
   public SatProblem createSat() {
     SatProblem problem = new SatProblem();
+    _variables.addWelldefinednessClauses(problem);
     for (int i = 0; i < _formulas.size(); i++) _formulas.get(i).addClauses(problem);
     return problem;
   }
