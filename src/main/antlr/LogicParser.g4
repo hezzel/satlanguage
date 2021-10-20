@@ -14,7 +14,8 @@ onlypexpression     : pexpression EOF
                     ;
 
 pexpression         : pexpressiontimes
-                    | pexpressionplus
+                    | pexpression PLUS pexpressiontimes
+                    | pexpression MINUS pexpressiontimes
                     ;
 
 pexpressionunit     : IDENTIFIER
@@ -25,10 +26,6 @@ pexpressionunit     : IDENTIFIER
 
 pexpressiontimes    : pexpressionunit
                     | pexpressionunit TIMES pexpressiontimes
-                    ;
-
-pexpressionplus     : pexpressiontimes PLUS pexpression
-                    | pexpressiontimes MINUS pexpression
                     ;
 
 /********** PConstraint **********/

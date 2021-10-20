@@ -71,5 +71,9 @@ public class Substitution {
   public Set<String> queryKeys() {
     return _values.keySet();
   }
+
+  public String toString() {
+    return _values.toString();
+  }
 }
 

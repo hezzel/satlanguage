@@ -94,10 +94,10 @@ public class ParsePExpressionTest {
     try {
       PExpression e = InputReader.readPExpressionFromString("a+0+d");
       assertTrue(e.queryKind() == PExpression.SUM);
-      assertTrue(e.queryLeft().queryKind() == PExpression.PARAMETER);
-      assertTrue(e.queryRight().queryKind() == PExpression.SUM);
-      assertTrue(e.queryRight().queryLeft().evaluate(null) == 0);
-      assertTrue(e.queryRight().queryRight().toString().equals("d"));
+      assertTrue(e.queryLeft().queryKind() == PExpression.SUM);
+      assertTrue(e.queryRight().queryKind() == PExpression.PARAMETER);
+      assertTrue(e.queryLeft().queryLeft().toString().equals("a"));
+      assertTrue(e.queryLeft().queryRight().evaluate(null) == 0);
     }
     catch (ParserException exc) {
       assertTrue(exc.toString(), false);
@@ -181,46 +181,44 @@ public class ParsePExpressionTest {
   }
 
   @Test
-  public void testComplicatedPExpression() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("a+b*( 12-c) + 13*-7 + (0 + (i+1) * j)");
-      assertTrue(e.queryKind() == PExpression.SUM);
-      
-      // split in its parts
-      PExpression a = e.queryLeft();
-      e = e.queryRight();
-      assertTrue(e.queryKind() == PExpression.SUM);
-      PExpression b12c = e.queryLeft();
-      e = e.queryRight();
-      assertTrue(e.queryKind() == PExpression.SUM);
-      PExpression intexp = e.queryLeft();
-      e = e.queryRight();
-      assertTrue(e.queryKind() == PExpression.SUM);
-      PExpression zero = e.queryLeft();
-      PExpression i1j = e.queryRight();
+  public void testPExpressionWithMinusInMiddle() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a - b + 3 * a");
+    assertTrue(e.toString().equals("a+-1*b+3*a"));
+  }
 
-      // a
-      assertTrue(a.queryKind() == PExpression.PARAMETER);
-      assertTrue(a.toString().equals("a"));
-      // b * (12 - c)
-      assertTrue(b12c.queryKind() == PExpression.PRODUCT);
-      assertTrue(b12c.queryRight().queryKind() == PExpression.SUM);
-      assertTrue(b12c.toString().equals("b*(12+-1*c)"));
-      // 13 * -7
-      assertTrue(intexp.queryKind() == PExpression.PRODUCT);
-      assertTrue(intexp.evaluate(null) == -91);
-      // 0
-      assertTrue(zero.queryKind() == PExpression.CONSTANT);
-      assertTrue(zero.evaluate(null) == 0);
-      // (i + 1) * j
-      assertTrue(i1j.queryKind() == PExpression.PRODUCT);
-      assertTrue(i1j.queryRight().queryKind() == PExpression.PARAMETER);
-      assertTrue(i1j.queryLeft().queryKind() == PExpression.SUM);
-      assertTrue(i1j.queryLeft().toString().equals("i+1"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  @Test
+  public void testComplicatedPExpression() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a+b*( 12-c) + 13*-7 + (0 + (i+1) * j)");
+    assertTrue(e.queryKind() == PExpression.SUM);
+
+    // split in its parts
+    PExpression last = e.queryRight();
+    PExpression i1j = last.queryRight();
+    PExpression zero = last.queryLeft();
+    e = e.queryLeft();
+    PExpression intexp = e.queryRight();
+    e = e.queryLeft();
+    PExpression b12c = e.queryRight();
+    PExpression a = e.queryLeft();
+
+    // a
+    assertTrue(a.queryKind() == PExpression.PARAMETER);
+    assertTrue(a.toString().equals("a"));
+    // b * (12 - c)
+    assertTrue(b12c.queryKind() == PExpression.PRODUCT);
+    assertTrue(b12c.queryRight().queryKind() == PExpression.SUM);
+    assertTrue(b12c.toString().equals("b*(12+-1*c)"));
+    // 13 * -7
+    assertTrue(intexp.queryKind() == PExpression.PRODUCT);
+    assertTrue(intexp.evaluate(null) == -91);
+    // 0
+    assertTrue(zero.queryKind() == PExpression.CONSTANT);
+    assertTrue(zero.evaluate(null) == 0);
+    // (i + 1) * j
+    assertTrue(i1j.queryKind() == PExpression.PRODUCT);
+    assertTrue(i1j.queryRight().queryKind() == PExpression.PARAMETER);
+    assertTrue(i1j.queryLeft().queryKind() == PExpression.SUM);
+    assertTrue(i1j.queryLeft().toString().equals("i+1"));
   }
 }
 

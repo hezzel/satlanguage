@@ -186,14 +186,9 @@ public class InputReader {
   /** ===== Reading PExpressions ===== */
 
   private PExpression readPExpression(ParseTree tree) {
-    if (tree.getChildCount() != 1) {
-      throw buildError(tree, "pexpression has unexpected shape (" + tree.getChildCount() +
-        " children)");
-    }
     String kind = checkChild(tree, 0);
     if (kind.equals("rule pexpressiontimes")) return readPExpressionTimes(tree.getChild(0));
-    if (kind.equals("rule pexpressionplus")) return readPExpressionPlus(tree.getChild(0));
-    throw buildError(tree, "pexpression has unexpected kind (" + kind + ")");
+    return readPExpressionPlus(tree);
   }
 
   private PExpression readPExpressionTimes(ParseTree tree) {
@@ -228,10 +223,10 @@ public class InputReader {
   }
 
   private PExpression readPExpressionPlus(ParseTree tree) {
-    verifyChildIsRule(tree, 0, "pexpressiontimes", "a pexpression without addition");
-    verifyChildIsRule(tree, 2, "pexpression", "a parameter expression");
-    PExpression part1 = readPExpressionTimes(tree.getChild(0));
-    PExpression part2 = readPExpression(tree.getChild(2));
+    verifyChildIsRule(tree, 0, "pexpression", "a parameter expression");
+    verifyChildIsRule(tree, 2, "pexpressiontimes", "a pexpression without addition");
+    PExpression part1 = readPExpression(tree.getChild(0));
+    PExpression part2 = readPExpressionTimes(tree.getChild(2));
     String kind = checkChild(tree, 1);
     if (kind.equals("token PLUS")) return new SumExpression(part1, part2);
     else if (part2.queryConstant()) {

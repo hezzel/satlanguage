@@ -57,7 +57,6 @@ public class ParamRangeVarTest {
     Parameter count = InputReader.readParameterFromString("x ∈ {i..4}");
     ParamRangeVar v = new ParamRangeVar(count, lst, falsehood(), truth());
     v.addWelldefinednessClauses(col);
-    System.out.println(col);
     assertTrue(col.size() == 3);
     assertTrue(col.contains("¬x[1]≥4 ∨ x[1]≥3"));
     assertTrue(col.contains("¬x[1]≥3 ∨ x[1]≥2"));
