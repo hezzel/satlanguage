@@ -126,7 +126,7 @@ public class OrTest {
     ClauseCollector coll = new ClauseCollector();
     Formula sample = sampleOr();
     Atom myatom = new Atom(new Variable("myvar"), true);
-    new Variable("⟦x4 ∧ x2⟧");
+    coll.addToMemory("⟦x4 ∧ x2⟧");
     sample.addClausesDef(myatom, coll);
     assertTrue(coll.size() == 6);
     assertFalse(coll.contains("x4 ∨ ¬⟦x4 ∧ x2⟧"));

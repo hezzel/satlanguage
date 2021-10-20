@@ -98,7 +98,7 @@ public class IffTest {
     Formula formula = new Iff(new And(makef("x", true), makef("y", true)), makef("z", true));
     Atom a = make("a", true);
     ClauseCollector coll = new ClauseCollector();
-    new Variable("⟦x ∧ y⟧");
+    coll.addToMemory("⟦x ∧ y⟧");
     formula.addClausesIfThisImplies(a, coll);
     assertTrue(coll.size() == 2);
     assertTrue(coll.contains("¬z ∨ a ∨ ¬⟦x ∧ y⟧"));  // [x/\y] /\ z -> a
@@ -112,7 +112,7 @@ public class IffTest {
     Formula formula = new Iff(new And(makef("x", true), makef("y", true)), makef("z", true));
     Atom a = make("a", true);
     ClauseCollector coll = new ClauseCollector();
-    new Variable("⟦x ∧ y⟧");
+    coll.addToMemory("⟦x ∧ y⟧");
     formula.addClausesDef(a, coll);
     assertTrue(coll.size() == 4);
     assertTrue(coll.contains("z ∨ ¬a ∨ ¬⟦x ∧ y⟧"));  // a /\ [x/\y] -> z

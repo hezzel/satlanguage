@@ -101,7 +101,7 @@ public class AndTest {
     ClauseCollector coll = new ClauseCollector();
     Formula sample = sampleAnd();
     Atom myatom = new Atom(new Variable("myvar"), true);
-    Variable tmp = new Variable("⟦x4 ∨ x2⟧");
+    coll.addToMemory("⟦x4 ∨ x2⟧");
     sample.addClausesIfThisImplies(myatom, coll);
     assertTrue(coll.size() == 1); 
     assertTrue(coll.contains("¬x1 ∨ ¬x2 ∨ x3 ∨ x5 ∨ myvar ∨ ¬⟦x4 ∨ x2⟧"));

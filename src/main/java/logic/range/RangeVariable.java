@@ -79,6 +79,10 @@ public class RangeVariable implements RangeInteger {
 
   /** Add clauses indicating that x ≥ i → x ≥ i-1 where necessary. */
   public void addWelldefinednessClauses(ClauseCollection col) {
+    // avoid adding the same clauses twice
+    if (col.isInMemory("rangevar " + _name)) return;
+    col.addToMemory("rangevar " + _name);
+    // add the clauses!
     for (int i = _maximum; i > _minimum+1; i--) {
       Variable xi = _variables.get(i), xj = _variables.get(i-1);
       if (xi != xj) col.addClause(new Clause(new Atom(xi, false), new Atom(xj, true)));

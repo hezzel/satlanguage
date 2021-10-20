@@ -102,9 +102,12 @@ public abstract class Formula {
     if (ret != null) return ret;
 
     String varname = "⟦" + formula.toString() + "⟧";
-    boolean exists = Variable.exists(varname);
+    boolean exists = col.isInMemory(varname);
     ret = new Atom(new Variable(varname), true);
-    if (!exists) formula.addClausesDef(ret, col);
+    if (!exists) {
+      formula.addClausesDef(ret, col);
+      col.addToMemory(varname);
+    }
     return ret;
   }
 
