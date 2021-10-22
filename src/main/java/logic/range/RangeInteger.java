@@ -16,5 +16,12 @@ public interface RangeInteger {
 
   /** a variable representing x ≥ i */
   public Variable queryGeqVariable(int i);
+
+  /**
+   * Adds clauses to the collection that guarantee that the variables defining this integer do
+   * indeed define an integer in the intended way.  These clauses are guaranteed to always be
+   * satisfiable (on their own).
+   */
+  public void addWelldefinednessClauses(ClauseCollection col);
 }
 

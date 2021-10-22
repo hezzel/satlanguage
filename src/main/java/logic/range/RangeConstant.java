@@ -30,5 +30,9 @@ public class RangeConstant implements RangeInteger {
   public void addWelldefinednessClauses(ClauseCollection col) {
     // nothing to add
   }
+
+  public String toString() {
+    return "" + _value;
+  }
 }
 

@@ -56,6 +56,11 @@ public class ParameterList {
     checkValidity();
   }
 
+  /** Creates a list with no parameters. */
+  public ParameterList() {
+    _lst = new ArrayList<Parameter>();
+  }
+
   /** Creates a list with a single parameter. */
   public ParameterList(Parameter p) {
     _lst = new ArrayList<Parameter>();
