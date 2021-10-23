@@ -2,8 +2,7 @@ package language.parser;
 
 import logic.sat.Variable;
 import logic.parameter.*;
-import logic.range.RangeVariable;
-import logic.range.ParamRangeVar;
+import logic.range.*;
 import logic.formula.*;
 import logic.VariableList;
 import logic.RequirementsList;
@@ -591,6 +590,9 @@ public class InputReader {
       return new IfThenElse(readFormula(tree.getChild(2), lst), readFormula(tree.getChild(4), lst),
                             readFormula(tree.getChild(6), lst));
     }
+    if (kind.equals("rule intcomparison")) {
+      return readIntegerComparison(tree.getChild(0), lst);
+    }
     verifyChildIsRule(tree, 0, "variable", "a variable");
     return readVariableFormula(tree.getChild(0), lst);
   }
@@ -610,6 +612,41 @@ public class InputReader {
     ArrayList<PExpression> given = new ArrayList<PExpression>();
     ParamBoolVar x = readQuantifiedBooleanVariable(tree, lst, given, false);
     return new QuantifiedAtom(x, true, given);
+  }
+
+  private Formula readIntegerComparison(ParseTree tree, VariableList lst) throws ParserException {
+    verifyChildIsRule(tree, 0, "intexpression", "an integer expression");
+    verifyChildIsRule(tree, 2, "intexpression", "an integer expression");
+    QuantifiedRangeInteger left = readIntegerExpression(tree.getChild(0), lst);
+    QuantifiedRangeInteger right = readIntegerExpression(tree.getChild(2), lst);
+    String kind = checkChild(tree, 1);
+    if (kind.equals("token GEQ")) return new Geq(left, right, true);
+    if (kind.equals("token LEQ")) return new Geq(right, left, true);
+    if (kind.equals("token SMALLER")) return new Geq(left, right, false);
+    if (kind.equals("token GREATER")) return new Geq(right, left, false);
+    throw buildError(tree, "expected comparison token");
+  }
+
+  private QuantifiedRangeInteger readIntegerExpression(ParseTree tree, VariableList lst)
+                                                                          throws ParserException {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("token IDENTIFIER")) {
+      String name = tree.getText();
+      RangeVariable x = lst.queryRangeVariable(name);
+      if (x != null) return new QuantifiedRangeWrapper(x);
+      return new QuantifiedRangeConstant(new ParameterExpression(name),
+                                         lst.queryFalseVariable(), lst.queryTrueVariable());
+    }
+    if (kind.equals("rule paramvar")) {
+      ArrayList<PExpression> args = new ArrayList<PExpression>();
+      ParamRangeVar x = readQuantifiedRangeVariable(tree.getChild(0), lst, args, false);
+      return new QuantifiedRangeVariable(x, args);
+    }
+    if (kind.equals("rule pexpression")) {
+      PExpression e = readPExpression(tree.getChild(0), lst);
+      return new QuantifiedRangeConstant(e, lst.queryFalseVariable(), lst.queryTrueVariable());
+    }
+    throw buildError(tree, "expected an integer expression");
   }
 
   private String getRootOperator(ParseTree tree) {
@@ -885,8 +922,8 @@ public class InputReader {
 
   /**
    * This method reads a formula from string and returns it.
-   * The formula is allowed to have free parameters.  However, all variables that are used are
-   * required to be in vs, otherwise a ParserException will be thrown.
+   * The formula is not allowed to have free parameters.  All variables that are used are required
+   * to be in vs, otherwise a ParserException will be thrown.
    */
   public static Formula readClosedFormulaFromString(String str, VariableList vs)
                                                                           throws ParserException {

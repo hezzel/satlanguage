@@ -23,7 +23,7 @@ public class Main {
       "  println()" +
       "}");
     */
-    program.readFromFile("inputs/queens.log");
+    program.readFromFile("inputs/sudoku.log");
     program.execute();
     //program.debugOutput();
   }

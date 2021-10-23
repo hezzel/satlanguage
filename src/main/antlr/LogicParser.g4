@@ -74,7 +74,7 @@ range               : BRACEOPEN pexpression DOTS pexpression BRACECLOSE (WITH pc
 parameterlist       : parameter (COMMA parameter)*
                     ;
 
-/********** ParamBoolVar **********/
+/********** (parametrised) variables **********/
 
 paramvar            : IDENTIFIER SBRACKETOPEN pexprlist SBRACKETCLOSE
                     ;
@@ -122,6 +122,7 @@ formula             : smallformula
 smallformula        : BRACKETOPEN formula BRACKETCLOSE
                     | (NOT | MINUS) smallformula
                     | ITE BRACKETOPEN formula COMMA formula COMMA formula BRACKETCLOSE
+                    | intcomparison
                     | variable
                     ;
 
@@ -140,6 +141,17 @@ quantification      : FORALL parameter DOT formula
 
 arrow               : (smallformula | junction) IMPLIES formula
                     | (smallformula | junction) IFF formula
+                    ;
+
+intcomparison       : intexpression GEQ intexpression
+                    | intexpression LEQ intexpression
+                    | intexpression GREATER intexpression
+                    | intexpression SMALLER intexpression
+                    ;
+
+intexpression       : IDENTIFIER
+                    | paramvar
+                    | pexpression
                     ;
 
 onlyformula         : formula EOF

@@ -6,6 +6,7 @@ import logic.parameter.ParameterExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.parameter.ParameterList;
+import java.util.ArrayList;
 import java.util.TreeSet;
 
 /**
@@ -19,6 +20,19 @@ public class QuantifiedRangeVariable implements QuantifiedRangeInteger {
   public QuantifiedRangeVariable(ParamRangeVar x, Substitution subst) {
     _pvar = x;
     _substitution = subst;
+  }
+
+  public QuantifiedRangeVariable(ParamRangeVar x, ArrayList<PExpression> args) {
+    ParameterList lst = x.queryParameters();
+    if (lst.size() != args.size()) {
+      throw new Error("QuantifiedRangeVariable created with args of size " + args.size() +
+        " while " + lst.size() + " arguments are expected.");
+    }
+    _pvar = x;
+    _substitution = new Substitution();
+    for (int i = 0; i < lst.size(); i++) {
+      _substitution.put(lst.get(i).queryName(), args.get(i));
+    }
   }
 
   public TreeSet<String> queryParameters() {

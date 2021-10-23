@@ -9,58 +9,38 @@ import language.parser.ParserException;
 
 public class ParseBasicFormulaTest {
   @Test
-  public void testReadPositiveAtom() {
+  public void testReadPositiveAtom() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
-    try {
-      Formula form = InputReader.readFormulaFromString("x", vars);
-      assertTrue(form.queryAtom().toString().equals("x"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("x", vars);
+    assertTrue(form.queryAtom().toString().equals("x"));
   }
 
   @Test
-  public void testReadNegativeAtom() {
+  public void testReadNegativeAtom() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
-    try {
-      Formula form = InputReader.readFormulaFromString("¬x", vars);
-      assertTrue(form.queryAtom().queryNegative());
-      assertTrue(form.queryAtom().queryVariable().equals(new Variable("x")));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("¬x", vars);
+    assertTrue(form.queryAtom().queryNegative());
+    assertTrue(form.queryAtom().queryVariable().equals(new Variable("x")));
   }
 
   @Test
-  public void testDoubleNegation() {
+  public void testDoubleNegation() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
-    try {
-      Formula form = InputReader.readFormulaFromString("¬-x", vars);
-      assertFalse(form.queryAtom().queryNegative());
-      assertTrue(form.queryAtom().queryVariable().toString().equals("x"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("¬-x", vars);
+    assertFalse(form.queryAtom().queryNegative());
+    assertTrue(form.queryAtom().queryVariable().toString().equals("x"));
   }
 
   @Test
-  public void testReadBracketFormula() {
+  public void testReadBracketFormula() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
-    try {
-      Formula form = InputReader.readFormulaFromString("(x)", vars);
-      assertFalse(form.queryAtom().queryNegative());
-      assertTrue(form.queryAtom().queryVariable().toString().equals("x"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("(x)", vars);
+    assertFalse(form.queryAtom().queryNegative());
+    assertTrue(form.queryAtom().queryVariable().toString().equals("x"));
   }
 
   @Test(expected = language.parser.ParserException.class)
@@ -71,34 +51,24 @@ public class ParseBasicFormulaTest {
   }
 
   @Test
-  public void testReadSimpleConjunction() {
+  public void testReadSimpleConjunction() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
     vars.registerBooleanVariable("y");
     vars.registerBooleanVariable("z");
-    try {
-      Formula form = InputReader.readFormulaFromString("x∧- y ∧  z", vars);
-      assertTrue(form instanceof And);
-      assertTrue(form.toString().equals("x ∧ ¬y ∧ z"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("x∧- y ∧  z", vars);
+    assertTrue(form instanceof And);
+    assertTrue(form.toString().equals("x ∧ ¬y ∧ z"));
   }
 
   @Test
-  public void testReadSimpleImplication() {
+  public void testReadSimpleImplication() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
     vars.registerBooleanVariable("y");
-    try {
-      Formula form = InputReader.readFormulaFromString("x  → ¬y", vars);
-      assertTrue(form instanceof Implication);
-      assertTrue(form.toString().equals("x → ¬y"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("x  → ¬y", vars);
+    assertTrue(form instanceof Implication);
+    assertTrue(form.toString().equals("x → ¬y"));
   }
 
   @Test
@@ -117,83 +87,58 @@ public class ParseBasicFormulaTest {
   }
 
   @Test
-  public void testReadSimpleIfThenElse() {
+  public void testReadSimpleIfThenElse() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
     vars.registerBooleanVariable("y");
     vars.registerBooleanVariable("z");
-    try {
-      Formula form = InputReader.readFormulaFromString("ite(x,y,-z /\\ x)", vars);
-      assertTrue(form instanceof IfThenElse);
-      assertTrue(form.toString().equals("ite(x, y, ¬z ∧ x)"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("ite(x,y,-z /\\ x)", vars);
+    assertTrue(form instanceof IfThenElse);
+    assertTrue(form.toString().equals("ite(x, y, ¬z ∧ x)"));
   }
 
   @Test
-  public void testReadDisjunctionWithBrackets() {
+  public void testReadDisjunctionWithBrackets() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
     vars.registerBooleanVariable("y");
     vars.registerBooleanVariable("z");
-    try {
-      Formula form = InputReader.readFormulaFromString("x ∨ (-y ∨  z)", vars);
-      assertTrue(form instanceof Or);
-      assertTrue(form.toString().equals("x ∨ ¬y ∨ z"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("x ∨ (-y ∨  z)", vars);
+    assertTrue(form instanceof Or);
+    assertTrue(form.toString().equals("x ∨ ¬y ∨ z"));
   }
 
   @Test
-  public void testReadNegationAboveBrackets() {
+  public void testReadNegationAboveBrackets() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
     vars.registerBooleanVariable("y");
     vars.registerBooleanVariable("z");
-    try {
-      Formula form = InputReader.readFormulaFromString("x ∨ -(-y ∧  z)", vars);
-      assertTrue(form instanceof Or);
-      assertTrue(form.toString().equals("x ∨ y ∨ ¬z"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("x ∨ -(-y ∧  z)", vars);
+    assertTrue(form instanceof Or);
+    assertTrue(form.toString().equals("x ∨ y ∨ ¬z"));
   }
 
   @Test
-  public void testComplicatedAndOrFormula() {
+  public void testComplicatedAndOrFormula() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
     vars.registerBooleanVariable("y");
     vars.registerBooleanVariable("z");
-    try {
-      Formula form = InputReader.readFormulaFromString("(x ∨ ¬y) ∧ -(-y ∧  (z ∨ x))", vars);
-      assertTrue(form.toString().equals("(x ∨ ¬y) ∧ (y ∨ (¬z ∧ ¬x))"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("(x ∨ ¬y) ∧ -(-y ∧  (z ∨ x))", vars);
+    assertTrue(form.toString().equals("(x ∨ ¬y) ∧ (y ∨ (¬z ∧ ¬x))"));
   }
 
   @Test
-  public void testJunctionImplicationMixture() {
+  public void testJunctionImplicationMixture() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
     vars.registerBooleanVariable("y");
     vars.registerBooleanVariable("z");
-    try {
-      Formula form = InputReader.readFormulaFromString("x ∨ ¬z → y ∧ z", vars);
-      assertTrue(form instanceof Implication);
-      Formula tr = ((Implication)form).translate();
-      assertTrue(tr.toString().equals("(¬x ∧ z) ∨ (y ∧ z)"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("x ∨ ¬z → y ∧ z", vars);
+    assertTrue(form instanceof Implication);
+    Formula tr = ((Implication)form).translate();
+    assertTrue(tr.toString().equals("(¬x ∧ z) ∨ (y ∧ z)"));
   }
 
   @Test(expected = language.parser.ParserException.class)
@@ -206,18 +151,13 @@ public class ParseBasicFormulaTest {
   }
 
   @Test
-  public void testIffMixture() {
+  public void testIffMixture() throws ParserException {
     VariableList vars = new VariableList();
     vars.registerBooleanVariable("x");
     vars.registerBooleanVariable("y");
     vars.registerBooleanVariable("z");
-    try {
-      Formula form = InputReader.readFormulaFromString("x ∨ ¬z ↔ (y -> z)", vars);
-      assertTrue(form instanceof Iff);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    Formula form = InputReader.readFormulaFromString("x ∨ ¬z ↔ (y -> z)", vars);
+    assertTrue(form instanceof Iff);
   }
 }
 
