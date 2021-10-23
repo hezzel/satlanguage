@@ -48,5 +48,10 @@ public class ParseParameterTest {
     }
     assertTrue("Expected an exception on parameter name i^", false);
   }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testParameterWithParamvar() throws ParserException {
+    InputReader.readParameterFromString("i ∈ {1..x[1,2]}");
+  }
 }
 

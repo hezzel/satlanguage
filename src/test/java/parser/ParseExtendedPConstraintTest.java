@@ -62,5 +62,18 @@ public class ParseExtendedPConstraintTest {
       assertTrue(exc.toString(), false);
     }
   }
+
+  @Test
+  public void testReadParamBoolVarWithParamRangeVar() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i,j] :: Bool for i ∈ {1..10}, j ∈ {1..10}", vars);
+    InputReader.declare("y[j] :: Int ∈ {1..10} for j ∈ {1..5}", vars);
+    InputReader.declare("z :: Int ∈ {1..10}", vars);
+    PConstraint c = InputReader.readExtendedPConstraintFromString("i < 2 ∧ x[z, y[j]]", vars);
+    assertTrue(c.toString().equals("i < 2 ∧ x[z,y[j]]"));
+    assertTrue(c.queryParameters().size() == 2);
+    assertTrue(c.queryParameters().contains("j"));
+    assertFalse(c.queryParameters().contains("z"));
+  }
 }
 

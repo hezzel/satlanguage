@@ -61,6 +61,14 @@ public class ParseStatementTest {
     assertTrue(stat.toString().equals("for i := 1 to k+1 do print(i, \"\\n\")"));
   }
 
+  @Test(expected = language.parser.ParserException.class)
+  public void testForWithIllegalCounter() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("i :: Int ∈ {1..10}", vars);
+    Statement stat = InputReader.readStatementFromString("for i := 1 to k + 1 do println(i)", vars);
+    assertTrue(stat.toString().equals("for i := 1 to k+1 do print(i, \"\\n\")"));
+  }
+
   @Test
   public void testBlock() throws ParserException {
     VariableList vars = new VariableList();

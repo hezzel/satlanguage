@@ -7,6 +7,8 @@ import logic.parameter.PConstraint;
 import logic.parameter.Assignment;
 import logic.parameter.ParameterList;
 import logic.parameter.ParamBoolVar;
+import logic.range.RangeVariable;
+import logic.range.ParamRangeVar;
 
 import java.util.Set;
 import java.util.ArrayList;
@@ -22,6 +24,10 @@ public class ProgramState extends Assignment {
     return _solution.check(x);
   }
 
+  public int queryValue(RangeVariable x) {
+    return x.getValue(_solution);
+  }
+
   public boolean queryValue(ParamBoolVar x, ArrayList<PExpression> values) {
     ParameterList params = x.queryParameters();
     Assignment ass = new Assignment();
@@ -29,6 +35,15 @@ public class ProgramState extends Assignment {
       ass.put(params.get(i).queryName(), evaluate(values.get(i)));
     }
     return _solution.check(x.queryVar(ass));
+  }
+
+  public int queryValue(ParamRangeVar x, ArrayList<PExpression> values) {
+    ParameterList params = x.queryParameters();
+    Assignment ass = new Assignment();
+    for (int i = 0; i < params.size(); i++) {
+      ass.put(params.get(i).queryName(), evaluate(values.get(i)));
+    }
+    return x.queryVar(ass).getValue(_solution);
   }
 
   /**

@@ -186,5 +186,13 @@ public class ParseQuantifiedFormulaTest {
       assertTrue(exc.toString(), false);
     }
   }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testParamBoolWithParamRangeVar() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
+    InputReader.declare("y[j] :: Int ∈ {1..10} for j ∈ {1..5}", vars);
+    Formula form = InputReader.readFormulaFromString("∀ j ∈ {1..5}.x[y[j]]", vars);
+  }
 }
 

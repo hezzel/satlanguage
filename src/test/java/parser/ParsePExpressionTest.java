@@ -186,6 +186,11 @@ public class ParsePExpressionTest {
     assertTrue(e.toString().equals("a+-1*b+3*a"));
   }
 
+  @Test(expected = language.parser.ParserException.class)
+  public void testPExpressionWithParamvar() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a - b + x[1] * a");
+  }
+
   @Test
   public void testComplicatedPExpression() throws ParserException {
     PExpression e = InputReader.readPExpressionFromString("a+b*( 12-c) + 13*-7 + (0 + (i+1) * j)");

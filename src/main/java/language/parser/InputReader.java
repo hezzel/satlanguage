@@ -2,6 +2,8 @@ package language.parser;
 
 import logic.sat.Variable;
 import logic.parameter.*;
+import logic.range.RangeVariable;
+import logic.range.ParamRangeVar;
 import logic.formula.*;
 import logic.VariableList;
 import logic.RequirementsList;
@@ -149,19 +151,38 @@ public class InputReader {
   }
 
   /**
-   * Returns the parametrised boolean variable represented by the identifier starting the tree,
-   * and updates the given arguments list to add all the pexpressions in the arguments list to the
-   * variable.  If there is no ParamBoolVar declared with that name, or if the length of the
-   * arguments list does not match the expected number of parameters, a ParserException is thrown
-   * instead.
+   * Reads a paramvar declaration, and (a) adds all the arguments to args, and (b) returns the name
+   * of the responsible variable.  If the given VariableList is null, then the arguments should be
+   * true PExpressions; otherwise, they should be extended PExpressions, so they are allowed to
+   * contain integer variables.  The name of the current variable is not looked up in the list.
    */
-  private ParamBoolVar readQuantifiedBooleanVariable(ParseTree tree, VariableList lst,
-                                           ArrayList<PExpression> args) throws ParserException {
+  private String splitParamVar(ParseTree tree, ArrayList<PExpression> args, VariableList lst)
+                                                                           throws ParserException {
     verifyChildIsToken(tree, 0, "IDENTIFIER", "the name of a ParamBoolVar");
     verifyChildIsToken(tree, 1, "SBRACKETOPEN", "indexing opening bracket [");
     verifyChildIsRule(tree, 2, "pexprlist", "a list of PExpressions");
     verifyChildIsToken(tree, 3, "SBRACKETCLOSE", "indexing closing bracket ]");
     String name = tree.getChild(0).getText();
+    ParseTree pexprs = tree.getChild(2);
+    for (int i = 0; i < pexprs.getChildCount(); i += 2) {
+      args.add(readPExpression(pexprs.getChild(i), lst));
+    }
+    return name;
+  }
+
+  /**
+   * Returns the parametrised boolean variable represented by the identifier starting the tree,
+   * and updates the given arguments list to add all the pexpressions in the arguments list to the
+   * variable.  (The args list is expected to be empty before the call.)
+   * If there is no ParamBoolVar declared with that name, or if the length of the arguments list
+   * does not match the expected number of parameters, a ParserException is thrown instead.  If
+   * ivarsInParams is false, then the parameters of the bool var should be pure PExpressions; that
+   * is, they are not allowed to contain integer variables.  If ivarsInParams is true, then we
+   * should read the arguments as extended PExpressions.
+   */
+  private ParamBoolVar readQuantifiedBooleanVariable(ParseTree tree, VariableList lst,
+                       ArrayList<PExpression> args, boolean ivarsInParams) throws ParserException {
+    String name = splitParamVar(tree, args, ivarsInParams ? lst : null);
     ParamBoolVar x = lst.queryParametrisedBooleanVariable(name);
     if (x == null) {
       if (lst.isDeclared(name)) {
@@ -173,40 +194,80 @@ public class InputReader {
       }
     }
     ParameterList expected = x.queryParameters();
-    ParseTree pexprs = tree.getChild(2);
-    if (pexprs.getChildCount() != 2 * expected.size() - 1) {
+    if (expected.size() != args.size()) {
       throw new ParserException(firstToken(tree), "Illegal use of variable " + name + " declared " +
-        "with " + expected.size() + " parameters, but used with " + ((pexprs.getChildCount()-1)/2)
-        + " parameters.");
+        "with " + expected.size() + " parameters, but used with " + args.size() + " parameters.");
     }
-    for (int i = 0; i < expected.size(); i++) args.add(readPExpression(pexprs.getChild(2*i)));
+    return x;
+  }
+
+  /**
+   * Returns the parametrised range variable represented by the identifier starting the tree, and
+   * updates the given arguments list to add all the pexpressions in the arguments list to the
+   * variable.  (The args list is expected to be empty before the call.)
+   * If there is no ParamRangeVar declared with that name, or if the length of the arguments list
+   * does not match the expected number of parameters, a ParserException is thrown instead.  If
+   * ivarsInParams is false, then the parameters of the range var should be pure PExpressions; that
+   * is, they are not allowed to contain integer variables.  If ivarsInParams is true, then we
+   * should read the arguments as extended PExpressions.
+   */
+  private ParamRangeVar readQuantifiedRangeVariable(ParseTree tree, VariableList lst,
+                        ArrayList<PExpression> args, boolean ivarsInParams) throws ParserException {
+    String name = splitParamVar(tree, args, ivarsInParams ? lst : null);
+    ParamRangeVar x = lst.queryParametrisedRangeVariable(name);
+    if (x == null) {
+      if (lst.isDeclared(name)) {
+        throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
+          "as a parametrised range variable but was not declared as such.");
+      }
+      else {
+        throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
+      }
+    }
+    ParameterList expected = x.queryParameters();
+    if (expected.size() != args.size()) {
+      throw new ParserException(firstToken(tree), "Illegal use of variable " + name + " declared " +
+        "with " + expected.size() + " parameters, but used with " + args.size() + " parameters.");
+    }
     return x;
   }
 
   /** ===== Reading PExpressions ===== */
 
-  private PExpression readPExpression(ParseTree tree) {
+  /**
+   * If the variable list is given, then we are reading an *extended* PExpression, and can use the
+   * list to look up variables occurring in the PExpression.
+   * If not, then this is a normal PExpression (as occurs in the requirements part).
+   */
+  private PExpression readPExpression(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
-    if (kind.equals("rule pexpressiontimes")) return readPExpressionTimes(tree.getChild(0));
-    return readPExpressionPlus(tree);
+    if (kind.equals("rule pexpressiontimes")) return readPExpressionTimes(tree.getChild(0), lst);
+    return readPExpressionPlus(tree, lst);
   }
 
-  private PExpression readPExpressionTimes(ParseTree tree) {
+  private PExpression readPExpressionTimes(ParseTree tree, VariableList lst)
+                                                                        throws ParserException {
     if (tree.getChildCount() == 1) {
       verifyChildIsRule(tree, 0, "pexpressionunit", "a parameter or integer");
-      return readPExpressionUnit(tree.getChild(0));
+      return readPExpressionUnit(tree.getChild(0), lst);
     }
     verifyChildIsRule(tree, 0, "pexpressionunit", "a parameter or integer");
     verifyChildIsToken(tree, 1, "TIMES", "TIMES (*)");
     verifyChildIsRule(tree, 2, "pexpressiontimes", "a pexpression without addition");
-    PExpression part1 = readPExpressionUnit(tree.getChild(0));
-    PExpression part2 = readPExpressionTimes(tree.getChild(2));
+    PExpression part1 = readPExpressionUnit(tree.getChild(0), lst);
+    PExpression part2 = readPExpressionTimes(tree.getChild(2), lst);
     return new ProductExpression(part1, part2);
   }
 
-  private PExpression readPExpressionUnit(ParseTree tree) {
+  private PExpression readPExpressionUnit(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
-    if (kind.equals("token IDENTIFIER")) return new ParameterExpression(tree.getText());
+    if (kind.equals("token IDENTIFIER")) {
+      String name = tree.getText();
+      if (lst == null) return new ParameterExpression(name);
+      RangeVariable x = lst.queryRangeVariable(name);
+      if (x != null) return new VariableExpression(x);
+      else return new ParameterExpression(tree.getText());
+    }
     if (kind.equals("token INTEGER")) {
       try { return new ConstantExpression(Integer.parseInt(tree.getText())); }
       catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
@@ -216,17 +277,20 @@ public class InputReader {
       try { return new ConstantExpression(Integer.parseInt(tree.getText())); }
       catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
     }
-    verifyChildIsToken(tree, 0, "BRACKETOPEN", "an identifier, integer or opening bracket");
-    verifyChildIsRule(tree, 1, "pexpression", "a parameter expression");
-    verifyChildIsToken(tree, 2, "BRACKETCLOSE", "a closing bracket");
-    return readPExpression(tree.getChild(1));
+    if (kind.equals("token BRACKETOPEN")) {
+      verifyChildIsRule(tree, 1, "pexpression", "a parameter expression");
+      verifyChildIsToken(tree, 2, "BRACKETCLOSE", "a closing bracket");
+      return readPExpression(tree.getChild(1), lst);
+    }
+    verifyChildIsRule(tree, 0, "paramvar", "an identifier, integer opening bracket or paramvar");
+    return readPExpressionParamvar(tree.getChild(0), lst);
   }
 
-  private PExpression readPExpressionPlus(ParseTree tree) {
+  private PExpression readPExpressionPlus(ParseTree tree, VariableList lst) throws ParserException {
     verifyChildIsRule(tree, 0, "pexpression", "a parameter expression");
     verifyChildIsRule(tree, 2, "pexpressiontimes", "a pexpression without addition");
-    PExpression part1 = readPExpression(tree.getChild(0));
-    PExpression part2 = readPExpressionTimes(tree.getChild(2));
+    PExpression part1 = readPExpression(tree.getChild(0), lst);
+    PExpression part2 = readPExpressionTimes(tree.getChild(2), lst);
     String kind = checkChild(tree, 1);
     if (kind.equals("token PLUS")) return new SumExpression(part1, part2);
     else if (part2.queryConstant()) {
@@ -236,10 +300,22 @@ public class InputReader {
     else return new SumExpression(part1, new ProductExpression(new ConstantExpression(-1), part2));
   }
 
-  private PExpression readFullPExpression(ParseTree tree) {
+  private PExpression readPExpressionParamvar(ParseTree tree, VariableList lst)
+                                                                           throws ParserException {
+    if (lst == null) {
+      throw new ParserException(firstToken(tree), "Encountered variable " + tree.getText() +
+        " which is not allowed as part of a parameter expression in the requirements part of " +
+        "the program.");
+    }
+    ArrayList<PExpression> exprs = new ArrayList<PExpression>();
+    ParamRangeVar x = readQuantifiedRangeVariable(tree, lst, exprs, true);
+    return new ParamRangeVarExpression(x, exprs);
+  }
+
+  private PExpression readFullPExpression(ParseTree tree, VariableList lst) throws ParserException {
     verifyChildIsRule(tree, 0, "pexpression", "a parameter expression");
     verifyChildIsToken(tree, 1, "EOF", "end of input");
-    return readPExpression(tree.getChild(0));
+    return readPExpression(tree.getChild(0), lst);
   }
 
   /** ===== Reading PConstraints ===== */
@@ -288,7 +364,7 @@ public class InputReader {
       return readPConstraintUnit(tree.getChild(1), lst).negate();
     }
     if (kind.equals("rule pconstraintrelation")) {
-      return readPConstraintRelation(tree.getChild(0));
+      return readPConstraintRelation(tree.getChild(0), lst);
     }
     verifyChildIsRule(tree, 0, "variable", "a boolean variable");
     return readPConstraintVariable(tree.getChild(0), lst);
@@ -307,16 +383,17 @@ public class InputReader {
     else {
       verifyChildIsRule(tree, 0, "paramvar", "a boolean variable or ranged variable");
       ArrayList<PExpression> exprs = new ArrayList<PExpression>();
-      ParamBoolVar x = readQuantifiedBooleanVariable(tree.getChild(0), lst, exprs);
+      ParamBoolVar x = readQuantifiedBooleanVariable(tree.getChild(0), lst, exprs, true);
       return new ParamBoolVarConstraint(x, exprs, true);
     }
   }
 
-  private PConstraint readPConstraintRelation(ParseTree tree) {
+  private PConstraint readPConstraintRelation(ParseTree tree, VariableList lst)
+                                                                           throws ParserException {
     verifyChildIsRule(tree, 0, "pexpression", "a parameter expression");
     verifyChildIsRule(tree, 2, "pexpression", "a parameter expression");
-    PExpression left = readPExpression(tree.getChild(0));
-    PExpression right = readPExpression(tree.getChild(2));
+    PExpression left = readPExpression(tree.getChild(0), lst);
+    PExpression right = readPExpression(tree.getChild(2), lst);
     String kind = checkChild(tree, 1);
     if (kind.equals("token SMALLER")) return new SmallerConstraint(left, right);
     if (kind.equals("token GREATER")) return new SmallerConstraint(right, left);
@@ -346,10 +423,10 @@ public class InputReader {
   private Parameter readParameterRange(String paramname, ParseTree tree) throws ParserException {
     verifyChildIsToken(tree, 0, "BRACEOPEN", "set opening brace {");
     verifyChildIsRule(tree, 1, "pexpression", "a parameter expression");
-    PExpression minimum = readPExpression(tree.getChild(1));
+    PExpression minimum = readPExpression(tree.getChild(1), null);
     verifyChildIsToken(tree, 2, "DOTS", "two dots ..");
     verifyChildIsRule(tree, 3, "pexpression", "a parameter expression");
-    PExpression maximum = readPExpression(tree.getChild(3));
+    PExpression maximum = readPExpression(tree.getChild(3), null);
     verifyChildIsToken(tree, 4, "BRACECLOSE", "set closing brace }");
     PConstraint constraint;
     if (tree.getChildCount() > 5) {
@@ -531,7 +608,7 @@ public class InputReader {
 
   private Formula readQuantifiedBoolVar(ParseTree tree, VariableList lst) throws ParserException {
     ArrayList<PExpression> given = new ArrayList<PExpression>();
-    ParamBoolVar x = readQuantifiedBooleanVariable(tree, lst, given);
+    ParamBoolVar x = readQuantifiedBooleanVariable(tree, lst, given, false);
     return new QuantifiedAtom(x, true, given);
   }
 
@@ -616,23 +693,24 @@ public class InputReader {
     return readBlock(tree.getChild(0), lst);
   }
 
-  private StringExpression readStringExpression(ParseTree tree) {
+  private StringExpression readStringExpression(ParseTree tree, VariableList lst)
+                                                                    throws ParserException {
     String kind = checkChild(tree, 0);
     if (kind.equals("rule pexpression")) {
-      return new StringExpression(readPExpression(tree.getChild(0)));
+      return new StringExpression(readPExpression(tree.getChild(0), lst));
     }
     verifyChildIsToken(tree, 0, "STRING", "a string");
     String s = tree.getText();
     return new StringExpression(s.substring(1,s.length()-1));
   }
 
-  private Statement readPrint(ParseTree tree, VariableList lst) {
+  private Statement readPrint(ParseTree tree, VariableList lst) throws ParserException {
     ArrayList<StringExpression> parts = new ArrayList<StringExpression>();
     verifyChildIsToken(tree, 1, "BRACKETOPEN", "opening bracket (");
     verifyChildIsToken(tree, tree.getChildCount()-1, "BRACKETCLOSE", "closing bracket )");
     for (int i = 2; i < tree.getChildCount()-1; i += 2) {
       verifyChildIsRule(tree, i, "stringexpr", "a string or pexpression");
-      parts.add(readStringExpression(tree.getChild(i)));
+      parts.add(readStringExpression(tree.getChild(i), lst));
     }
     if (checkChild(tree, 0).equals("token PRINTLN")) parts.add(new StringExpression("\\n"));
     return new Print(parts);
@@ -664,8 +742,12 @@ public class InputReader {
     verifyChildIsToken(tree, 6, "DO", "do keyword");
     verifyChildIsRule(tree, 7, "statement", "a statement");
     String name = tree.getChild(1).getText();
-    PExpression minimum = readPExpression(tree.getChild(3));
-    PExpression maximum = readPExpression(tree.getChild(5));
+    if (lst.isDeclared(name)) {
+      throw new ParserException(firstToken(tree), "Please do not use '" + name + "' as a loop " +
+        "counter: it is also declared as a variable.");
+    }
+    PExpression minimum = readPExpression(tree.getChild(3), lst);
+    PExpression maximum = readPExpression(tree.getChild(5), lst);
     Statement statement = readStatement(tree.getChild(7), lst);
     return new For(name, minimum, maximum, statement);
   }
@@ -721,13 +803,25 @@ public class InputReader {
     return parser;
   }
 
+  /** Yields a PExpression without variables in it. */
   public static PExpression readPExpressionFromString(String str) throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
     ParseTree tree = parser.onlypexpression();
     collector.throwCollectedExceptions();
-    return reader.readFullPExpression(tree);
+    return reader.readFullPExpression(tree, null);
+  }
+
+  /** Yields a PExpression which may have variables in it. */
+  public static PExpression readExtendedPExpressionFromString(String str, VariableList vars)
+                                                                          throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    ParseTree tree = parser.onlypexpression();
+    collector.throwCollectedExceptions();
+    return reader.readFullPExpression(tree, vars);
   }
 
   /** Yields a PConstraint without variables in it. */

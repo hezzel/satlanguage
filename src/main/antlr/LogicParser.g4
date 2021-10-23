@@ -22,6 +22,7 @@ pexpressionunit     : IDENTIFIER
                     | INTEGER
                     | MINUS INTEGER
                     | BRACKETOPEN pexpression BRACKETCLOSE
+                    | paramvar
                     ;
 
 pexpressiontimes    : pexpressionunit
