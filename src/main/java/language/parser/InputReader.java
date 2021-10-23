@@ -624,7 +624,9 @@ public class InputReader {
     if (kind.equals("token LEQ")) return new Geq(right, left, true);
     if (kind.equals("token SMALLER")) return new Geq(left, right, false);
     if (kind.equals("token GREATER")) return new Geq(right, left, false);
-    throw buildError(tree, "expected comparison token");
+    if (kind.equals("token EQUALS")) return new Equals(left, right, true);
+    if (kind.equals("token NEQ")) return new Equals(left, right, false);
+    throw buildError(tree, "expected (in)equality token");
   }
 
   private QuantifiedRangeInteger readIntegerExpression(ParseTree tree, VariableList lst)

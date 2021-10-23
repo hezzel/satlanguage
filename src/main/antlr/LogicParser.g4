@@ -147,6 +147,8 @@ intcomparison       : intexpression GEQ intexpression
                     | intexpression LEQ intexpression
                     | intexpression GREATER intexpression
                     | intexpression SMALLER intexpression
+                    | intexpression EQUALS intexpression
+                    | intexpression NEQ intexpression
                     ;
 
 intexpression       : IDENTIFIER

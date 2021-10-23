@@ -42,31 +42,31 @@ public class Equals extends Formula {
 
   /** Returns the clauses that imply a = b. */
   private ArrayList<Clause> generateEqualClauses(RangeInteger a, RangeInteger b) {
-    ArrayList<Clause> ret = new ArrayList<Clause>();
-    /* To see that a = b, we must certainly have:
-     *
-     * (a) amax ≥ bmin and bmax ≥ amin
-     * (b) if amin > bmin then b ≥ amin
-     * (c) if bmin > amin then a ≥ bmin
-     * (d) if amax > bmax then a < bmax + 1
-     * (e) if bmax > amax then b < amax + 1
-     * (f) for all i in {MAX(amin,bmin)+1 .. MIN(amax,bmax)}: a ≥ i <-> b ≥ i.
-     *
-     * After all, a = b implies amax ≥ a ≥ b ≥ bmin and bmax ≥ b ≥ a ≥ amin.  We also have that if
-     * those requirements are satisfied, then a = b, since we then have ∀ i. a ≥ i <-> b ≥ i:
-     * - for i ≤ amin and i ≤ bmin, then both a ≥ i and b ≥ i are satisfied
-     * - if i > amax and i > bmax, then a ≥ i and b ≥ i are both not satisfied
-     * - if bmin < i ≤ amin, then a ≥ i certainly holds, and b ≥ i holds by (b): b ≥ amin ≥ i
-     * - if amin < i ≤ bmin, then b ≥ i certainly holds, and a ≥ i holds by (c): a ≥ bmin ≥ i
-     * - if amax ≥ i > bmax, then b ≥ i does not hold, and a ≥ i fails by (d): a < bmax+1 ≤ i
-     * - if bmax ≥ i > amax, then a ≥ i does not hold, and b ≥ i fails by (e): b < amax+1 ≤ i
-     */
+    // a = b <-> a ≥ b and b ≥ a
+    ArrayList<Clause> ret = Geq.generateGeqClauses(a, b);
+    ret.addAll(Geq.generateGeqClauses(b, a));
     return ret;
   }
 
-  /** Returns the clauses that imply a != b. */
+  /** Returns the clauses that imply a ≠ b. */
   private ArrayList<Clause> generateNeqClauses(RangeInteger a, RangeInteger b) {
     ArrayList<Clause> ret = new ArrayList<Clause>();
+    // a != b <-> for all i: if a = i then b != i
+    //        <-> for all i ∈ {amin..amax}: if a = i then b != i (as otherwise a = i does not hold)
+    for (int i = a.queryMinimum(); i <= a.queryMaximum(); i++) {
+      // if b cannot be equal to a, then we don't need clauses to get b != i
+      if (i < b.queryMinimum() || i > b.queryMaximum()) continue;
+      // a = i → b ≠ i <--> a ≥ i ∧ a < i+1 → b < i ∨ b ≥ i+1
+      //               <--> ¬(a≥i) ∨ a≥i+1 ∨ ¬b≥i ∨ b≥i+1
+      // (and don't add atoms that evaluate to false anyway)
+      ArrayList<Atom> parts = new ArrayList<Atom>();
+      if (i > a.queryMinimum()) parts.add(new Atom(a.queryGeqVariable(i), false));
+      if (i < a.queryMaximum()) parts.add(new Atom(a.queryGeqVariable(i+1), true));
+      if (i > b.queryMinimum()) parts.add(new Atom(b.queryGeqVariable(i), false));
+      if (i < b.queryMaximum()) parts.add(new Atom(b.queryGeqVariable(i+1), true));
+      if (parts.size() == 0) parts.add(new Atom(a.queryGeqVariable(a.queryMaximum()+1), true));
+      ret.add(new Clause(parts));
+    }
     return ret;
   }
 

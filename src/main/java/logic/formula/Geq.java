@@ -44,7 +44,7 @@ public class Geq extends Formula {
   }
 
   /** Returns the clauses that imply a ≥ b. */
-  private ArrayList<Clause> generateGeqClauses(RangeInteger a, RangeInteger b) {
+  public static ArrayList<Clause> generateGeqClauses(RangeInteger a, RangeInteger b) {
   /* Suppose a ∈ {amin..amax} and b ∈ {bmin..bmax}.  To see that a ≥ b, we must clearly have:
    * - amax ≥ bmin
    * - if bmin > amin, then: a ≥ bmin
@@ -84,7 +84,7 @@ public class Geq extends Formula {
   }
 
   /** Returns the clauses that imply a < b, so b ≥ a+1. */
-  private ArrayList<Clause> generateSmallerClauses(RangeInteger a, RangeInteger b) {
+  private static ArrayList<Clause> generateSmallerClauses(RangeInteger a, RangeInteger b) {
     ArrayList<Clause> ret = new ArrayList<Clause>();
     if (b.queryMaximum() < a.queryMinimum() + 1) {  // add b ≥ amax+1, which is exactly FALSE
       ret.add(new Clause(new Atom(b.queryGeqVariable(b.queryMaximum()+1), true)));
