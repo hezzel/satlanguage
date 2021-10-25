@@ -55,6 +55,10 @@ public class ParamRangeVarExpression implements PExpression {
     return null;
   }
 
+  public int queryLeadingInteger() {
+    return 1;
+  }
+
   public String toString() {
     return _var.toString(_arguments);
   }
@@ -70,6 +74,12 @@ public class ParamRangeVarExpression implements PExpression {
   public PExpression add(int value) {
     if (value == 0) return this;
     return new SumExpression(this, new ConstantExpression(value));
+  }
+
+  public PExpression multiply(int value) {
+    if (value == 0) return new ConstantExpression(0);
+    if (value == 1) return this;
+    return new ProductExpression(new ConstantExpression(value), this);
   }
 
   public boolean equals(PExpression other) {

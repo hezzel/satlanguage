@@ -145,5 +145,89 @@ public class PExpressionTest {
     assertTrue((new ParameterExpression("p")).add(0).toString().equals("p"));
     assertTrue(createExpr().substitute(new Substitution()).add(2).toString().equals("a+b+3*a+3"));
   }
+
+  @Test
+  public void testMultiply() {
+    assertTrue(createExpr().multiply(0).equals(new ConstantExpression(0)));
+    assertTrue(createExpr().multiply(1).equals(createExpr()));
+    assertTrue((new ParameterExpression("p")).multiply(1).equals(new ParameterExpression("p")));
+    assertTrue(createExpr().multiply(-2).toString().equals("-2-2*a-2*b-2*a*3"));
+  }
+
+  @Test
+  public void testDoubleNegationMultiply() {
+    PExpression e = (new ParameterExpression("i")).multiply(-1);
+    assertTrue(e.toString().equals("-i"));
+    e = e.multiply(-1);
+    assertTrue(e.equals(new ParameterExpression("i")));
+  }
+
+  private PExpression createDivision() {
+    return new DivExpression(
+             new ProductExpression(new ParameterExpression("a"),
+                                   new ParameterExpression("b")),
+             new ProductExpression(new ParameterExpression("c"),
+                                   new ConstantExpression(2)));
+  }
+
+  @Test
+  public void testDivisionBasics() {
+    PExpression e = createDivision();
+    assertTrue(e.queryKind() == PExpression.DIVISION);
+    assertTrue(e.queryLeft().toString().equals("a*b"));
+    assertTrue(e.queryRight().toString().equals("c*2"));
+    assertTrue(e.toString().equals("(a*b)/(c*2)"));
+    assertFalse(e.queryConstant());
+    assertTrue(e.queryParameters().size() == 3);
+    assertTrue(e.equals(createDivision()));
+    assertTrue(e.add(5).toString().equals("(a*b)/(c*2)+5"));
+    assertTrue(e.multiply(5).toString().equals("5*((a*b)/(c*2))"));
+  }
+
+  @Test
+  public void testDivisionSubstituteAssign() {
+    PExpression e = createDivision();
+    Assignment ass = new Assignment("a", 2, "b", 3, "c", 2);
+    assertTrue(e.evaluate(ass) == 1);
+    ass = new Assignment("a", 2, "b", 3, "c", 1);
+    assertTrue(e.evaluate(ass) == 3);
+    Substitution subst = new Substitution("b", new ConstantExpression(2));
+    assertTrue(e.substitute(subst).toString().equals("(2*a)/(2*c)"));
+  }
+
+  @Test
+  public void testNestedDivision() {
+    PExpression e = new DivExpression(createDivision(), new ConstantExpression(2));
+    assertTrue(e.toString().equals("((a*b)/(c*2))/2"));
+  }
+
+  @Test
+  public void testModuloToString() {
+    PExpression m = new ModExpression(
+                      new ProductExpression(new ParameterExpression("a"),
+                                            new ParameterExpression("b")),
+                      new ConstantExpression(2));
+    assertTrue(m.toString().equals("(a*b)%2"));
+    assertTrue(m.multiply(2).toString().equals("2*((a*b)%2)"));
+  }
+
+  @Test
+  public void testMinimumBasics() {
+    PExpression m = new MinExpression(new ParameterExpression("a"), new ParameterExpression("b"));
+    assertTrue(m.queryKind() == PExpression.MINIMUM);
+    assertTrue(m.evaluate(new Assignment("a", 3, "b", 4)) == 3);
+    assertTrue(m.toString().equals("min(a,b)"));
+  }
+
+  @Test
+  public void testMaximumBasics() {
+    PExpression m = new MaxExpression(
+                      new ProductExpression(new ParameterExpression("a"),
+                                            new ConstantExpression(2)),
+                      new ParameterExpression("b"));
+    assertTrue(m.queryKind() == PExpression.MAXIMUM);
+    assertTrue(m.evaluate(new Assignment("a", 1, "b", 4)) == 4);
+    assertTrue(m.toString().equals("max(a*2,b)"));
+  }
 }
 

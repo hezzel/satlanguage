@@ -41,6 +41,12 @@ public class ParameterExpression implements PExpression {
     return new SumExpression(this, new ConstantExpression(number));
   }
 
+  public PExpression multiply(int number) {
+    if (number == 0) return new ConstantExpression(0);
+    if (number == 1) return this;
+    return new ProductExpression(new ConstantExpression(number), this);
+  }
+
   public TreeSet<String> queryParameters() {
     TreeSet<String> ret = new TreeSet<String>();
     ret.add(_param);

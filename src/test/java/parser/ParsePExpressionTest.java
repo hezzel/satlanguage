@@ -9,176 +9,163 @@ import language.parser.ParserException;
 
 public class ParsePExpressionTest {
   @Test
-  public void testReadPositiveInteger() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("39");
-      assertTrue(e.queryConstant());
-      assertTrue(e.evaluate(null) == 39);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testReadPositiveInteger() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("39");
+    assertTrue(e.queryConstant());
+    assertTrue(e.evaluate(null) == 39);
   }
 
   @Test
-  public void testReadNegativeInteger() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("-71341");
-      assertTrue(e.queryConstant());
-      assertTrue(e.evaluate(null) == -71341);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testReadNegativeInteger() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("-71341");
+    assertTrue(e.queryConstant());
+    assertTrue(e.evaluate(null) == -71341);
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testReadBadInteger() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("01");
   }
 
   @Test
-  public void testReadBadInteger() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("01");
-    }
-    catch (ParserException exc) {
-      return;
-    }
-    assertTrue("Expected exception when reading 01", false);
+  public void testReadShortParam() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a");
+    assertTrue(e.queryKind() == PExpression.PARAMETER);
+    assertTrue(e.toString().equals("a"));
   }
 
   @Test
-  public void testReadShortParam() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("a");
-      assertTrue(e.queryKind() == PExpression.PARAMETER);
-      assertTrue(e.toString().equals("a"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testReadLongParam() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a9TT_0b");
+    assertTrue(e.queryKind() == PExpression.PARAMETER);
+    assertTrue(e.toString().equals("a9TT_0b"));
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testReadParamWithIllegalCharacters() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a7@b");
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testReadParamWithIllegalStart() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("Hello");
   }
 
   @Test
-  public void testReadLongParam() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("a9TT_0b");
-      assertTrue(e.queryKind() == PExpression.PARAMETER);
-      assertTrue(e.toString().equals("a9TT_0b"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testSimpleSum() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a+0+d");
+    assertTrue(e.queryKind() == PExpression.SUM);
+    assertTrue(e.queryLeft().queryKind() == PExpression.SUM);
+    assertTrue(e.queryRight().queryKind() == PExpression.PARAMETER);
+    assertTrue(e.queryLeft().queryLeft().toString().equals("a"));
+    assertTrue(e.queryLeft().queryRight().evaluate(null) == 0);
   }
 
   @Test
-  public void testReadParamWithIllegalCharacters() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("a7@b");
-    }
-    catch (ParserException exc) {
-      return;
-    }
-    assertTrue("Expected exception when reading a7@b", false);
+  public void testSimpleProduct() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("abc*3*bc");
+    assertTrue(e.queryKind() == PExpression.PRODUCT);
+    assertTrue(e.queryRight().queryKind() == PExpression.PARAMETER);
+    assertTrue(e.queryRight().toString().equals("bc"));
+    assertTrue(e.queryLeft().queryKind() == PExpression.PRODUCT);
+    assertTrue(e.queryLeft().queryRight().evaluate(null) == 3);
+    assertTrue(e.queryLeft().queryLeft().toString().equals("abc"));
   }
 
   @Test
-  public void testReadParamWithIllegalStart() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("Hello");
-    }
-    catch (ParserException exc) {
-      return;
-    }
-    assertTrue("Expected exception when reading Hello as parameter", false);
+  public void testProductSumLeft() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a3*bI+12");
+    assertTrue(e.queryKind() == PExpression.SUM);
+    assertTrue(e.queryLeft().queryKind() == PExpression.PRODUCT);
+    assertTrue(e.queryLeft().queryLeft().queryKind() == PExpression.PARAMETER);
+    assertTrue(e.queryLeft().queryLeft().toString().equals("a3"));
+    assertTrue(e.queryLeft().queryRight().toString().equals("bI"));
+    assertTrue(e.queryRight().evaluate(null) == 12);
   }
 
   @Test
-  public void testSimpleSum() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("a+0+d");
-      assertTrue(e.queryKind() == PExpression.SUM);
-      assertTrue(e.queryLeft().queryKind() == PExpression.SUM);
-      assertTrue(e.queryRight().queryKind() == PExpression.PARAMETER);
-      assertTrue(e.queryLeft().queryLeft().toString().equals("a"));
-      assertTrue(e.queryLeft().queryRight().evaluate(null) == 0);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testProductSumRight() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a3+bI*12");
+    assertTrue(e.queryKind() == PExpression.SUM);
+    assertTrue(e.queryLeft().queryKind() == PExpression.PARAMETER);
+    assertTrue(e.queryLeft().toString().equals("a3"));
+    assertTrue(e.queryRight().queryKind() == PExpression.PRODUCT);
+    assertTrue(e.queryRight().queryLeft().toString().equals("bI"));
+    assertTrue(e.queryRight().queryRight().evaluate(null) == 12);
   }
 
   @Test
-  public void testSimpleProduct() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("abc*3*bc");
-      assertTrue(e.queryKind() == PExpression.PRODUCT);
-      assertTrue(e.queryRight().queryKind() == PExpression.PARAMETER);
-      assertTrue(e.queryRight().toString().equals("bc"));
-      assertTrue(e.queryLeft().queryKind() == PExpression.PRODUCT);
-      assertTrue(e.queryLeft().queryRight().evaluate(null) == 3);
-      assertTrue(e.queryLeft().queryLeft().toString().equals("abc"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testSimpleDivision() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a/d");
+    assertTrue(e.queryKind() == PExpression.DIVISION);
+    assertTrue(e.queryLeft().toString().equals("a"));
+    assertTrue(e.queryRight().toString().equals("d"));
   }
 
   @Test
-  public void testProductSumLeft() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("a3*bI+12");
-      assertTrue(e.queryKind() == PExpression.SUM);
-      assertTrue(e.queryLeft().queryKind() == PExpression.PRODUCT);
-      assertTrue(e.queryLeft().queryLeft().queryKind() == PExpression.PARAMETER);
-      assertTrue(e.queryLeft().queryLeft().toString().equals("a3"));
-      assertTrue(e.queryLeft().queryRight().toString().equals("bI"));
-      assertTrue(e.queryRight().evaluate(null) == 12);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testSimpleModulo() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a%2");
+    assertTrue(e.queryKind() == PExpression.MODULO);
+    assertTrue(e.queryLeft().toString().equals("a"));
+    assertTrue(e.queryRight().evaluate(null) == 2);
   }
 
   @Test
-  public void testProductSumRight() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("a3+bI*12");
-      assertTrue(e.queryKind() == PExpression.SUM);
-      assertTrue(e.queryLeft().queryKind() == PExpression.PARAMETER);
-      assertTrue(e.queryLeft().toString().equals("a3"));
-      assertTrue(e.queryRight().queryKind() == PExpression.PRODUCT);
-      assertTrue(e.queryRight().queryLeft().toString().equals("bI"));
-      assertTrue(e.queryRight().queryRight().evaluate(null) == 12);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testDivModMulCombination() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a*b*c/d*e%f");
+    assertTrue(e.queryKind() == PExpression.MODULO);
+    assertTrue(e.queryRight().toString().equals("f"));
+    e = e.queryLeft();
+    assertTrue(e.queryKind() == PExpression.PRODUCT);
+    assertTrue(e.queryRight().toString().equals("e"));
+    e = e.queryLeft();
+    assertTrue(e.queryKind() == PExpression.DIVISION);
+    assertTrue(e.queryRight().toString().equals("d"));
+    e = e.queryLeft();
+    assertTrue(e.queryKind() == PExpression.PRODUCT);
+    assertTrue(e.queryRight().toString().equals("c"));
+    e = e.queryLeft();
+    assertTrue(e.toString().equals("a*b"));
   }
 
   @Test
-  public void testDoubleMinus() throws ParserException {
+  public void testSimpleMin() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("min(a*b,c)");
+    assertTrue(e.queryKind() == PExpression.MINIMUM);
+    assertTrue(e.queryLeft().toString().equals("a*b"));
+    assertTrue(e.queryRight().equals(new ParameterExpression("c")));
+  }
+
+  @Test
+  public void testSimpleMax() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("max(-2, a + b - c)");
+    assertTrue(e.queryKind() == PExpression.MAXIMUM);
+    assertTrue(e.queryLeft().evaluate(null) == -2);
+    assertTrue(e.queryRight().toString().equals("a+b-c"));
+  }
+
+  @Test
+  public void testMultipleMinus() throws ParserException {
     PExpression e = InputReader.readPExpressionFromString("a - b - c + d - e");
-    assertTrue(e.toString().equals("a+-1*b+-1*c+d+-1*e"));
+    assertTrue(e.toString().equals("a-b-c+d-e"));
     assertTrue(e.queryKind() == PExpression.SUM);
     PExpression l = e.queryLeft();
     PExpression r = e.queryRight();
-    assertTrue(l.toString().equals("a+-1*b+-1*c"));
-    assertTrue(r.toString().equals("d+-1*e"));
+    assertTrue(l.toString().equals("a-b-c"));
+    assertTrue(r.toString().equals("d-e"));
     assertTrue(l.queryKind() == PExpression.SUM);
-    assertTrue(l.queryRight().toString().equals("-1*c"));
+    assertTrue(l.queryRight().toString().equals("-c"));
     assertTrue(l.queryLeft().queryLeft().toString().equals("a"));
   }
 
   @Test
-  public void testPExpressionWithBrackets() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("(1+b)+-3");
-      assertTrue(e.queryKind() == PExpression.SUM);
-      assertTrue(e.queryLeft().queryKind() == PExpression.SUM);
-      assertTrue(e.queryLeft().queryLeft().evaluate(null) == 1);
-      assertTrue(e.queryLeft().queryRight().toString().equals("b"));
-      assertTrue(e.queryRight().evaluate(null) == -3);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testPExpressionWithBrackets() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("(1+b)-3");
+    assertTrue(e.queryKind() == PExpression.SUM);
+    assertTrue(e.queryLeft().queryKind() == PExpression.SUM);
+    assertTrue(e.queryLeft().queryLeft().evaluate(null) == 1);
+    assertTrue(e.queryLeft().queryRight().toString().equals("b"));
+    assertTrue(e.queryRight().evaluate(null) == -3);
   }
 
   @Test
@@ -197,7 +184,7 @@ public class ParsePExpressionTest {
   @Test
   public void testPExpressionWithMinusInMiddle() throws ParserException {
     PExpression e = InputReader.readPExpressionFromString("a - b + 3 * a");
-    assertTrue(e.toString().equals("a+-1*b+3*a"));
+    assertTrue(e.toString().equals("a-b+3*a"));
   }
 
   @Test(expected = language.parser.ParserException.class)
@@ -226,7 +213,7 @@ public class ParsePExpressionTest {
     // b * (12 - c)
     assertTrue(b12c.queryKind() == PExpression.PRODUCT);
     assertTrue(b12c.queryRight().queryKind() == PExpression.SUM);
-    assertTrue(b12c.toString().equals("b*(12+-1*c)"));
+    assertTrue(b12c.toString().equals("b*(12-c)"));
     // 13 * -7
     assertTrue(intexp.queryKind() == PExpression.PRODUCT);
     assertTrue(intexp.evaluate(null) == -91);

@@ -41,6 +41,10 @@ public class ConstantExpression implements PExpression {
     return new ConstantExpression(_value + num);
   }
 
+  public PExpression multiply(int num) {
+    return new ConstantExpression(_value * num);
+  }
+
   public TreeSet<String> queryParameters() {
     return new TreeSet<String>();
   }

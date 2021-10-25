@@ -3,6 +3,7 @@ package language.execution;
 import logic.sat.Variable;
 import logic.parameter.ConstantExpression;
 import logic.parameter.SumExpression;
+import logic.parameter.ProductExpression;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
@@ -42,6 +43,10 @@ public class VariableExpression implements PExpression {
     return null;
   }
 
+  public int queryLeadingInteger() {
+    return 1;
+  }
+
   public String toString() {
     return _var.toString();
   }
@@ -53,6 +58,12 @@ public class VariableExpression implements PExpression {
   public PExpression add(int value) {
     if (value == 0) return this;
     return new SumExpression(this, new ConstantExpression(value));
+  }
+
+  public PExpression multiply(int value) {
+    if (value == 0) return new ConstantExpression(0);
+    if (value == 1) return this;
+    return new ProductExpression(new ConstantExpression(value), this);
   }
 
   public boolean equals(PExpression other) {

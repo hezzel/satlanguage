@@ -25,7 +25,7 @@ public class QRangeConstantTest {
 
   @Test
   public void testToString() {
-    assertTrue(createConstant().toString().equals("a+b+-1*3*a"));
+    assertTrue(createConstant().toString().equals("a+b-3*a"));
   }
 
   @Test
@@ -49,7 +49,7 @@ public class QRangeConstantTest {
   public void testSubstitute() {
     Substitution subst = new Substitution("a", expr("a * c"));
     QuantifiedRangeInteger c = createConstant().substitute(subst);
-    assertTrue(c.toString().equals("a*c+b+-3*a*c"));
+    assertTrue(c.toString().equals("a*c+b-3*a*c"));
     assertTrue(c.queryParameters().size() == 3);
   }
 

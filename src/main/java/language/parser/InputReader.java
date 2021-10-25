@@ -278,11 +278,14 @@ public class InputReader {
       return readPExpressionUnit(tree.getChild(0), lst);
     }
     verifyChildIsRule(tree, 0, "pexpressiontimes", "a pexpression without plus or minus");
-    verifyChildIsToken(tree, 1, "TIMES", "TIMES (*)");
     verifyChildIsRule(tree, 2, "pexpressionunit", "a unit pexpression");
     PExpression part1 = readPExpressionTimes(tree.getChild(0), lst);
     PExpression part2 = readPExpressionUnit(tree.getChild(2), lst);
-    return new ProductExpression(part1, part2);
+    String kind = checkChild(tree, 1);
+    if (kind.equals("token TIMES")) return new ProductExpression(part1, part2);
+    if (kind.equals("token DIV")) return new DivExpression(part1, part2);
+    if (kind.equals("token MOD")) return new ModExpression(part1, part2);
+    throw buildError(tree, "unexpected " + kind + " in pexpressiontimes");
   }
 
   private PExpression readPExpressionUnit(ParseTree tree, VariableList lst) throws ParserException {
@@ -302,6 +305,17 @@ public class InputReader {
       verifyChildIsToken(tree, 1, "INTEGER", "a positive integer");
       try { return new ConstantExpression(Integer.parseInt(tree.getText())); }
       catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
+    }
+    if (kind.equals("token MIN") || kind.equals("token MAX")) {
+      verifyChildIsToken(tree, 1, "BRACKETOPEN", "opening bracket (");
+      verifyChildIsRule(tree, 2, "pexpression", "pexpression");
+      verifyChildIsToken(tree, 3, "COMMA", "a comma");
+      verifyChildIsRule(tree, 4, "pexpression", "pexpression");
+      verifyChildIsToken(tree, 5, "BRACKETCLOSE", "closing bracket )");
+      PExpression a = readPExpression(tree.getChild(2), lst);
+      PExpression b = readPExpression(tree.getChild(4), lst);
+      if (kind.equals("token MIN")) return new MinExpression(a, b);
+      else return new MaxExpression(a, b);
     }
     if (kind.equals("token BRACKETOPEN")) {
       verifyChildIsRule(tree, 1, "pexpression", "a parameter expression");

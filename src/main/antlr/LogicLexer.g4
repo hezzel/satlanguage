@@ -33,6 +33,10 @@ DO                  : 'do' ;
 
 ITE                 : 'ite' ;
 
+MIN                 : 'min' ;
+
+MAX                 : 'max' ;
+
 IDENTIFIER          : [a-z] [a-z0-9A-Z_]* ;
 
 INTEGER             : '0' | [1-9] [0-9]* ;
@@ -59,11 +63,15 @@ TYPEOF              : '::' ;
 
 PLUS                : '+' ;
 
-RANGEPLUS           : '⊕' ;
+RANGEPLUS           : '⊕' | '(+)' | '\\oplus' ;
 
 MINUS               : '-' ;
 
 TIMES               : '*' ;
+
+DIV                 : '/' ;
+
+MOD                 : '%' ;
 
 GREATER             : '>' ;
 
@@ -107,7 +115,7 @@ STRING              : ('"' (~[\n\r"])* '"') | ('\'' (~[\n\r'])* '\'') ;
 
 SEPARATOR           : '==' '='+ ;
 
-COMMENT             : '%' (~[\n\r])* -> skip ;
+COMMENT             : '#' (~[\n\r])* -> skip ;
 
 WHITESPACE          : [ \t\r\n]+ -> skip ;
 

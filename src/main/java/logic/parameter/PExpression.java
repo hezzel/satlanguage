@@ -9,8 +9,12 @@ import java.util.Set;
 public interface PExpression {
   static final int CONSTANT  = 0;
   static final int PARAMETER = 1;
-  static final int PRODUCT   = 2;
-  static final int SUM       = 3;
+  static final int MINIMUM   = 2;
+  static final int MAXIMUM   = 3;
+  static final int PRODUCT   = 4;
+  static final int DIVISION  = 5;
+  static final int MODULO    = 6;
+  static final int SUM       = 7;
 
   /**
    * Given a complete assignment of all parameters in the current expression, this returns the
@@ -37,13 +41,18 @@ public interface PExpression {
    */
   public PExpression add(int constant);
 
+  /**
+   * Returns a PExpression representing the multiplication of the present expression with constant.
+   */
+  public PExpression multiply(int constant);
+
   /** This returns the names of the parameters that are used in the current expression. */
   public Set<String> queryParameters();
 
   /** This does a semantic equality check. */
   public boolean equals(PExpression expr);
 
-  /** This returns the kind of expression (CONSTANT, PARAMETER, SUM, PRODUCT). */
+  /** This returns the kind of expression (CONSTANT, PARAMETER, SUM, PRODUCT, ...). */
   public int queryKind();
 
   /** If this is a sum or product, this returns the left child. */

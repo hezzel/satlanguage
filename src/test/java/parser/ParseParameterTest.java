@@ -30,7 +30,7 @@ public class ParseParameterTest {
       assertTrue(p.queryName().equals("c1"));
       assertTrue(p.queryMinimum().toString().equals("j+1"));
       assertTrue(p.queryMaximum().queryKind() == PExpression.SUM);
-      assertTrue(p.queryMaximum().toString().equals("9+-1*h*3"));
+      assertTrue(p.queryMaximum().toString().equals("9-h*3"));
       assertTrue(p.queryRestriction().toString().equals("h < c1 ∧ h ≠ 12"));
     }
     catch (ParserException exc) {

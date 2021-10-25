@@ -3,25 +3,17 @@ package logic.parameter;
 import java.util.Set;
 
 /** An Expression corresponding to the product of two PExpressions. */
-public class ProductExpression implements PExpression {
-  private PExpression _left;
-  private PExpression _right;
-
+public class ProductExpression extends BinaryExpression {
   public ProductExpression(PExpression l, PExpression r) {
-    _left = l;
-    _right = r;
+    super(l, r);
+  }
+
+  protected ProductExpression create(PExpression l, PExpression r) {
+    return new ProductExpression(l, r);
   }
 
   public int queryKind() {
     return PExpression.PRODUCT;
-  }
-
-  public PExpression queryLeft() {
-    return _left;
-  }
-
-  public PExpression queryRight() {
-    return _right;
   }
 
   public int evaluate(Assignment assignment) {
@@ -65,19 +57,14 @@ public class ProductExpression implements PExpression {
     return new ProductExpression(l, r);
   }
 
-  public boolean queryConstant() {
-    return false;
-  }
-
-  public PExpression add(int num) {
-    if (num == 0) return this;
-    return new SumExpression(this, new ConstantExpression(num));
-  }
-
-  public Set<String> queryParameters() {
-    Set<String> ret = _left.queryParameters();
-    ret.addAll(_right.queryParameters());
-    return ret;
+  public PExpression multiply(int num) {
+    PExpression l = _left.multiply(num);
+    if (l.queryConstant()) {
+      int k = l.evaluate(null);
+      if (k == 0) return l;
+      if (k == 1) return _right;
+    }
+    return new ProductExpression(l, _right);
   }
 
   public String toString() {
@@ -85,12 +72,7 @@ public class ProductExpression implements PExpression {
     String right = _right.toString();
     if (_left.queryKind() > queryKind()) left = "(" + left + ")";
     if (_right.queryKind() > queryKind()) right = "(" + right + ")";
-    return left + "*" + right;
-  }
-
-  public boolean equals(PExpression expr) {
-    if (!(expr instanceof ProductExpression)) return false;
-    ProductExpression other = (ProductExpression)expr;
-    return other._left.equals(_left) && other._right.equals(_right);
+    if (_left.queryConstant() && _left.evaluate(null) == -1) return "-" + right;
+    else return left + "*" + right;
   }
 }

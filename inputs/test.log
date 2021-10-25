@@ -1,28 +1,49 @@
-declare poolof[player] :: Int ∈ {1..3} for player ∈ {1..16}
-declare poolsize[pool,player] :: Int ∈ {0..6} for pool ∈ {1..3}, player ∈ {0..16}
-declare poolscore[pool,player] :: Int ∈ {0..52} for pool ∈ {1..3}, player ∈ {0..16}
+declare field[x,y] :: Int ∈ {1..9} for x ∈ {1..9}, y ∈ {1..9}
 
-∀ pool ∈ {1..3}. poolsize[pool,0] = 0
-∀ pool ∈ {1..3}. ∀ player ∈ {1..16}. poolof[player] = pool → poolsize[pool,player] = poolsize[pool,player-1] + 1
-∀ pool ∈ {1..3}. ∀ player ∈ {1..16}. poolof[player] != pool → poolsize[pool,player] = poolsize[pool,player-1]
-∀ pool ∈ {1..3}. poolsize[pool,16] ≥ 5
+# every number occurs once in each row
+∀ i ∈ {1..9}.∀ y ∈ {1..9}.∃ x ∈ {1..9}. field[x,y] = i
+# every number occurs once in each column
+∀ i ∈ {1..9}.∀ x ∈ {1..9}.∃ y ∈ {1..9}. field[x,y] = i
+# every number occurs once in each block
+∀ i ∈ {1..9}.∀ x1 ∈ {0..2}.∀ y1 ∈ {0..2}.∃x2 ∈ {1..3}.∃y2 ∈ {1..3}.field[3*x1+x2,3*y1+y2] = i
 
-∀ pool ∈ {1..3}. poolscore[pool,0] = 0
-∀ pool ∈ {1..3}. ∀ player ∈ {1..16}. poolof[player] = pool → poolscore[pool,player] = poolscore[pool,player-1] + player
-∀ pool ∈ {1..3}. ∀ player ∈ {1..16}. poolof[player] != pool → poolscore[pool,player] = poolscore[pool,player-1]
-∀ pool ∈ {1..3}. ∀ i ∈ {5..6}. poolsize[pool, 16] = i → (poolscore[pool,16] > 8 * i ∧ poolscore[pool,16] < 9 * i)
+field[1,2] = 1
+field[1,5] = 8
+field[1,8] = 2
+field[1,9] = 6
+field[2,4] = 9
+field[3,4] = 6
+field[3,7] = 7
+field[3,9] = 1
+field[4,2] = 3
+field[4,6] = 8
+field[4,8] = 7
+field[4,9] = 9
+field[5,1] = 5
+field[5,3] = 1
+field[5,7] = 8
+field[5,9] = 2
+field[6,1] = 7
+field[6,2] = 8
+field[6,4] = 1
+field[6,8] = 5
+field[7,1] = 3
+field[7,3] = 6
+field[7,6] = 9
+field[8,6] = 7
+field[9,1] = 2
+field[9,2] = 7
+field[9,5] = 3
+field[9,8] = 1
 
-poolof[1] = 1
-poolof[2] = 2
-poolof[3] = 3
+===============
 
-================
-
-for pool := 1 to 3 do {
-  println("Pool ", pool, " (", poolscore[pool,16], ")")
-  for player := 1 to 16 do {
-    if poolof[player] = pool then println("  Player ", player)
+for y := 1 to 9 do {
+  for x := 1 to 9 do {
+    print(field[x,y], ' ')
+    if x = 3 ∨ x = 6 then print('| ')
   }
   println()
+  if y = 3 ∨ y = 6 then println('------+-------+------')
 }
 

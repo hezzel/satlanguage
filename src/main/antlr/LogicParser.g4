@@ -23,11 +23,15 @@ pexpressionminus    : pexpressiontimes
 
 pexpressiontimes    : pexpressionunit
                     | pexpressiontimes TIMES pexpressionunit
+                    | pexpressiontimes DIV pexpressionunit
+                    | pexpressiontimes MOD pexpressionunit
                     ;
 
 pexpressionunit     : IDENTIFIER
                     | INTEGER
                     | MINUS INTEGER
+                    | MIN BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
+                    | MAX BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
                     | BRACKETOPEN pexpression BRACKETCLOSE
                     | paramvar
                     ;
