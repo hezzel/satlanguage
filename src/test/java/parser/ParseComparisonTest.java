@@ -56,6 +56,39 @@ public class ParseComparisonTest {
     assertTrue(form.toString().equals("y ≠ x[4]"));
   }
 
+  @Test
+  public void testEqualityWithExtraPluses() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
+    Formula form = InputReader.readFormulaFromString("3+x[1]+7 = x[4]", vars);
+    assertTrue(form.toString().equals("x[1] ⊕ 3+7 = x[4]"));
+  }
+
+  @Test
+  public void testGeqWithMultipleVariables() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("y    :: Int ∈ {1..10}", vars);
+    Formula form = InputReader.readFormulaFromString("0 >= x[1] ⊕ y + x[4]", vars);
+    assertTrue(form.toString().equals("0 ≥ x[1] ⊕ y ⊕ x[4]"));
+  }
+
+  @Test
+  public void testSmallerWithMinus() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("y    :: Int ∈ {1..10}", vars);
+    Formula form = InputReader.readFormulaFromString("y < i - 1", vars);
+    assertTrue(form.toString().equals("y < i-1"));
+  }
+
+  @Test
+  public void testNeqWithUnnecessaryRangePlus() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("y    :: Int ∈ {1..10}", vars);
+    Formula form = InputReader.readFormulaFromString("y != i ⊕ 1", vars);
+    assertTrue(form.toString().equals("y ≠ i+1"));
+  }
+
   @Test(expected = language.parser.ParserException.class)
   public void testComparisonWithUndeclaredVariable() throws ParserException {
     VariableList vars = new VariableList();

@@ -13,9 +13,16 @@ options {
 onlypexpression     : pexpression EOF
                     ;
 
-pexpression         : pexpressiontimes
-                    | pexpression PLUS pexpressiontimes
-                    | pexpression MINUS pexpressiontimes
+pexpression         : pexpressionminus
+                    | pexpression PLUS pexpressionminus
+                    ;
+
+pexpressionminus    : pexpressiontimes
+                    | pexpressionminus MINUS pexpressiontimes
+                    ;
+
+pexpressiontimes    : pexpressionunit
+                    | pexpressiontimes TIMES pexpressionunit
                     ;
 
 pexpressionunit     : IDENTIFIER
@@ -23,10 +30,6 @@ pexpressionunit     : IDENTIFIER
                     | MINUS INTEGER
                     | BRACKETOPEN pexpression BRACKETCLOSE
                     | paramvar
-                    ;
-
-pexpressiontimes    : pexpressionunit
-                    | pexpressionunit TIMES pexpressiontimes
                     ;
 
 /********** PConstraint **********/
@@ -151,9 +154,17 @@ intcomparison       : intexpression GEQ intexpression
                     | intexpression NEQ intexpression
                     ;
 
-intexpression       : IDENTIFIER
+intexpression       : intexpressionmain (rangeplus intexpressionmain)*
+                    ;
+
+rangeplus           : RANGEPLUS
+                    | PLUS
+                    ;
+
+intexpressionmain   : IDENTIFIER
+                    | BRACKETOPEN intexpression BRACKETCLOSE
                     | paramvar
-                    | pexpression
+                    | pexpressionminus
                     ;
 
 onlyformula         : formula EOF

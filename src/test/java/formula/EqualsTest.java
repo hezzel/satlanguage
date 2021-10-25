@@ -183,7 +183,6 @@ public class EqualsTest {
   public void testAddClausesNeqLowerRangeVersusHigherRange() {
     ClauseCollector col = setupRangeRangeTest(1, 5, false, 3, 8);
     assertTrue(col.size() == 3);
-    System.out.println(col);
     assertTrue(col.contains("x≥4 ∨ ¬x≥3 ∨ y≥4"));
     assertTrue(col.contains("x≥5 ∨ ¬x≥4 ∨ y≥5 ∨ ¬y≥4"));
     assertTrue(col.contains("¬x≥5 ∨ y≥6 ∨ ¬y≥5"));

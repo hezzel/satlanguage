@@ -239,9 +239,36 @@ public class InputReader {
    * If not, then this is a normal PExpression (as occurs in the requirements part).
    */
   private PExpression readPExpression(ParseTree tree, VariableList lst) throws ParserException {
-    String kind = checkChild(tree, 0);
-    if (kind.equals("rule pexpressiontimes")) return readPExpressionTimes(tree.getChild(0), lst);
-    return readPExpressionPlus(tree, lst);
+    if (tree.getChildCount() == 1) {
+      verifyChildIsRule(tree, 0, "pexpressionminus", "a pexpression without plus");
+      return readPExpressionMinus(tree.getChild(0), lst);
+    }
+    else {
+      verifyChildIsRule(tree, 0, "pexpression", "a pexpression");
+      verifyChildIsToken(tree, 1, "PLUS", "addition operator +");
+      verifyChildIsRule(tree, 2, "pexpressionminus", "a pexpression without plus");
+      PExpression left = readPExpression(tree.getChild(0), lst);
+      PExpression right = readPExpressionMinus(tree.getChild(2), lst);
+      return new SumExpression(left, right);
+    }
+  }
+
+  private PExpression readPExpressionMinus(ParseTree tree, VariableList lst)
+                                                                           throws ParserException {
+    if (tree.getChildCount() == 1) {
+      verifyChildIsRule(tree, 0, "pexpressiontimes", "a pexpression without plus or minus");
+      return readPExpressionTimes(tree.getChild(0), lst);
+    }
+    else {
+      verifyChildIsRule(tree, 0, "pexpressionminus", "a pexpression without plus");
+      verifyChildIsToken(tree, 1, "MINUS", "subtraction operator -");
+      verifyChildIsRule(tree, 2, "pexpressiontimes", "a pexpression without plus or minus");
+      PExpression left = readPExpressionMinus(tree.getChild(0), lst);
+      PExpression right = readPExpressionTimes(tree.getChild(2), lst);
+      if (right.queryConstant()) right = new ConstantExpression(0 - right.evaluate(null));
+      else right = new ProductExpression(new ConstantExpression(-1), right);
+      return new SumExpression(left, right);
+    }
   }
 
   private PExpression readPExpressionTimes(ParseTree tree, VariableList lst)
@@ -250,11 +277,11 @@ public class InputReader {
       verifyChildIsRule(tree, 0, "pexpressionunit", "a parameter or integer");
       return readPExpressionUnit(tree.getChild(0), lst);
     }
-    verifyChildIsRule(tree, 0, "pexpressionunit", "a parameter or integer");
+    verifyChildIsRule(tree, 0, "pexpressiontimes", "a pexpression without plus or minus");
     verifyChildIsToken(tree, 1, "TIMES", "TIMES (*)");
-    verifyChildIsRule(tree, 2, "pexpressiontimes", "a pexpression without addition");
-    PExpression part1 = readPExpressionUnit(tree.getChild(0), lst);
-    PExpression part2 = readPExpressionTimes(tree.getChild(2), lst);
+    verifyChildIsRule(tree, 2, "pexpressionunit", "a unit pexpression");
+    PExpression part1 = readPExpressionTimes(tree.getChild(0), lst);
+    PExpression part2 = readPExpressionUnit(tree.getChild(2), lst);
     return new ProductExpression(part1, part2);
   }
 
@@ -283,20 +310,6 @@ public class InputReader {
     }
     verifyChildIsRule(tree, 0, "paramvar", "an identifier, integer opening bracket or paramvar");
     return readPExpressionParamvar(tree.getChild(0), lst);
-  }
-
-  private PExpression readPExpressionPlus(ParseTree tree, VariableList lst) throws ParserException {
-    verifyChildIsRule(tree, 0, "pexpression", "a parameter expression");
-    verifyChildIsRule(tree, 2, "pexpressiontimes", "a pexpression without addition");
-    PExpression part1 = readPExpression(tree.getChild(0), lst);
-    PExpression part2 = readPExpressionTimes(tree.getChild(2), lst);
-    String kind = checkChild(tree, 1);
-    if (kind.equals("token PLUS")) return new SumExpression(part1, part2);
-    else if (part2.queryConstant()) {
-      part2 = new ConstantExpression(0 - part2.evaluate(null));
-      return new SumExpression(part1, part2);
-    }
-    else return new SumExpression(part1, new ProductExpression(new ConstantExpression(-1), part2));
   }
 
   private PExpression readPExpressionParamvar(ParseTree tree, VariableList lst)
@@ -631,24 +644,73 @@ public class InputReader {
 
   private QuantifiedRangeInteger readIntegerExpression(ParseTree tree, VariableList lst)
                                                                           throws ParserException {
-    String kind = checkChild(tree, 0);
-    if (kind.equals("token IDENTIFIER")) {
-      String name = tree.getText();
-      RangeVariable x = lst.queryRangeVariable(name);
-      if (x != null) return new QuantifiedRangeWrapper(x);
-      return new QuantifiedRangeConstant(new ParameterExpression(name),
-                                         lst.queryFalseVariable(), lst.queryTrueVariable());
+    QuantifiedRangeInteger expr = getConstantPart(tree, lst);
+    QuantifiedRangeInteger ret = getNonConstantPart(tree, lst);
+    if (expr == null && ret == null) {
+      throw buildError(tree, "Encountered QuantifiedRangeInteger with no substantive parts: " +
+                       tree.getText());
     }
-    if (kind.equals("rule paramvar")) {
-      ArrayList<PExpression> args = new ArrayList<PExpression>();
-      ParamRangeVar x = readQuantifiedRangeVariable(tree.getChild(0), lst, args, false);
-      return new QuantifiedRangeVariable(x, args);
+    if (expr == null) return ret;
+    if (ret == null) return expr;
+    return new QuantifiedRangePlus(ret, expr);
+  }
+
+  /**
+   * This filters all the pexpressions out of an integer expression, and combines them into a
+   * single constant.  If there are no pexpressions in there, null is returned.
+   */
+  private QuantifiedRangeConstant getConstantPart(ParseTree tree, VariableList lst)
+                                                                          throws ParserException {
+    PExpression expr = null;
+    for (int i = 0; i < tree.getChildCount(); i += 2) {
+      ParseTree child = tree.getChild(i);
+      String kind = checkChild(child, 0);
+      if (kind.equals("rule pexpressionminus")) {
+        PExpression e = readPExpressionMinus(child.getChild(0), lst);
+        if (expr == null) expr = e; else expr = new SumExpression(expr, e);
+      }
+      else if (kind.equals("token IDENTIFIER") &&
+               lst.queryRangeVariable(child.getText()) == null) {
+        PExpression e = new ParameterExpression(child.getText());
+        if (expr == null) expr = e; else expr = new SumExpression(expr, e);
+      }
     }
-    if (kind.equals("rule pexpression")) {
-      PExpression e = readPExpression(tree.getChild(0), lst);
-      return new QuantifiedRangeConstant(e, lst.queryFalseVariable(), lst.queryTrueVariable());
+    if (expr == null) return null;
+    return new QuantifiedRangeConstant(expr, lst.queryFalseVariable(), lst.queryTrueVariable());
+  }
+
+  /**
+   * This filters all the non-pexpressions out of an integer expression, and combines them into a
+   * single QuantifiedRangeInteger.  If there are only pexpressions in there, null is returned.
+   */
+  private QuantifiedRangeInteger getNonConstantPart(ParseTree tree, VariableList lst)
+                                                                          throws ParserException {
+    QuantifiedRangeInteger ret = null;
+    for (int i = 0; i < tree.getChildCount(); i += 2) {
+      ParseTree child = tree.getChild(i);
+      String kind = checkChild(child, 0);
+      QuantifiedRangeInteger found = null;
+      if (kind.equals("token IDENTIFIER")) {
+        String name = child.getText();
+        RangeVariable x = lst.queryRangeVariable(name);
+        if (x != null) found = new QuantifiedRangeWrapper(x);
+      }
+      if (kind.equals("token BRACKETOPEN")) {
+        verifyChildIsRule(child, 1, "intexpression", "an integer expression");
+        verifyChildIsToken(child, 2, "BRACKETCLOSE", "closing bracket )");
+        found = readIntegerExpression(child.getChild(1), lst);
+      }
+      if (kind.equals("rule paramvar")) {
+        ArrayList<PExpression> args = new ArrayList<PExpression>();
+        ParamRangeVar x = readQuantifiedRangeVariable(child.getChild(0), lst, args, false);
+        found = new QuantifiedRangeVariable(x, args);
+      }
+      if (found != null) {
+        if (ret == null) ret = found;
+        else ret = new QuantifiedRangePlus(ret, found);
+      }
     }
-    throw buildError(tree, "expected an integer expression");
+    return ret;
   }
 
   private String getRootOperator(ParseTree tree) {

@@ -59,6 +59,8 @@ TYPEOF              : '::' ;
 
 PLUS                : '+' ;
 
+RANGEPLUS           : '⊕' ;
+
 MINUS               : '-' ;
 
 TIMES               : '*' ;

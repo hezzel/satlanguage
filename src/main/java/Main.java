@@ -23,7 +23,7 @@ public class Main {
       "  println()" +
       "}");
     */
-    program.readFromFile("inputs/sudoku.log");
+    program.readFromFile("inputs/test.log");
     program.execute();
     //program.debugOutput();
   }
