@@ -1,7 +1,5 @@
 package logic.parameter;
 
-import java.util.Set;
-
 /** An Expression corresponding to the minimum of two PExpressions. */
 public class MinExpression extends BinaryExpression {
   public MinExpression(PExpression l, PExpression r) {

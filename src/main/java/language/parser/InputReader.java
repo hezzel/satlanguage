@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.TreeMap;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -24,10 +25,12 @@ import org.antlr.v4.runtime.Vocabulary;
 public class InputReader {
   private Vocabulary _vocabulary;
   private String[] _ruleNames;
+  private DefinitionData _defs;
 
   public InputReader() {
     _vocabulary = LogicParser.VOCABULARY;
     _ruleNames = LogicParser.ruleNames;
+    _defs = new DefinitionData();
   }
 
   /** ===== Generic functions: usable for all Antlr readers ===== */
@@ -288,6 +291,27 @@ public class InputReader {
     throw buildError(tree, "unexpected " + kind + " in pexpressiontimes");
   }
 
+  private int readInteger(ParseTree tree) throws ParserException {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("token INTEGER")) {
+      try { return Integer.parseInt(tree.getText()); }
+      catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
+    }
+    if (kind.equals("token MINUS")) {
+      verifyChildIsToken(tree, 1, "INTEGER", "a positive integer");
+      try { return Integer.parseInt(tree.getText()); }
+      catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
+    }
+    if (kind.equals("token DEFINITION")) {
+      String name = tree.getChild(0).getText();
+      if (!_defs._macros.containsKey(name)) {
+        throw new ParserException(firstToken(tree), "Encountered undefined macro " + name);
+      }
+      return _defs._macros.get(name);
+    }
+    throw buildError(tree, "unexpected " + kind + " in integer");
+  }
+
   private PExpression readPExpressionUnit(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
     if (kind.equals("token IDENTIFIER")) {
@@ -296,15 +320,6 @@ public class InputReader {
       RangeVariable x = lst.queryRangeVariable(name);
       if (x != null) return new VariableExpression(x);
       else return new ParameterExpression(tree.getText());
-    }
-    if (kind.equals("token INTEGER")) {
-      try { return new ConstantExpression(Integer.parseInt(tree.getText())); }
-      catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
-    }
-    if (kind.equals("token MINUS")) {
-      verifyChildIsToken(tree, 1, "INTEGER", "a positive integer");
-      try { return new ConstantExpression(Integer.parseInt(tree.getText())); }
-      catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
     }
     if (kind.equals("token MIN") || kind.equals("token MAX")) {
       verifyChildIsToken(tree, 1, "BRACKETOPEN", "opening bracket (");
@@ -321,6 +336,20 @@ public class InputReader {
       verifyChildIsRule(tree, 1, "pexpression", "a parameter expression");
       verifyChildIsToken(tree, 2, "BRACKETCLOSE", "a closing bracket");
       return readPExpression(tree.getChild(1), lst);
+    }
+    if (kind.equals("token DEFINITION")) {
+      verifyChildIsToken(tree, 1, "BRACKETOPEN", "opening bracket (");
+      verifyChildIsRule(tree, 2, "pexpression", "a pexpression");
+      verifyChildIsToken(tree, 3, "BRACKETCLOSE", "closing bracket )");
+      String name = tree.getChild(0).getText();
+      if (!_defs._mappings.containsKey(name)) {
+        throw new ParserException(firstToken(tree), "Definition " + name + " is not a mapping.");
+      }
+      PExpression expr = readPExpression(tree.getChild(2), lst);
+      return new FunctionExpression(_defs._mappings.get(name), expr);
+    }
+    if (kind.equals("rule integer")) {
+      return new ConstantExpression(readInteger(tree.getChild(0)));
     }
     verifyChildIsRule(tree, 0, "paramvar", "an identifier, integer opening bracket or paramvar");
     return readPExpressionParamvar(tree.getChild(0), lst);
@@ -879,6 +908,86 @@ public class InputReader {
 
   /** ===== A full program ===== */
 
+  private int readMacro(ParseTree tree) throws ParserException {
+    verifyChildIsToken(tree, 0, "DEFINE", "keyword define");
+    verifyChildIsToken(tree, 1, "DEFINITION", "a macro");
+    verifyChildIsRule(tree, 2, "pexpression", "a pexpression");
+    String name = tree.getChild(1).getText();
+    if (_defs._macros.containsKey(name)) {
+      throw new ParserException(firstToken(tree), "Redefining previously declared macro " + name);
+    }
+    if (_defs._mappings.containsKey(name)) {
+      throw new ParserException(firstToken(tree), "Redefining macro previously defined as " +
+        "mapping: " + name);
+    }
+    PExpression expr = readPExpression(tree.getChild(2), null);
+    if (expr.queryParameters().size() != 0) {
+      throw new ParserException(firstToken(tree), "Macro definition " + name +
+        " contains parameters: " + expr.queryParameters());
+    }
+    int k = expr.evaluate(null);
+    _defs._macros.put(name, k);
+    return k;
+  }
+
+  private Function readMapping(ParseTree tree) throws ParserException {
+    verifyChildIsToken(tree, 0, "MAPPING", "keyword mapping");
+    verifyChildIsToken(tree, 1, "DEFINITION", "keyword definition");
+    verifyChildIsToken(tree, 2, "BRACEOPEN", "opening brace {");
+    verifyChildIsRule(tree, 3, "mappingentrylist", "entries to the mapping");
+    verifyChildIsToken(tree, 4, "BRACECLOSE", "closing brace }");
+
+    String name = tree.getChild(1).getText();
+    if (_defs._macros.containsKey(name)) {
+      throw new ParserException(firstToken(tree), "Cannot define mapping named " + name +
+        " when there is already a macro definition by that name.");
+    }
+    if (_defs._mappings.containsKey(name)) {
+      throw new ParserException(firstToken(tree), "Cannot redefine mapping named " + name + ".");
+    }
+
+    Function ret = readMappingEntries(name, new TreeMap<Integer,Integer>(), tree.getChild(3));
+    _defs._mappings.put(name, ret);
+    return ret;
+  }
+
+  private Function readMappingEntries(String name, TreeMap<Integer,Integer> entries,
+                                      ParseTree tree) throws ParserException {
+    verifyChildIsToken(tree, 1, "COLON", "a colon");
+    String kind = checkChild(tree, 0);
+    if (kind.equals("token IDENTIFIER")) {
+      verifyChildIsRule(tree, 2, "pexpression", "a pexpression");
+      String p = tree.getChild(0).getText();
+      PExpression e = readPExpression(tree.getChild(2), null);
+      Set<String> params = e.queryParameters();
+      params.remove(p);
+      if (params.size() > 0) {
+        throw new ParserException(firstToken(tree), "Illegal mapping entry " + tree.getText() +
+          ": contains parameters other than " + name + "(" + params + ")");
+      }
+      return new Function(name, entries, p, e);
+    }
+
+    verifyChildIsRule(tree, 0, "integer", "an integer");
+    verifyChildIsRule(tree, 2, "pexpression", "a pexpression");
+    int k = readInteger(tree.getChild(0));
+    PExpression e = readPExpression(tree.getChild(2), null);
+    if (e.queryParameters().size() > 0) {
+      throw new ParserException(firstToken(tree), "Illegal mapping entry " + tree.getText() +
+        ": value should be (or evaluate to) an integer, and canoot contain parameters.");
+    }
+    int n = e.evaluate(null);
+    entries.put(k,n);
+
+    if (tree.getChildCount() > 3) {
+      verifyChildIsToken(tree, 3, "SEMICOLON", "a semicolon");
+      verifyChildIsRule(tree, 4, "mappingentrylist", "the rest of the mapping");
+      return readMappingEntries(name, entries, tree.getChild(4));
+    }
+
+    return new Function(name, entries);
+  }
+
   private Statement readProgram(ParseTree tree, RequirementsList lst) throws ParserException {
     int i = 0;
     VariableList vars = lst.queryVariables();
@@ -890,11 +999,11 @@ public class InputReader {
         throw new ParserException(firstToken(tree.getChild(i)),
           "Encountered a statement before the program separator ===.");
       }
-      if (kind.equals("rule declaration")) readDeclaration(tree.getChild(i), vars);
+      if (kind.equals("rule macro")) readMacro(tree.getChild(i));
+      else if (kind.equals("rule mapping")) readMapping(tree.getChild(i));
+      else if (kind.equals("rule declaration")) readDeclaration(tree.getChild(i), vars);
       else if (kind.equals("rule formula")) lst.add(readClosedFormula(tree.getChild(i), vars));
-      else {
-        throw buildError(tree.getChild(i), "unexpected: " + kind);
-      }
+      else throw buildError(tree.getChild(i), "unexpected: " + kind);
     }
     // read statements
     ArrayList<Statement> stats = new ArrayList<Statement>();
@@ -919,13 +1028,20 @@ public class InputReader {
   }
 
   /** Yields a PExpression without variables in it. */
-  public static PExpression readPExpressionFromString(String str) throws ParserException {
+  public static PExpression readPExpressionFromString(String str, DefinitionData defs)
+                                                                          throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
     ParseTree tree = parser.onlypexpression();
     collector.throwCollectedExceptions();
     return reader.readFullPExpression(tree, null);
+  }
+
+  /** Only really used for more convenient unit testing. */
+  public static PExpression readPExpressionFromString(String str) throws ParserException{
+    return readPExpressionFromString(str, null);
   }
 
   /** Yields a PExpression which may have variables in it. */
@@ -975,13 +1091,20 @@ public class InputReader {
    * Note that this will also give errors if the declaration is well-formed, but the variable was
    * previously declared.
    */
-  public static void declare(String str, VariableList lst) throws ParserException {
+  public static void declare(String str, VariableList lst, DefinitionData defs)
+                                                                           throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
     ParseTree tree = parser.internaldeclaration();
     collector.throwCollectedExceptions();
     reader.readInternalDeclaration(tree, lst);
+  }
+
+  /** Only really used for more convenient unit testing. */
+  public static void declare(String str, VariableList lst) throws ParserException {
+    declare(str, lst, null);
   }
 
   /**
@@ -1003,29 +1126,57 @@ public class InputReader {
    * The formula is not allowed to have free parameters.  All variables that are used are required
    * to be in vs, otherwise a ParserException will be thrown.
    */
-  public static Formula readClosedFormulaFromString(String str, VariableList vs)
+  public static Formula readClosedFormulaFromString(String str, VariableList vs, DefinitionData ds)
                                                                           throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
+    reader._defs = ds;
     ParseTree tree = parser.onlyformula();
     collector.throwCollectedExceptions();
     return reader.readClosedFormula(tree.getChild(0), vs);
   }
 
-  public static Statement readStatementFromString(String str, VariableList vs)
+  public static Statement readStatementFromString(String str, VariableList vs, DefinitionData defs)
                                                                           throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
     ParseTree tree = parser.statement();
     collector.throwCollectedExceptions();
     return reader.readStatement(tree, vs);
   }
 
+  /** Only really used for more convenient unit testing. */
+  public static Statement readStatementFromString(String s, VariableList v) throws ParserException {
+    return readStatementFromString(s, v, null);
+  }
+
+  public static int readMacroFromString(String str, DefinitionData defs) throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
+    ParseTree tree = parser.macro();
+    collector.throwCollectedExceptions();
+    return reader.readMacro(tree);
+  }
+
+  public static Function readMappingFromString(String str, DefinitionData defs)
+                                                                        throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
+    ParseTree tree = parser.mapping();
+    collector.throwCollectedExceptions();
+    return reader.readMapping(tree);
+  }
+
   /** Sets up a (lexer and) parser from the given file, using the given error collector. */
-  public static Statement readProgramFromFile(String filename, RequirementsList lst)
-                                                             throws IOException, ParserException {
+  public static Statement readProgramFromFile(String filename, RequirementsList lst, DefinitionData
+                                              defs) throws IOException, ParserException {
     ErrorCollector collector = new ErrorCollector();
     ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
     LogicLexer lexer = new LogicLexer(input);
@@ -1035,6 +1186,7 @@ public class InputReader {
     parser.removeErrorListeners();
     parser.addErrorListener(collector);
     InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
     ParseTree tree = parser.program();
     collector.throwCollectedExceptions();
     return reader.readProgram(tree, lst);

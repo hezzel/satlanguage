@@ -4,8 +4,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.parameter.PExpression;
-import language.parser.InputReader;
+import language.parser.DefinitionData;
 import language.parser.ParserException;
+import language.parser.InputReader;
 
 public class ParsePExpressionTest {
   @Test
@@ -169,16 +170,30 @@ public class ParsePExpressionTest {
   }
 
   @Test
-  public void testPExpressionMinus() {
-    try {
-      PExpression e = InputReader.readPExpressionFromString("a-3");
-      assertTrue(e.queryKind() == PExpression.SUM);
-      assertTrue(e.queryLeft().toString().equals("a"));
-      assertTrue(e.queryRight().evaluate(null) == -3);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+  public void testPExpressionMinus() throws ParserException {
+    PExpression e = InputReader.readPExpressionFromString("a-3");
+    assertTrue(e.queryKind() == PExpression.SUM);
+    assertTrue(e.queryLeft().toString().equals("a"));
+    assertTrue(e.queryRight().evaluate(null) == -3);
+  }
+
+  @Test
+  public void testPExpressionWithDefinition() throws ParserException {
+    DefinitionData dd = new DefinitionData();
+    InputReader.readMacroFromString("define A 3", dd);
+    InputReader.readMacroFromString("define B 7", dd);
+    PExpression e = InputReader.readPExpressionFromString("a * A + B / 7", dd);
+    assertTrue(e.toString().equals("a*3+7/7"));
+  }
+
+  @Test
+  public void testMappingExpression() throws ParserException {
+    DefinitionData dd = new DefinitionData();
+    InputReader.readMappingFromString("mapping A { 1 : 2 ; 3 : 4 ; i : i }", dd);
+    PExpression e = InputReader.readPExpressionFromString("A(3)", dd);
+    assertTrue(e.queryKind() == PExpression.FUNCTION);
+    assertTrue(e.queryRight().equals(new ConstantExpression(3)));
+    assertTrue(e.toString().equals("A(3)"));
   }
 
   @Test

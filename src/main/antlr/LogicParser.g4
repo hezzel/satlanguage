@@ -8,6 +8,13 @@ options {
   tokenVocab = LogicLexer;
 }
 
+/********** general **********/
+
+integer             : INTEGER
+                    | MINUS INTEGER
+                    | DEFINITION
+                    ;
+
 /********** PExpression **********/
 
 onlypexpression     : pexpression EOF
@@ -28,11 +35,11 @@ pexpressiontimes    : pexpressionunit
                     ;
 
 pexpressionunit     : IDENTIFIER
-                    | INTEGER
-                    | MINUS INTEGER
                     | MIN BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
                     | MAX BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
                     | BRACKETOPEN pexpression BRACKETCLOSE
+                    | DEFINITION BRACKETOPEN pexpression BRACKETCLOSE
+                    | integer
                     | paramvar
                     ;
 
@@ -204,6 +211,17 @@ block               : BRACEOPEN statement* BRACECLOSE
 
 /********** Full programs **********/
 
-program             : declaration* formula* SEPARATOR statement* EOF
+macro               : DEFINE DEFINITION pexpression
+                    ;
+
+mapping             : MAPPING DEFINITION BRACEOPEN mappingentrylist BRACECLOSE
+                    ;
+
+mappingentrylist    : IDENTIFIER COLON pexpression
+                    | integer COLON pexpression
+                    | integer COLON pexpression SEMICOLON mappingentrylist
+                    ;
+
+program             : (declaration | macro | mapping)* formula* SEPARATOR statement* EOF
                     ;
 

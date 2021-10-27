@@ -1,7 +1,5 @@
 package logic.parameter;
 
-import java.util.Set;
-
 /** An Expression corresponding to the (truncated) division of two PExpressions. */
 public class DivExpression extends BinaryExpression {
   public DivExpression(PExpression l, PExpression r) {

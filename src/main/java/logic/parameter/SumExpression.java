@@ -1,7 +1,5 @@
 package logic.parameter;
 
-import java.util.Set;
-
 /** An Expression corresponding to the sum of two PExpressions. */
 public class SumExpression extends BinaryExpression {
   public SumExpression(PExpression l, PExpression r) {

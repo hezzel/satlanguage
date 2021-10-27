@@ -11,10 +11,11 @@ public interface PExpression {
   static final int PARAMETER = 1;
   static final int MINIMUM   = 2;
   static final int MAXIMUM   = 3;
-  static final int PRODUCT   = 4;
-  static final int DIVISION  = 5;
-  static final int MODULO    = 6;
-  static final int SUM       = 7;
+  static final int FUNCTION  = 4;
+  static final int PRODUCT   = 5;
+  static final int DIVISION  = 6;
+  static final int MODULO    = 7;
+  static final int SUM       = 8;
 
   /**
    * Given a complete assignment of all parameters in the current expression, this returns the

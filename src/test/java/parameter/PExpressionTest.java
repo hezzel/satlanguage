@@ -3,6 +3,7 @@ import static org.junit.Assert.*;
 
 import logic.parameter.*;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class PExpressionTest {
   private PExpression createExpr() {
@@ -228,6 +229,32 @@ public class PExpressionTest {
     assertTrue(m.queryKind() == PExpression.MAXIMUM);
     assertTrue(m.evaluate(new Assignment("a", 1, "b", 4)) == 4);
     assertTrue(m.toString().equals("max(a*2,b)"));
+  }
+
+  @Test
+  public void testFunctionExpressionBasics() {
+    TreeMap<Integer,Integer> map = new TreeMap<Integer,Integer>();
+    map.put(0, 0);
+    Function f = new Function("f", map, "i", (new ParameterExpression("i")).add(-1));
+    PExpression expr = new SumExpression(new ParameterExpression("a"),
+                          new ModExpression(new ParameterExpression("b"),
+                                            new ConstantExpression(2)));
+    FunctionExpression fe = new FunctionExpression(f, expr);
+
+    assertTrue(fe.queryKind() == PExpression.FUNCTION);
+    assertTrue(fe.queryLeft() == null);
+    assertTrue(fe.queryRight().equals(expr));
+    assertFalse(fe.queryConstant());
+    assertTrue(fe.toString().equals("f(a+b%2)"));
+    assertTrue(fe.equals(new FunctionExpression(f, expr)));
+
+    Assignment ass = new Assignment("a", 3, "b", 4);
+    assertTrue(fe.evaluate(ass) == 2);
+    ass = new Assignment("a", -1, "b", 1);
+    assertTrue(fe.evaluate(ass) == 0);
+
+    Substitution subst = new Substitution("a", new ParameterExpression("b"));
+    assertTrue(fe.substitute(subst).toString().equals("f(b+b%2)"));
   }
 }
 

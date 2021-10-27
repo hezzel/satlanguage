@@ -1,7 +1,5 @@
 package logic.parameter;
 
-import java.util.Set;
-
 /** An Expression corresponding to the modulo division of two PExpressions. */
 public class ModExpression extends BinaryExpression {
   public ModExpression(PExpression l, PExpression r) {

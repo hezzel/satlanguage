@@ -5,6 +5,7 @@ import logic.VariableList;
 import logic.RequirementsList;
 import language.parser.ParserException;
 import language.parser.InputReader;
+import language.parser.DefinitionData;
 import language.execution.ProgramState;
 import language.execution.Statement;
 
@@ -16,30 +17,42 @@ public class Program {
   private VariableList _vars;
   private RequirementsList _reqs;
   private Statement _statement;
+  private DefinitionData _defs;
 
   public Program() {
     _vars = new VariableList();
     _reqs = new RequirementsList(_vars);
+    _defs = new DefinitionData();
     _statement = null;
   }
 
   public void readFromFile(String filename) {
-    try { _statement = InputReader.readProgramFromFile(filename, _reqs); }
+    try { _statement = InputReader.readProgramFromFile(filename, _reqs, _defs); }
     catch (Exception e) { throw new Error(e); }
   }
 
+  public void addMacro(String name, int value) {
+    try { InputReader.readMappingFromString("define " + name + " " + value, _defs); }
+    catch (ParserException e) { throw new Error(e); }
+  }
+
+  public void addMapping(String name, String description) {
+    try { InputReader.readMappingFromString("mapping " + name + " " + description, _defs); }
+    catch (ParserException e) { throw new Error(e); }
+  }
+
   public void declare(String declaration) {
-    try { InputReader.declare(declaration, _vars); }
+    try { InputReader.declare(declaration, _vars, _defs); }
     catch (ParserException e) { throw new Error(e); }
   }
 
   public void require(String formula) {
-    try { _reqs.add(InputReader.readClosedFormulaFromString(formula, _vars)); }
+    try { _reqs.add(InputReader.readClosedFormulaFromString(formula, _vars, _defs)); }
     catch (ParserException e) { throw new Error(e); }
   }
 
   public void setOutput(String program) {
-    try { _statement = InputReader.readStatementFromString("{" + program + "}", _vars); }
+    try { _statement = InputReader.readStatementFromString("{" + program + "}", _vars, _defs); }
     catch (ParserException e) { throw new Error(e); }
   }
 

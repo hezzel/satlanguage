@@ -1,7 +1,5 @@
 package logic.parameter;
 
-import java.util.Set;
-
 /** An Expression corresponding to the product of two PExpressions. */
 public class ProductExpression extends BinaryExpression {
   public ProductExpression(PExpression l, PExpression r) {

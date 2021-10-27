@@ -37,7 +37,13 @@ MIN                 : 'min' ;
 
 MAX                 : 'max' ;
 
+DEFINE              : 'define' ;
+
+MAPPING             : 'mapping' ;
+
 IDENTIFIER          : [a-z] [a-z0-9A-Z_]* ;
+
+DEFINITION          : [A-Z]+ ;
 
 INTEGER             : '0' | [1-9] [0-9]* ;
 
@@ -104,6 +110,8 @@ IFF                 : ('↔' | '<->' | '\\leftrightarrow') ;
 QUESTION            : '?' ;
 
 COLON               : ':' ;
+
+SEMICOLON           : ';' ;
 
 DOTS                : '..' ;
 
