@@ -22,6 +22,10 @@ public class RangeConstant implements RangeInteger {
     return _value;
   }
 
+  public RangeInteger setPracticalBounds(int newmin, int newmax) {
+    return this;
+  }
+
   public Variable queryGeqVariable(int i) {
     if (_value >= i) return _truevar;
     else return _falsevar;

@@ -728,7 +728,7 @@ public class InputReader {
    */
   private QuantifiedRangeInteger getNonConstantPart(ParseTree tree, VariableList lst)
                                                                           throws ParserException {
-    QuantifiedRangeInteger ret = null;
+    ArrayList<QuantifiedRangeInteger> ret = new ArrayList<QuantifiedRangeInteger>();
     for (int i = 0; i < tree.getChildCount(); i += 2) {
       ParseTree child = tree.getChild(i);
       String kind = checkChild(child, 0);
@@ -736,24 +736,22 @@ public class InputReader {
       if (kind.equals("token IDENTIFIER")) {
         String name = child.getText();
         RangeVariable x = lst.queryRangeVariable(name);
-        if (x != null) found = new QuantifiedRangeWrapper(x);
+        if (x != null) ret.add(new QuantifiedRangeWrapper(x));
       }
       if (kind.equals("token BRACKETOPEN")) {
         verifyChildIsRule(child, 1, "intexpression", "an integer expression");
         verifyChildIsToken(child, 2, "BRACKETCLOSE", "closing bracket )");
-        found = readIntegerExpression(child.getChild(1), lst);
+        ret.add(readIntegerExpression(child.getChild(1), lst));
       }
       if (kind.equals("rule paramvar")) {
         ArrayList<PExpression> args = new ArrayList<PExpression>();
         ParamRangeVar x = readQuantifiedRangeVariable(child.getChild(0), lst, args, false);
-        found = new QuantifiedRangeVariable(x, args);
-      }
-      if (found != null) {
-        if (ret == null) ret = found;
-        else ret = new QuantifiedRangePlus(ret, found);
+        ret.add(new QuantifiedRangeVariable(x, args));
       }
     }
-    return ret;
+    if (ret.size() == 0) return null;
+    if (ret.size() == 1) return ret.get(0);
+    return new QuantifiedRangePlus(ret);
   }
 
   private String getRootOperator(ParseTree tree) {

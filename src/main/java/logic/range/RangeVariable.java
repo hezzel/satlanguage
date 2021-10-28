@@ -71,6 +71,10 @@ public class RangeVariable implements RangeInteger {
     return _maximum;
   }
 
+  public RangeInteger setPracticalBounds(int newmin, int newmax) {
+    return this;
+  }
+
   public Variable queryGeqVariable(int i) {
     if (_minimum >= i) return _truevar;
     if (i > _maximum) return _falsevar;

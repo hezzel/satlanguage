@@ -27,6 +27,10 @@ public class RangeShift implements RangeInteger {
     return _ri.queryMaximum() + _shift;
   }
 
+  public RangeInteger setPracticalBounds(int newmin, int newmax) {
+    return this;
+  }
+
   public Variable queryGeqVariable(int i) {
     return _ri.queryGeqVariable(i - _shift);
   }

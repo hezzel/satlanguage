@@ -37,6 +37,18 @@ public class RangePlus implements RangeInteger {
 
   /** a + b where the minimum and maximum are bounded by the given values. */
   public RangePlus(RangeInteger left, RangeInteger right, int min, int max) {
+    int lmin = left.queryMinimum(), lmax = left.queryMaximum();
+    int rmin = right.queryMinimum(), rmax = right.queryMaximum();
+    if (max < min) min = max;
+
+    if (lmin + rmax < min) lmin = min - rmax;
+    else if (lmin + rmax > max) rmax = max - lmin;
+    if (rmin + lmax < min) rmin = min - lmax;
+    else if (rmin + lmax > max) lmax = max - rmin;
+
+    left = left.setPracticalBounds(lmin, lmax);
+    right = right.setPracticalBounds(rmin, rmax);
+
     if (left.toString().compareTo(right.toString()) < 0) {
       _left = left;
       _right = right;
@@ -67,6 +79,13 @@ public class RangePlus implements RangeInteger {
     return _maximum;
   }
 
+  public RangeInteger setPracticalBounds(int newmin, int newmax) {
+    if (newmin <= _minimum && newmax >= _maximum) return this;
+    if (newmax < _minimum) newmax = _minimum;
+    if (newmin > _maximum) newmin = _maximum;
+    return new RangePlus(_left, _right, newmin, newmax);
+  }
+
   public Variable queryGeqVariable(int i) {
     if (i <= _minimum) return _left.queryGeqVariable(_left.queryMinimum());     // TRUE
     if (i > _maximum) return _right.queryGeqVariable(_right.queryMaximum()+1);  // FALSE
@@ -94,16 +113,23 @@ public class RangePlus implements RangeInteger {
         parts = new ArrayList<Atom>();
         if (i > _left.queryMinimum()) parts.add(new Atom(_left.queryGeqVariable(i), false));
         if (j > _right.queryMinimum()) parts.add(new Atom(_right.queryGeqVariable(j), false));
-        if (i + j > _maximum) parts.add(new Atom(queryGeqVariable(_maximum), true));
+        if (i + j > _maximum) {
+          if (_maximum > _minimum) parts.add(new Atom(queryGeqVariable(_maximum), true));
+        }
         else parts.add(new Atom(queryGeqVariable(i + j), true));
         col.addClause(new Clause(parts));
+        if (i + j >= _maximum) break;
       }
+      if (i + _right.queryMinimum() >= _maximum) break;
     }
 
     // for all i, j: left < i+1 ∧ right < j+1 → sum < i + j + 1, so bsum < MAX(i+j, _minimum)+1
     for (int i = _left.queryMinimum(); i <= _left.queryMaximum(); i++) {
+      if (i + _right.queryMaximum() < _minimum && i < _left.queryMaximum()) continue;
       for (int j = _right.queryMinimum(); j <= _right.queryMaximum(); j++) {
-        if (i + j >= _maximum) continue;    // busm <= _maximum <= i+j is satisfied anyway
+        if (i + j < _minimum && j < _right.queryMaximum()) continue;
+          // in this case, i + (j+1) <= minimum will be added in the next step anyway
+        if (i + j >= _maximum) continue;    // sum <= _maximum <= i+j is satisfied anyway
         parts = new ArrayList<Atom>();
         if (i < _left.queryMaximum()) parts.add(new Atom(_left.queryGeqVariable(i+1), true));
         if (j < _right.queryMaximum()) parts.add(new Atom(_right.queryGeqVariable(j+1), true));

@@ -14,6 +14,17 @@ public interface RangeInteger {
   /** the top value for the range (inclusive) */
   public int queryMaximum();
 
+  /**
+   * This function returns a RangeInteger y with the following properties:
+   * - if x ≤ newmin then y ≤ newmin
+   * - if y ≥ newmax then y ≥ newmax
+   * - else y = x
+   * This new RangeInteger may be equal to x, or completely different outside the given range.
+   * This is intended to be used to avoid creating more boolean variables and well-definedness
+   * clauses than necessary.
+   */
+  public RangeInteger setPracticalBounds(int newmin, int newmax);
+
   /** a variable representing x ≥ i */
   public Variable queryGeqVariable(int i);
 
