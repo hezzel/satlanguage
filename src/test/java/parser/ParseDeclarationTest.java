@@ -43,7 +43,7 @@ public class ParseDeclarationTest {
     assertTrue(lst.isDeclared("myvar"));
     RangeVariable rv = lst.queryRangeVariable("myvar");
     assertTrue(rv.toString().equals("myvar"));
-    assertTrue(rv.queryGeqVariable(14).equals(rv.queryGeqVariable(15)));
+    assertTrue(rv.queryGeqAtom(14).equals(rv.queryGeqAtom(15)));
   }
 
   @Test
@@ -108,9 +108,9 @@ public class ParseDeclarationTest {
     RangeVariable x = v.queryVar(ass);
     assertTrue(x.queryMinimum() == 6);
     assertTrue(x.queryMaximum() == 8);
-    assertTrue(x.queryGeqVariable(7).toString().equals("var[2,5]≥7"));
-    assertTrue(x.queryGeqVariable(9).toString().equals("FALSE"));
-    assertTrue(x.queryGeqVariable(6).toString().equals("TRUE"));
+    assertTrue(x.queryGeqAtom(7).toString().equals("var[2,5]≥7"));
+    assertTrue(x.queryGeqAtom(9).toString().equals("¬TRUE"));
+    assertTrue(x.queryGeqAtom(6).toString().equals("TRUE"));
   }
 
   @Test
@@ -127,8 +127,8 @@ public class ParseDeclarationTest {
     RangeVariable x = v.queryVar(ass);
     assertTrue(x.queryMinimum() == 0);
     assertTrue(x.queryMaximum() == 5);
-    assertTrue(x.queryGeqVariable(1).toString().equals("var[2,5]≥1"));
-    assertTrue(x.queryGeqVariable(2).toString().equals("var[2,5]≥3"));
+    assertTrue(x.queryGeqAtom(1).toString().equals("var[2,5]≥1"));
+    assertTrue(x.queryGeqAtom(2).toString().equals("var[2,5]≥3"));
   }
 
   @Test(expected = language.parser.ParserException.class)

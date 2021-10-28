@@ -1,6 +1,7 @@
 package logic.range;
 
-import logic.sat.*;
+import logic.sat.Atom;
+import logic.sat.ClauseCollection;
 import logic.parameter.Assignment;
 
 import java.util.ArrayList;
@@ -31,8 +32,8 @@ public class RangeShift implements RangeInteger {
     return this;
   }
 
-  public Variable queryGeqVariable(int i) {
-    return _ri.queryGeqVariable(i - _shift);
+  public Atom queryGeqAtom(int i) {
+    return _ri.queryGeqAtom(i - _shift);
   }
 
   public void addWelldefinednessClauses(ClauseCollection col) {

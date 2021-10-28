@@ -11,14 +11,12 @@ public class RangeVariable implements RangeInteger {
   private int _minimum;
   private int _maximum;
   private Variable _truevar;
-  private Variable _falsevar;
   private TreeMap<Integer,Variable> _variables;
   private String _rangeDesc;
 
-  public RangeVariable(Parameter range, Variable falsevar, Variable truevar) {
+  public RangeVariable(Parameter range, Variable truevar) {
     _name = range.queryName();
     _truevar = truevar;
-    _falsevar = falsevar;
     _minimum = range.queryMinimum().evaluate(null);
     _maximum = range.queryMaximum().evaluate(null);
     _variables = new TreeMap<Integer,Variable>();
@@ -50,12 +48,11 @@ public class RangeVariable implements RangeInteger {
     }
   }
 
-  public RangeVariable(String name, int minimum, int maximum, Variable fvar, Variable tvar) {
+  public RangeVariable(String name, int minimum, int maximum, Variable truevar) {
     _name = name;
     _minimum = minimum;
     _maximum = maximum;
-    _truevar = tvar;
-    _falsevar = fvar;
+    _truevar = truevar;
     _rangeDesc = "{" + minimum + ".." + maximum + "}";
     _variables = new TreeMap<Integer,Variable>();
     for (int i = maximum; i > _minimum; i--) {
@@ -75,10 +72,10 @@ public class RangeVariable implements RangeInteger {
     return this;
   }
 
-  public Variable queryGeqVariable(int i) {
-    if (_minimum >= i) return _truevar;
-    if (i > _maximum) return _falsevar;
-    return _variables.get(i);
+  public Atom queryGeqAtom(int i) {
+    if (_minimum >= i) return new Atom(_truevar, true);
+    if (i > _maximum) return new Atom(_truevar, false);
+    return new Atom(_variables.get(i), true);
   }
 
   /** Add clauses indicating that x ≥ i → x ≥ i-1 where necessary. */
@@ -99,7 +96,7 @@ public class RangeVariable implements RangeInteger {
    */
   public int getValue(Solution solution) {
     for (int i = _minimum + 1; i <= _maximum; i++) {
-      if (!solution.check(queryGeqVariable(i))) return i - 1;
+      if (!solution.check(_variables.get(i))) return i - 1;
     }
     return _maximum;
   }

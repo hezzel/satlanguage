@@ -60,11 +60,11 @@ public class Equals extends Formula {
       //               <--> ¬(a≥i) ∨ a≥i+1 ∨ ¬b≥i ∨ b≥i+1
       // (and don't add atoms that evaluate to false anyway)
       ArrayList<Atom> parts = new ArrayList<Atom>();
-      if (i > a.queryMinimum()) parts.add(new Atom(a.queryGeqVariable(i), false));
-      if (i < a.queryMaximum()) parts.add(new Atom(a.queryGeqVariable(i+1), true));
-      if (i > b.queryMinimum()) parts.add(new Atom(b.queryGeqVariable(i), false));
-      if (i < b.queryMaximum()) parts.add(new Atom(b.queryGeqVariable(i+1), true));
-      if (parts.size() == 0) parts.add(new Atom(a.queryGeqVariable(a.queryMaximum()+1), true));
+      if (i > a.queryMinimum()) parts.add(a.queryGeqAtom(i).negate());
+      if (i < a.queryMaximum()) parts.add(a.queryGeqAtom(i+1));
+      if (i > b.queryMinimum()) parts.add(b.queryGeqAtom(i).negate());
+      if (i < b.queryMaximum()) parts.add(b.queryGeqAtom(i+1));
+      if (parts.size() == 0) parts.add(a.queryGeqAtom(a.queryMaximum()+1));
       ret.add(new Clause(parts));
     }
     return ret;

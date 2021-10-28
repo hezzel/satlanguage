@@ -19,8 +19,7 @@ public class QRangeConstantTest {
   }
 
   private QuantifiedRangeConstant createConstant() {
-    return new QuantifiedRangeConstant(expr("a + b - 3 * a"),
-                                       new Variable("FALSE"), new Variable("TRUE"));
+    return new QuantifiedRangeConstant(expr("a + b - 3 * a"), new Variable("TRUE"));
   }
 
   @Test
@@ -39,9 +38,7 @@ public class QRangeConstantTest {
   @Test
   public void testClosed() {
     assertFalse(createConstant().queryClosed());
-    QuantifiedRangeConstant c = new QuantifiedRangeConstant(expr("1"),
-                                                            new Variable("FALSE"),
-                                                            new Variable("TRUE"));
+    QuantifiedRangeConstant c = new QuantifiedRangeConstant(expr("1"), new Variable("TRUE"));
     assertTrue(c.queryClosed());
   }
 
@@ -63,8 +60,7 @@ public class QRangeConstantTest {
 
   @Test
   public void testNullInstantiate() {
-    QuantifiedRangeConstant q = new QuantifiedRangeConstant(expr("1+2"),
-                                             new Variable("FALSE"), new Variable("TRUE"));
+    QuantifiedRangeConstant q = new QuantifiedRangeConstant(expr("1+2"), new Variable("TRUE"));
     RangeConstant c = q.instantiate(null);
     assertTrue(c.queryMinimum() == 3);
     assertTrue(c.queryMaximum() == 3);

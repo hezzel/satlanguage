@@ -12,13 +12,11 @@ import java.util.Set;
  */
 public class QuantifiedRangeConstant implements QuantifiedRangeInteger {
   private PExpression _constant;
-  private Variable _falsevar;
   private Variable _truevar;
 
-  public QuantifiedRangeConstant(PExpression expression, Variable fvar, Variable tvar) {
+  public QuantifiedRangeConstant(PExpression expression, Variable truevar) {
     _constant = expression;
-    _falsevar = fvar;
-    _truevar = tvar;
+    _truevar = truevar;
   }
 
   public Set<String> queryParameters() {
@@ -30,11 +28,11 @@ public class QuantifiedRangeConstant implements QuantifiedRangeInteger {
   }
 
   public QuantifiedRangeConstant substitute(Substitution subst) {
-    return new QuantifiedRangeConstant(_constant.substitute(subst), _falsevar, _truevar);
+    return new QuantifiedRangeConstant(_constant.substitute(subst), _truevar);
   }
 
   public RangeConstant instantiate(Assignment ass) {
-    return new RangeConstant(_constant.evaluate(ass), _falsevar, _truevar);
+    return new RangeConstant(_constant.evaluate(ass), _truevar);
   }
 
   public String toString() {

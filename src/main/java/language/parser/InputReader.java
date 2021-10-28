@@ -719,7 +719,7 @@ public class InputReader {
       }
     }
     if (expr == null) return null;
-    return new QuantifiedRangeConstant(expr, lst.queryFalseVariable(), lst.queryTrueVariable());
+    return new QuantifiedRangeConstant(expr, lst.queryTrueVariable());
   }
 
   /**

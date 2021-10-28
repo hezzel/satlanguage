@@ -59,7 +59,7 @@ public class VariableList {
   public RangeVariable registerRangeVariable(Parameter param) {
     String name = param.queryName();
     checkAcceptableName(name);
-    RangeVariable v = new RangeVariable(param, queryFalseVariable(), queryTrueVariable());
+    RangeVariable v = new RangeVariable(param, queryTrueVariable());
     _rangevars.put(name, v);
     _usednames.add(name);
     return v;
@@ -67,7 +67,7 @@ public class VariableList {
 
   public ParamBoolVar registerParametrisedBooleanVariable(String name, ParameterList params) {
     checkAcceptableName(name);
-    ParamBoolVar v = new ParamBoolVar(name, params, _boolvars.get("FALSE"));
+    ParamBoolVar v = new ParamBoolVar(name, params, queryFalseVariable());
     _paramboolvars.put(name, v);
     _usednames.add(name);
     return v;
@@ -76,7 +76,7 @@ public class VariableList {
   public ParamRangeVar registerParametrisedRangeVariable(Parameter count, ParameterList params) {
     String name = count.queryName();
     checkAcceptableName(name);
-    ParamRangeVar v = new ParamRangeVar(count, params, queryFalseVariable(), queryTrueVariable());
+    ParamRangeVar v = new ParamRangeVar(count, params, queryTrueVariable());
     _paramrangevars.put(name, v);
     _usednames.add(name);
     return v;

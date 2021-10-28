@@ -13,14 +13,12 @@ import language.parser.ParserException;
 
 public class EqualsTest {
   private QuantifiedRangeInteger makeVar(String name, int min, int max) {
-    RangeInteger ri = new RangeVariable(name, min, max,
-                                        new Variable("FALSE"), new Variable("TRUE"));
+    RangeInteger ri = new RangeVariable(name, min, max, new Variable("TRUE"));
     return new QuantifiedRangeWrapper(ri);
   }
 
   private QuantifiedRangeInteger makeConstant(int num) {
-    return new QuantifiedRangeWrapper(new RangeConstant(num, new Variable("FALSE"),
-                                                             new Variable("TRUE")));
+    return new QuantifiedRangeWrapper(new RangeConstant(num, new Variable("TRUE")));
   }
 
   /** Helper function for tests that compare an integer with a constant. */
@@ -65,7 +63,7 @@ public class EqualsTest {
   public void testAddClausesEqualsBelowRange() {
     ClauseCollector col = setupIntegerRangeTest(3, 6, true, 1);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test
@@ -94,7 +92,7 @@ public class EqualsTest {
   public void testAddClausesEqualsAboveRange() {
     ClauseCollector col = setupIntegerRangeTest(3, 6, true, 7);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test
@@ -140,7 +138,7 @@ public class EqualsTest {
   public void testAddClausesNeqDefinitelyEqual() {
     ClauseCollector col = setupIntegerRangeTest(3, 3, false, 3);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test

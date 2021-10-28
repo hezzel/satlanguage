@@ -16,10 +16,8 @@ public class ParamRangeVar extends ParametrisedObject<RangeVariable> {
    * The falsehood variable should be such that it represents "false", and the truth variable
    * should represent "true".
    */
-  public ParamRangeVar(String name, ParameterList params, int minimum, int maximum,
-                       Variable falsehood, Variable truth) {
-    super(name, params,
-          makeHelper(new Parameter(name, minimum, maximum), params, falsehood, truth));
+  public ParamRangeVar(String name, ParameterList params, int minimum, int maximum, Variable tru) {
+    super(name, params, makeHelper(new Parameter(name, minimum, maximum), params, tru));
     _rangeDesc = "{" + minimum + ".." + maximum + "}";
   }
 
@@ -28,8 +26,8 @@ public class ParamRangeVar extends ParametrisedObject<RangeVariable> {
    * defines the requirements for the IntegerVariable: its name, minimum, maximum and perhaps
    * range restriction.
    */
-  public ParamRangeVar(Parameter count, ParameterList params, Variable falsehood, Variable truth) {
-    super(count.queryName(), params, makeHelper(count, params, falsehood, truth));
+  public ParamRangeVar(Parameter count, ParameterList params, Variable truth) {
+    super(count.queryName(), params, makeHelper(count, params, truth));
     _rangeDesc = "{" + count.queryMinimum() + ".." + count.queryMaximum() + "}";
     if (!count.queryRestriction().isTop()) _rangeDesc += " with " + count.queryRestriction();
   }
@@ -40,7 +38,6 @@ public class ParamRangeVar extends ParametrisedObject<RangeVariable> {
    */
   private static ParamTree.ConstructorHelper<RangeVariable> makeHelper(Parameter count,
                                                                          ParameterList params,
-                                                                         Variable falsehood,
                                                                          Variable truth) {
     return new ParamTree.ConstructorHelper<RangeVariable>() {
       /** Creates a variable for a suitable, complete combination of parameters. */
@@ -52,7 +49,7 @@ public class ParamRangeVar extends ParametrisedObject<RangeVariable> {
         subst.put(count.queryName(), new ParameterExpression(varname));
         PConstraint restriction = count.queryRestriction().substitute(subst);
         Parameter p = new Parameter(varname, minimum, maximum, restriction);
-        return new RangeVariable(p, falsehood, truth);
+        return new RangeVariable(p, truth);
       }
     };
   }

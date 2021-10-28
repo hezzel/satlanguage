@@ -65,20 +65,19 @@ public class Geq extends Formula {
    */
     ArrayList<Clause> ret = new ArrayList<Clause>();
     if (a.queryMaximum() < b.queryMinimum()) {  // add a ≥ bmin, which is exactly FALSE
-      ret.add(new Clause(new Atom(a.queryGeqVariable(b.queryMinimum()), true)));
+      ret.add(new Clause(a.queryGeqAtom(b.queryMinimum())));
       return ret;
     }
     if (b.queryMinimum() > a.queryMinimum()) {  // add a ≥ bmin
-      ret.add(new Clause(new Atom(a.queryGeqVariable(b.queryMinimum()), true)));
+      ret.add(new Clause(a.queryGeqAtom(b.queryMinimum())));
     }
     if (b.queryMaximum() > a.queryMaximum()) {  // add b < amax + 1
-      ret.add(new Clause(new Atom(b.queryGeqVariable(a.queryMaximum()+1), false)));
+      ret.add(new Clause(b.queryGeqAtom(a.queryMaximum()+1).negate()));
     }
     int min = (b.queryMinimum() > a.queryMinimum() ? b.queryMinimum() : a.queryMinimum()) + 1;
     int max = b.queryMaximum() < a.queryMaximum() ? b.queryMaximum() : a.queryMaximum();
     for (int i = min; i <= max; i++) {
-      ret.add(new Clause(new Atom(b.queryGeqVariable(i), false),
-                         new Atom(a.queryGeqVariable(i), true)));
+      ret.add(new Clause(b.queryGeqAtom(i).negate(), a.queryGeqAtom(i)));
     }
     return ret;
   }
@@ -87,21 +86,20 @@ public class Geq extends Formula {
   private static ArrayList<Clause> generateSmallerClauses(RangeInteger a, RangeInteger b) {
     ArrayList<Clause> ret = new ArrayList<Clause>();
     if (b.queryMaximum() < a.queryMinimum() + 1) {  // add b ≥ amax+1, which is exactly FALSE
-      ret.add(new Clause(new Atom(b.queryGeqVariable(b.queryMaximum()+1), true)));
+      ret.add(new Clause(b.queryGeqAtom(b.queryMaximum()+1)));
       return ret;
     }
     if (a.queryMinimum() + 1 > b.queryMinimum()) {  // add b ≥ (a+1)min = amin+1
-      ret.add(new Clause(new Atom(b.queryGeqVariable(a.queryMinimum()+1), true)));
+      ret.add(new Clause(b.queryGeqAtom(a.queryMinimum()+1)));
     }
     if (a.queryMaximum() + 1 > b.queryMaximum()) {  // add a+1 < bmax+1, so a < bmax
-      ret.add(new Clause(new Atom(a.queryGeqVariable(b.queryMaximum()), false)));
+      ret.add(new Clause(a.queryGeqAtom(b.queryMaximum()).negate()));
     }
     // ∀ i ∈ {MAX(bmin+1,amin+2) .. MIN(bmax,amax+1)}. a+1 ≥ i → b ≥ i
     int min = (b.queryMinimum() > a.queryMinimum() ? b.queryMinimum() : a.queryMinimum()+1) + 1;
     int max = b.queryMaximum() <= a.queryMaximum() ? b.queryMaximum() : a.queryMaximum() + 1;
     for (int i = min; i <= max; i++) {  // a ≥ i-1 → b ≥ i
-      ret.add(new Clause(new Atom(a.queryGeqVariable(i-1), false),
-                         new Atom(b.queryGeqVariable(i), true)));
+      ret.add(new Clause(a.queryGeqAtom(i-1).negate(), b.queryGeqAtom(i)));
     }
     return ret;
   }

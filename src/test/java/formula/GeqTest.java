@@ -13,14 +13,12 @@ import language.parser.ParserException;
 
 public class GeqTest {
   private QuantifiedRangeInteger makeVar(String name, int min, int max) {
-    RangeInteger ri = new RangeVariable(name, min, max,
-                                        new Variable("FALSE"), new Variable("TRUE"));
+    RangeInteger ri = new RangeVariable(name, min, max, new Variable("TRUE"));
     return new QuantifiedRangeWrapper(ri);
   }
 
   private QuantifiedRangeInteger makeConstant(int num) {
-    return new QuantifiedRangeWrapper(new RangeConstant(num, new Variable("FALSE"),
-                                                             new Variable("TRUE")));
+    return new QuantifiedRangeWrapper(new RangeConstant(num, new Variable("TRUE")));
   }
 
   /** Helper function for tests that compare an integer with a constant. */
@@ -89,21 +87,21 @@ public class GeqTest {
   public void testAddClausesGeqAboveRange() {
     ClauseCollector col = setupIntegerRangeTest(3, 6, true, 7);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test
   public void testAddClausesSmallerBelowRange() {
     ClauseCollector col = setupIntegerRangeTest(3, 6, false, 1);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test
   public void testAddClausesSmallerMinimumRange() {
     ClauseCollector col = setupIntegerRangeTest(3, 6, false, 3);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test
@@ -130,7 +128,7 @@ public class GeqTest {
   public void testAddClausesReverseGeqBelowRange() {
     ClauseCollector col = setupReverseIntegerRangeTest(3, 6, true, 1);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test
@@ -183,14 +181,14 @@ public class GeqTest {
   public void testAddClausesReverseSmallerMaximumRange() {
     ClauseCollector col = setupReverseIntegerRangeTest(3, 6, false, 6);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test
   public void testAddClausesReverseSmallerAboveRange() {
     ClauseCollector col = setupReverseIntegerRangeTest(3, 6, false, 7);
     assertTrue(col.size() == 1);
-    assertTrue(col.contains("FALSE"));
+    assertTrue(col.contains("¬TRUE"));
   }
 
   @Test

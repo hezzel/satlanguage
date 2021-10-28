@@ -1,6 +1,6 @@
 package logic.range;
 
-import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.sat.ClauseCollection;
 
 /**
@@ -25,8 +25,8 @@ public interface RangeInteger {
    */
   public RangeInteger setPracticalBounds(int newmin, int newmax);
 
-  /** a variable representing x ≥ i */
-  public Variable queryGeqVariable(int i);
+  /** an atom representing x ≥ i */
+  public Atom queryGeqAtom(int i);
 
   /**
    * Adds clauses to the collection that guarantee that the variables defining this integer do

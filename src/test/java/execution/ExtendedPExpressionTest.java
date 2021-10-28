@@ -59,7 +59,7 @@ public class ExtendedPExpressionTest {
                                       new VariableExpression(v));
     // evaluate expression with x = 7
     TreeSet<Integer> truevars = new TreeSet<Integer>();
-    for (int i = 1; i <= 7; i++) truevars.add(v.queryGeqVariable(i).queryIndex());
+    for (int i = 1; i <= 7; i++) truevars.add(v.queryGeqAtom(i).queryIndex());
     Solution sol = new Solution(truevars);
     ProgramState state = new ProgramState(sol);
     assertTrue(e.evaluate(state) == 10);

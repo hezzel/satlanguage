@@ -29,7 +29,7 @@ public class QRangePlusTest {
   }
 
   private QuantifiedRangeConstant createConstant(String txt) {
-    return new QuantifiedRangeConstant(expr(txt), new Variable("FALSE"), new Variable("TRUE"));
+    return new QuantifiedRangeConstant(expr(txt), new Variable("TRUE"));
   }
 
   /** Creates x[i] + <the expression given by txt> */

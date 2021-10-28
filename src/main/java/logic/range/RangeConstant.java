@@ -1,17 +1,21 @@
 package logic.range;
 
 import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.sat.ClauseCollection;
 
 public class RangeConstant implements RangeInteger {
   private int _value;
-  private Variable _falsevar;
-  private Variable _truevar;
+  private Atom _trueAtom;
 
-  public RangeConstant(int value, Variable falsevar, Variable truevar) {
+  public RangeConstant(int value, Variable truevar) {
     _value = value;
-    _falsevar = falsevar;
-    _truevar = truevar;
+    _trueAtom = new Atom(truevar, true);
+  }
+
+  public RangeConstant(int value, Atom trueatom) {
+    _value = value;
+    _trueAtom = trueatom;
   }
 
   public int queryMinimum() {
@@ -26,9 +30,9 @@ public class RangeConstant implements RangeInteger {
     return this;
   }
 
-  public Variable queryGeqVariable(int i) {
-    if (_value >= i) return _truevar;
-    else return _falsevar;
+  public Atom queryGeqAtom(int i) {
+    if (_value >= i) return _trueAtom;
+    else return _trueAtom.negate();
   }
 
   public void addWelldefinednessClauses(ClauseCollection col) {

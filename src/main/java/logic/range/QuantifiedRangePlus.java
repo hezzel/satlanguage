@@ -1,6 +1,6 @@
 package logic.range;
 
-import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
@@ -55,7 +55,7 @@ public class QuantifiedRangePlus implements QuantifiedRangeInteger {
   }
 
   public RangeInteger instantiate(Assignment ass) {
-    Variable falsevar = null, truevar = null;
+    Atom truth = null;
     int constant = 0;
     ArrayList<RangeInteger> evalparts = new ArrayList<RangeInteger>();
 
@@ -63,14 +63,13 @@ public class QuantifiedRangePlus implements QuantifiedRangeInteger {
       RangeInteger ri = _parts.get(i).instantiate(ass);
       if (ri.queryMinimum() == ri.queryMaximum()) {
         constant += ri.queryMinimum();
-        falsevar = ri.queryGeqVariable(ri.queryMaximum() + 1);    // these two are only needed if
-        truevar = ri.queryGeqVariable(ri.queryMinimum());         // there is at least one constant
+        truth = ri.queryGeqAtom(ri.queryMinimum());     // only needed if there is ≥ 1 constant
       }
       else evalparts.add(ri);
     }
 
     // we only got constants!
-    if (evalparts.size() == 0) return new RangeConstant(constant, falsevar, truevar);
+    if (evalparts.size() == 0) return new RangeConstant(constant, truth);
 
     // just one non-constant
     if (evalparts.size() == 1) {

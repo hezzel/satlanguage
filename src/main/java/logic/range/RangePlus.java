@@ -86,11 +86,11 @@ public class RangePlus implements RangeInteger {
     return new RangePlus(_left, _right, newmin, newmax);
   }
 
-  public Variable queryGeqVariable(int i) {
-    if (i <= _minimum) return _left.queryGeqVariable(_left.queryMinimum());     // TRUE
-    if (i > _maximum) return _right.queryGeqVariable(_right.queryMaximum()+1);  // FALSE
+  public Atom queryGeqAtom(int i) {
+    if (i <= _minimum) return _left.queryGeqAtom(_left.queryMinimum());     // TRUE
+    if (i > _maximum) return _right.queryGeqAtom(_right.queryMaximum()+1);  // FALSE
     if (_vars == null) setupVars();
-    return _vars.get(i);
+    return new Atom(_vars.get(i), true);
   }
 
   /**
@@ -111,12 +111,12 @@ public class RangePlus implements RangeInteger {
       for (int j = _right.queryMinimum(); j <= _right.queryMaximum(); j++) {
         if (i + j <= _minimum) continue;    // in this case sum ≥ i + j is satisfied anyway
         parts = new ArrayList<Atom>();
-        if (i > _left.queryMinimum()) parts.add(new Atom(_left.queryGeqVariable(i), false));
-        if (j > _right.queryMinimum()) parts.add(new Atom(_right.queryGeqVariable(j), false));
+        if (i > _left.queryMinimum()) parts.add(_left.queryGeqAtom(i).negate());
+        if (j > _right.queryMinimum()) parts.add(_right.queryGeqAtom(j).negate());
         if (i + j > _maximum) {
-          if (_maximum > _minimum) parts.add(new Atom(queryGeqVariable(_maximum), true));
+          if (_maximum > _minimum) parts.add(queryGeqAtom(_maximum));
         }
-        else parts.add(new Atom(queryGeqVariable(i + j), true));
+        else parts.add(queryGeqAtom(i + j));
         col.addClause(new Clause(parts));
         if (i + j >= _maximum) break;
       }
@@ -131,10 +131,10 @@ public class RangePlus implements RangeInteger {
           // in this case, i + (j+1) <= minimum will be added in the next step anyway
         if (i + j >= _maximum) continue;    // sum <= _maximum <= i+j is satisfied anyway
         parts = new ArrayList<Atom>();
-        if (i < _left.queryMaximum()) parts.add(new Atom(_left.queryGeqVariable(i+1), true));
-        if (j < _right.queryMaximum()) parts.add(new Atom(_right.queryGeqVariable(j+1), true));
-        if (i + j < _minimum) parts.add(new Atom(queryGeqVariable(_minimum+1), false));
-        else parts.add(new Atom(queryGeqVariable(i + j + 1), false));
+        if (i < _left.queryMaximum()) parts.add(_left.queryGeqAtom(i+1));
+        if (j < _right.queryMaximum()) parts.add(_right.queryGeqAtom(j+1));
+        if (i + j < _minimum) parts.add(queryGeqAtom(_minimum+1).negate());
+        else parts.add(queryGeqAtom(i + j + 1).negate());
         col.addClause(new Clause(parts));
       }
     }
