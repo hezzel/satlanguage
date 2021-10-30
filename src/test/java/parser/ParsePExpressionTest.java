@@ -1,9 +1,9 @@
-package logic.parameter;
-
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.parameter.PExpression;
+import logic.parameter.ConstantExpression;
+import logic.parameter.ParameterExpression;
 import language.parser.DefinitionData;
 import language.parser.ParserException;
 import language.parser.InputReader;
@@ -187,13 +187,21 @@ public class ParsePExpressionTest {
   }
 
   @Test
-  public void testMappingExpression() throws ParserException {
+  public void testUnaryMappingExpression() throws ParserException {
     DefinitionData dd = new DefinitionData();
-    InputReader.readMappingFromString("mapping A { 1 : 2 ; 3 : 4 ; i : i }", dd);
+    InputReader.readFunctionFromString("function A(i) { 1 ⇒ 2 ; 3 ⇒ 4 ; _ ⇒ i }", dd);
     PExpression e = InputReader.readPExpressionFromString("A(3)", dd);
     assertTrue(e.queryKind() == PExpression.FUNCTION);
-    assertTrue(e.queryRight().equals(new ConstantExpression(3)));
     assertTrue(e.toString().equals("A(3)"));
+  }
+
+  @Test
+  public void testBinaryExpression() throws ParserException {
+    DefinitionData dd = new DefinitionData();
+    InputReader.readFunctionFromString("function A(i) { (1,2) ⇒ 2 ; (3,4) ⇒ 3 ; _ ⇒ i }", dd);
+    PExpression e = InputReader.readPExpressionFromString("A(i, 7)", dd);
+    assertTrue(e.queryKind() == PExpression.FUNCTION);
+    assertTrue(e.toString().equals("A(i,7)"));
   }
 
   @Test

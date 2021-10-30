@@ -331,7 +331,6 @@ public class GeqTest {
     col.addToMemory("rangevar z");
     formula.addClauses(col);
     // we only really need to know whether x⊕y is at most 1, equal to 2, or at least 3
-    System.out.println(col);
     assertTrue(col.contains("¬x≥2 ∨ x⊕y≥2"));        // x ≥ 2 → x⊕y ≥ 2
     assertTrue(col.contains("¬x≥3 ∨ x⊕y≥3"));        // x ≥ 2 → x⊕y ≥ 3
     assertTrue(col.contains("¬y≥2 ∨ x⊕y≥2"));        // y ≥ 2 → x⊕y ≥ 2

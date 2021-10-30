@@ -2,6 +2,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.parameter.*;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -233,28 +234,33 @@ public class PExpressionTest {
 
   @Test
   public void testFunctionExpressionBasics() {
-    TreeMap<Integer,Integer> map = new TreeMap<Integer,Integer>();
-    map.put(0, 0);
-    Function f = new Function("f", map, "i", (new ParameterExpression("i")).add(-1));
-    PExpression expr = new SumExpression(new ParameterExpression("a"),
-                          new ModExpression(new ParameterExpression("b"),
-                                            new ConstantExpression(2)));
-    FunctionExpression fe = new FunctionExpression(f, expr);
+    Function f = new Function("f", "i", "j");
+    f.setValue(new Match(0, 0), 0);
+    f.setValue(new Match((Integer)null, 1), (new ParameterExpression("i")).add(-1));
+    f.setValue(new Match(1, (Integer)null), (new ParameterExpression("j")).add(1));
+    PExpression expr1 = new SumExpression(new ParameterExpression("a"),
+                           new ModExpression(new ParameterExpression("b"),
+                                             new ConstantExpression(2)));
+    PExpression expr2 = new ParameterExpression("i");
+    ArrayList<PExpression> args = new ArrayList<PExpression>();
+    args.add(expr1);
+    args.add(expr2);
+    FunctionExpression fe = new FunctionExpression(f, args);
 
-    assertTrue(fe.queryKind() == PExpression.FUNCTION);
-    assertTrue(fe.queryLeft() == null);
-    assertTrue(fe.queryRight().equals(expr));
-    assertFalse(fe.queryConstant());
-    assertTrue(fe.toString().equals("f(a+b%2)"));
-    assertTrue(fe.equals(new FunctionExpression(f, expr)));
+    assertTrue(fe.toString().equals("f(a+b%2,i)"));
+    assertTrue(fe.equals(new FunctionExpression(f, args)));
+    args.set(0, expr2);
+    args.set(1, expr1);
+    assertFalse(fe.equals(new FunctionExpression(f, args)));
 
-    Assignment ass = new Assignment("a", 3, "b", 4);
-    assertTrue(fe.evaluate(ass) == 2);
-    ass = new Assignment("a", -1, "b", 1);
+    Assignment ass = new Assignment("a", 0, "b", 2, "i", 0);
     assertTrue(fe.evaluate(ass) == 0);
+    ass = new Assignment("a", 100, "b", 17, "i", 1);
+    assertTrue(fe.evaluate(ass) == 100);
 
-    Substitution subst = new Substitution("a", new ParameterExpression("b"));
-    assertTrue(fe.substitute(subst).toString().equals("f(b+b%2)"));
+    Substitution subst = new Substitution("a", new ParameterExpression("b"),
+                                          "i", new ConstantExpression(7));
+    assertTrue(fe.substitute(subst).toString().equals("f(b+b%2,7)"));
   }
 }
 

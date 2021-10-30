@@ -39,7 +39,7 @@ MAX                 : 'max' ;
 
 DEFINE              : 'define' ;
 
-MAPPING             : 'mapping' ;
+FUNCTION            : 'function' ;
 
 IDENTIFIER          : [a-z] [a-z0-9A-Z_]* ;
 
@@ -106,6 +106,10 @@ NOT                 : ('¬' | '\\neg') ;
 IMPLIES             : ('→' | '->' | '\\rightarrow') ;
 
 IFF                 : ('↔' | '<->' | '\\leftrightarrow') ;
+
+FUNCARROW           : ('⇒' | '=>' | '\\Rightarrow') ;
+
+UNDERSCORE          : '_' ;
 
 QUESTION            : '?' ;
 

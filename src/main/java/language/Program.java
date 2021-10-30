@@ -32,12 +32,12 @@ public class Program {
   }
 
   public void addMacro(String name, int value) {
-    try { InputReader.readMappingFromString("define " + name + " " + value, _defs); }
+    try { InputReader.readMacroFromString("define " + name + " " + value, _defs); }
     catch (ParserException e) { throw new Error(e); }
   }
 
   public void addMapping(String name, String description) {
-    try { InputReader.readMappingFromString("mapping " + name + " " + description, _defs); }
+    try { InputReader.readFunctionFromString("function " + name + " " + description, _defs); }
     catch (ParserException e) { throw new Error(e); }
   }
 

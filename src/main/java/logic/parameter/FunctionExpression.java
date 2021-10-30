@@ -1,17 +1,24 @@
 package logic.parameter;
 
 import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * A FunctionExpression is the application of a (user-defined) function/mapping to a PExpression.
  */
 public class FunctionExpression implements PExpression {
   private Function _func;
-  private PExpression _target;
+  private ArrayList<PExpression> _targets;
+
+  public FunctionExpression(Function f, ArrayList<PExpression> applyOn) {
+    _func = f;
+    _targets = new ArrayList<PExpression>(applyOn);
+  }
 
   public FunctionExpression(Function f, PExpression applyOn) {
     _func = f;
-    _target = applyOn;
+    _targets = new ArrayList<PExpression>();
+    _targets.add(applyOn);
   }
 
   public int queryKind() {
@@ -23,15 +30,23 @@ public class FunctionExpression implements PExpression {
   }
 
   public PExpression queryRight() {
-      return _target;
+      return null;
   }
 
   public int evaluate(Assignment assignment) {
-    return _func.lookup(_target.evaluate(assignment));
+    ArrayList<Integer> parts = new ArrayList<Integer>();
+    for (int i = 0; i < _targets.size(); i++) {
+      parts.add(_targets.get(i).evaluate(assignment));
+    }
+    return _func.lookup(parts);
   }
 
   public PExpression substitute(Substitution substitution) {
-    return new FunctionExpression(_func, _target.substitute(substitution));
+    ArrayList<PExpression> parts = new ArrayList<PExpression>();
+    for (int i = 0; i < _targets.size(); i++) {
+      parts.add(_targets.get(i).substitute(substitution));
+    }
+    return new FunctionExpression(_func, parts);
   }
 
   public boolean queryConstant() {
@@ -50,18 +65,31 @@ public class FunctionExpression implements PExpression {
   }
 
   public Set<String> queryParameters() {
-    return _target.queryParameters();
+    Set<String> ret = _targets.get(0).queryParameters();
+    for (int i = 1; i < _targets.size(); i++) {
+      ret.addAll(_targets.get(i).queryParameters());
+    }
+    return ret;
   }
 
   public String toString() {
-    return _func.toString(_target);
+    String ret = _func.queryName() + "(";
+    for (int i = 0; i < _targets.size(); i++) {
+      if (i > 0) ret += ",";
+      ret += _targets.get(i).toString();
+    }
+    return ret + ")";
   }
 
   public boolean equals(PExpression expr) {
     if (expr.queryKind() != PExpression.FUNCTION) return false;
     FunctionExpression e = (FunctionExpression)expr;
     if (e._func != _func) return false;
-    return _target.equals(e._target);
+    if (e._targets.size() != _targets.size()) return false;
+    for (int i = 0; i < _targets.size(); i++) {
+      if (!_targets.get(i).equals(e._targets.get(i))) return false;
+    }
+    return true;
   }
 }
 

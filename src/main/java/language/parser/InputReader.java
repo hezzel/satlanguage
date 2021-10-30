@@ -340,13 +340,16 @@ public class InputReader {
     if (kind.equals("token DEFINITION")) {
       verifyChildIsToken(tree, 1, "BRACKETOPEN", "opening bracket (");
       verifyChildIsRule(tree, 2, "pexpression", "a pexpression");
-      verifyChildIsToken(tree, 3, "BRACKETCLOSE", "closing bracket )");
+      verifyChildIsToken(tree, tree.getChildCount()-1, "BRACKETCLOSE", "closing bracket )");
       String name = tree.getChild(0).getText();
-      if (!_defs._mappings.containsKey(name)) {
-        throw new ParserException(firstToken(tree), "Definition " + name + " is not a mapping.");
+      if (!_defs._functions.containsKey(name)) {
+        throw new ParserException(firstToken(tree), "Definition " + name + " is not a function.");
       }
-      PExpression expr = readPExpression(tree.getChild(2), lst);
-      return new FunctionExpression(_defs._mappings.get(name), expr);
+      ArrayList<PExpression> parts = new ArrayList<PExpression>();
+      for (int i = 2; i < tree.getChildCount(); i += 2) {
+        parts.add(readPExpression(tree.getChild(i), lst));
+      }
+      return new FunctionExpression(_defs._functions.get(name), parts);
     }
     if (kind.equals("rule integer")) {
       return new ConstantExpression(readInteger(tree.getChild(0)));
@@ -959,9 +962,9 @@ public class InputReader {
     if (_defs._macros.containsKey(name)) {
       throw new ParserException(firstToken(tree), "Redefining previously declared macro " + name);
     }
-    if (_defs._mappings.containsKey(name)) {
+    if (_defs._functions.containsKey(name)) {
       throw new ParserException(firstToken(tree), "Redefining macro previously defined as " +
-        "mapping: " + name);
+        "function: " + name);
     }
     PExpression expr = readPExpression(tree.getChild(2), null);
     if (expr.queryParameters().size() != 0) {
@@ -973,62 +976,84 @@ public class InputReader {
     return k;
   }
 
-  private Function readMapping(ParseTree tree) throws ParserException {
-    verifyChildIsToken(tree, 0, "MAPPING", "keyword mapping");
-    verifyChildIsToken(tree, 1, "DEFINITION", "keyword definition");
-    verifyChildIsToken(tree, 2, "BRACEOPEN", "opening brace {");
-    verifyChildIsRule(tree, 3, "mappingentrylist", "entries to the mapping");
-    verifyChildIsToken(tree, 4, "BRACECLOSE", "closing brace }");
-
+  private Function readFunction(ParseTree tree) throws ParserException {
+    verifyChildIsToken(tree, 0, "FUNCTION", "keyword function");
+    verifyChildIsToken(tree, 1, "DEFINITION", "a definition");
     String name = tree.getChild(1).getText();
+    verifyChildIsToken(tree, 2, "BRACKETOPEN", "opening bracket (");
+    int i = 3;
+    ArrayList<String> args = new ArrayList<String>();
+    for (; i < tree.getChildCount(); i++) {
+      String kind = checkChild(tree, i);
+      if (kind.equals("token COMMA")) continue;
+      if (kind.equals("token BRACKETCLOSE")) break;
+      args.add(tree.getChild(i).getText());
+    }
+    Function func = new Function(name, args);
+    verifyChildIsToken(tree, i+1, "BRACEOPEN", "opening brace {");
+    for (i = i + 2; i < tree.getChildCount(); i++) {
+      String kind = checkChild(tree, i);
+      if (kind.equals("token SEMICOLON")) continue;
+      if (kind.equals("token BRACECLOSE")) break;
+      verifyChildIsRule(tree, i, "mappingentry", "a mapping entry");
+      readMappingEntry(tree.getChild(i), args, func);
+    }
+    if (_defs._functions.containsKey(name)) {
+      throw new ParserException(firstToken(tree), "Defining function " + name + " which already " +
+        "exists.");
+    }
     if (_defs._macros.containsKey(name)) {
-      throw new ParserException(firstToken(tree), "Cannot define mapping named " + name +
-        " when there is already a macro definition by that name.");
+      throw new ParserException(firstToken(tree), "Defining function " + name + " when a macro " +
+        "by that name already exists.");
     }
-    if (_defs._mappings.containsKey(name)) {
-      throw new ParserException(firstToken(tree), "Cannot redefine mapping named " + name + ".");
-    }
-
-    Function ret = readMappingEntries(name, new TreeMap<Integer,Integer>(), tree.getChild(3));
-    _defs._mappings.put(name, ret);
-    return ret;
+    _defs._functions.put(name, func);
+    return func;
   }
 
-  private Function readMappingEntries(String name, TreeMap<Integer,Integer> entries,
-                                      ParseTree tree) throws ParserException {
-    verifyChildIsToken(tree, 1, "COLON", "a colon");
+  private void readMappingEntry(ParseTree tree, ArrayList<String> argNames, Function func)
+                                                                           throws ParserException {
+    verifyChildIsToken(tree, tree.getChildCount()-2, "FUNCARROW", "function arrow ⇒");
+    verifyChildIsRule(tree, tree.getChildCount()-1, "pexpression", "a parameter expression");
+    PExpression result = readPExpression(tree.getChild(tree.getChildCount()-1), null);
+    ArrayList<Integer> values = new ArrayList<Integer>();
+
+    Set<String> params = result.queryParameters();
+    for (int i = 0; i < argNames.size(); i++) params.remove(argNames.get(i));
+    if (params.size() > 0) {
+      throw new ParserException(firstToken(tree), "Expression " + result.toString() +
+        " in function " + func.queryName() + " uses unexpected parameters " + params);
+    }
+    
     String kind = checkChild(tree, 0);
-    if (kind.equals("token IDENTIFIER")) {
-      verifyChildIsRule(tree, 2, "pexpression", "a pexpression");
-      String p = tree.getChild(0).getText();
-      PExpression e = readPExpression(tree.getChild(2), null);
-      Set<String> params = e.queryParameters();
-      params.remove(p);
-      if (params.size() > 0) {
-        throw new ParserException(firstToken(tree), "Illegal mapping entry " + tree.getText() +
-          ": contains parameters other than " + name + "(" + params + ")");
+    
+    if (kind.equals("rule optionalinteger")) {
+      ParseTree child = tree.getChild(0);
+      // _ ⇒ expr may be used regardless of how many parameters the function has
+      if (checkChild(child, 0).equals("token UNDERSCORE")) {
+        for (int i = 0; i < func.arity(); i++) values.add(null);
       }
-      return new Function(name, entries, p, e);
+      else {
+        // i ⇒ expr may only be used if the function has exactly one parameter
+        verifyChildIsRule(child, 0, "integer", "an integer");
+        int k = readInteger(child.getChild(0));
+        if (func.arity() != 1) {
+          throw new ParserException(firstToken(tree), "function entry should be a tuple with " +
+            func.arity() + " arguments, as this is how the function is declared!");
+        }
+        values.add(k);
+      }
+    }
+    else {
+      verifyChildIsToken(tree, 0, "BRACKETOPEN", "opening bracket (");
+      int i = 1;
+      for (; checkChild(tree, i).equals("rule optionalinteger"); i += 2) {
+        ParseTree child = tree.getChild(i);
+        if (checkChild(child, 0).equals("token UNDERSCORE")) values.add(null);
+        else values.add(readInteger(child.getChild(0)));
+      }
     }
 
-    verifyChildIsRule(tree, 0, "integer", "an integer");
-    verifyChildIsRule(tree, 2, "pexpression", "a pexpression");
-    int k = readInteger(tree.getChild(0));
-    PExpression e = readPExpression(tree.getChild(2), null);
-    if (e.queryParameters().size() > 0) {
-      throw new ParserException(firstToken(tree), "Illegal mapping entry " + tree.getText() +
-        ": value should be (or evaluate to) an integer, and canoot contain parameters.");
-    }
-    int n = e.evaluate(null);
-    entries.put(k,n);
-
-    if (tree.getChildCount() > 3) {
-      verifyChildIsToken(tree, 3, "SEMICOLON", "a semicolon");
-      verifyChildIsRule(tree, 4, "mappingentrylist", "the rest of the mapping");
-      return readMappingEntries(name, entries, tree.getChild(4));
-    }
-
-    return new Function(name, entries);
+    func.setValue(new Match(values), result);
   }
 
   private Statement readProgram(ParseTree tree, RequirementsList lst) throws ParserException {
@@ -1043,7 +1068,7 @@ public class InputReader {
           "Encountered a statement before the program separator ===.");
       }
       if (kind.equals("rule macro")) readMacro(tree.getChild(i));
-      else if (kind.equals("rule mapping")) readMapping(tree.getChild(i));
+      else if (kind.equals("rule function")) readFunction(tree.getChild(i));
       else if (kind.equals("rule declaration")) readDeclaration(tree.getChild(i), vars);
       else if (kind.equals("rule formula")) lst.add(readClosedFormula(tree.getChild(i), vars));
       else throw buildError(tree.getChild(i), "unexpected: " + kind);
@@ -1206,15 +1231,15 @@ public class InputReader {
     return reader.readMacro(tree);
   }
 
-  public static Function readMappingFromString(String str, DefinitionData defs)
+  public static Function readFunctionFromString(String str, DefinitionData defs)
                                                                         throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
     if (defs != null) reader._defs = defs;
-    ParseTree tree = parser.mapping();
+    ParseTree tree = parser.function();
     collector.throwCollectedExceptions();
-    return reader.readMapping(tree);
+    return reader.readFunction(tree);
   }
 
   /** Sets up a (lexer and) parser from the given file, using the given error collector. */

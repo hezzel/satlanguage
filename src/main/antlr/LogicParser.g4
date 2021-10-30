@@ -38,7 +38,7 @@ pexpressionunit     : IDENTIFIER
                     | MIN BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
                     | MAX BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
                     | BRACKETOPEN pexpression BRACKETCLOSE
-                    | DEFINITION BRACKETOPEN pexpression BRACKETCLOSE
+                    | DEFINITION BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
                     | integer
                     | paramvar
                     ;
@@ -217,19 +217,24 @@ printstatement      : PRINT BRACKETOPEN BRACKETCLOSE
 block               : BRACEOPEN statement* BRACECLOSE
                     ;
 
+/********** Functions and properties **********/
+
+function            : FUNCTION DEFINITION BRACKETOPEN IDENTIFIER (COMMA IDENTIFIER)* BRACKETCLOSE BRACEOPEN (mappingentry SEMICOLON)* mappingentry BRACECLOSE
+                    ;
+
+mappingentry        : optionalinteger FUNCARROW pexpression
+                    | BRACKETOPEN (optionalinteger COMMA)* optionalinteger BRACKETCLOSE FUNCARROW pexpression
+                    ;
+
+optionalinteger     : integer
+                    | UNDERSCORE
+                    ;
+
 /********** Full programs **********/
 
 macro               : DEFINE DEFINITION pexpression
                     ;
 
-mapping             : MAPPING DEFINITION BRACEOPEN mappingentrylist BRACECLOSE
-                    ;
-
-mappingentrylist    : IDENTIFIER COLON pexpression
-                    | integer COLON pexpression
-                    | integer COLON pexpression SEMICOLON mappingentrylist
-                    ;
-
-program             : (declaration | macro | mapping)* formula* SEPARATOR statement* EOF
+program             : (declaration | macro | function)* formula* SEPARATOR statement* EOF
                     ;
 
