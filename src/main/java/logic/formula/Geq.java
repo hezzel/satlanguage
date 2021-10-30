@@ -110,6 +110,19 @@ public class Geq extends Formula {
     }
     RangeInteger l = _left.instantiate(null);
     RangeInteger r = _right.instantiate(null);
+    // if r ∈ {min..max}, then l ≥ r <-> MIN(l,max) ≥ r <-> MAX(l,min-1) ≥ r:
+    // * MIN(l,max) ≥ r <-> max ≥ l ≥ r ∨ l > max ≥ r; in both cases l ≥ r, and if l ≥ r one of
+    //   the cases is satisfied (since max ≥ r holds regardless)
+    // * MAX(l,min-1) ≥ r <-> (l ≥ r ∧ l ≥ min-1) ∨ (min-1 ≥ r ∧ min-1 ≥ r) <-> l ≥ r ≥ min-1,
+    //   since min-1 ≥ r cannot hold s r > min-1
+    // cannot hold
+    l = l.setPracticalBounds(r.queryMinimum()-1, r.queryMaximum());
+    // if l ∈ {min..max}, then l ≥ r <-> l ≥ MAX(r,min) <-> l ≥ MIN(r,max+1):
+    // * l ≥ MAX(r,min) <-> l ≥ r ≥ min ∨ l ≥ min > r; in both cases l ≥ r and if l ≥ r then one of
+    //   the cases is satisfied since l ≥ min holds regardless
+    // * l ≥ MIN(r,max+1) <-> (l ≥ r ∧ max+1 > r) ∨ (l ≥ max+1 ∧ r ≥ max+1) <-> l ≥ r since max+1 >
+    //   r holds regardless and l ≥ max+1 cannot hold
+    r = r.setPracticalBounds(l.queryMinimum(), l.queryMaximum()+1);
     l.addWelldefinednessClauses(col);
     r.addWelldefinednessClauses(col);
 
@@ -130,6 +143,8 @@ public class Geq extends Formula {
     }
     RangeInteger l = _left.instantiate(null);
     RangeInteger r = _right.instantiate(null);
+    l = l.setPracticalBounds(r.queryMinimum()-1, r.queryMaximum());
+    r = r.setPracticalBounds(l.queryMinimum(), l.queryMaximum()+1);
     l.addWelldefinednessClauses(col);
     r.addWelldefinednessClauses(col);
 
@@ -151,6 +166,8 @@ public class Geq extends Formula {
     }
     RangeInteger l = _left.instantiate(null);
     RangeInteger r = _right.instantiate(null);
+    l = l.setPracticalBounds(r.queryMinimum()-1, r.queryMaximum());
+    r = r.setPracticalBounds(l.queryMinimum(), l.queryMaximum()+1);
     l.addWelldefinednessClauses(col);
     r.addWelldefinednessClauses(col);
 

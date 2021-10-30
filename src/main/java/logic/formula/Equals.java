@@ -76,6 +76,8 @@ public class Equals extends Formula {
     }
     RangeInteger l = _left.instantiate(null);
     RangeInteger r = _right.instantiate(null);
+    l = l.setPracticalBounds(r.queryMinimum() - 1, r.queryMaximum() + 1);
+    r = r.setPracticalBounds(l.queryMinimum() - 1, l.queryMaximum() + 1);
     l.addWelldefinednessClauses(col);
     r.addWelldefinednessClauses(col);
 
@@ -96,6 +98,8 @@ public class Equals extends Formula {
     }
     RangeInteger l = _left.instantiate(null);
     RangeInteger r = _right.instantiate(null);
+    l = l.setPracticalBounds(r.queryMinimum() - 1, r.queryMaximum() + 1);
+    r = r.setPracticalBounds(l.queryMinimum() - 1, l.queryMaximum() + 1);
     l.addWelldefinednessClauses(col);
     r.addWelldefinednessClauses(col);
 
@@ -117,6 +121,8 @@ public class Equals extends Formula {
     }
     RangeInteger l = _left.instantiate(null);
     RangeInteger r = _right.instantiate(null);
+    l = l.setPracticalBounds(r.queryMinimum() - 1, r.queryMaximum() + 1);
+    r = r.setPracticalBounds(l.queryMinimum() - 1, l.queryMaximum() + 1);
     l.addWelldefinednessClauses(col);
     r.addWelldefinednessClauses(col);
 

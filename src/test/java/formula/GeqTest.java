@@ -295,6 +295,61 @@ public class GeqTest {
   }
 
   @Test
+  public void testAddClausesGeqRelevantBoundRight() {
+    Variable.reset();
+    QuantifiedRangeInteger plus = new QuantifiedRangePlus(makeVar("x", 0, 5), makeVar("y", 0, 5));
+    QuantifiedRangeInteger z = makeVar("z", 1, 2); 
+    Geq formula = new Geq(plus, z, true); 
+    ClauseCollector col = new ClauseCollector();
+    col.addToMemory("rangevar x");
+    col.addToMemory("rangevar y");
+    col.addToMemory("rangevar z");
+    formula.addClauses(col);
+    // we only really need to know whether x⊕y is at most 0, equal to 1, or at least 2
+    assertTrue(col.contains("¬x≥1 ∨ x⊕y≥1"));   // x ≥ 1 → x⊕y ≥ 1
+    assertTrue(col.contains("¬x≥2 ∨ x⊕y≥2"));   // x ≥ 2 → x⊕y ≥ 2
+    assertTrue(col.contains("¬y≥1 ∨ x⊕y≥1"));   // y ≥ 1 → x⊕y ≥ 1
+    assertTrue(col.contains("¬y≥2 ∨ x⊕y≥2"));   // y ≥ 2 → x⊕y ≥ 2
+    assertTrue(col.contains("¬x≥1 ∨ ¬y≥1 ∨ x⊕y≥2"));   // x ≥ 1 ∧ y ≥ 1 → x⊕y ≥ 2
+    assertTrue(col.contains("x≥1 ∨ y≥1 ∨ ¬x⊕y≥1")); // x ≤ 0 ∧ y ≤ 0 → x⊕y ≤ 0
+    assertTrue(col.contains("x≥1 ∨ y≥2 ∨ ¬x⊕y≥2")); // x ≤ 0 ∧ y ≤ 1 → x⊕y ≤ 1
+    assertTrue(col.contains("x≥2 ∨ y≥1 ∨ ¬x⊕y≥2")); // x ≤ 1 ∧ y ≤ 0 → x⊕y ≤ 1
+    assertTrue(col.contains("x⊕y≥1"));          // x⊕y is at least zmin
+    assertTrue(col.contains("¬z≥2 ∨ x⊕y≥2"));   // z≥2 → x⊕y≥2
+    assertTrue(col.size() == 10);
+  }
+
+  @Test
+  public void testAddClausesGeqRelevantBoundLeft() {
+    Variable.reset();
+    QuantifiedRangeInteger plus = new QuantifiedRangePlus(makeVar("x", 0, 5), makeVar("y", 0, 5));
+    QuantifiedRangeInteger z = makeVar("z", 1, 2); 
+    Geq formula = new Geq(z, plus, true); 
+    ClauseCollector col = new ClauseCollector();
+    col.addToMemory("rangevar x");
+    col.addToMemory("rangevar y");
+    col.addToMemory("rangevar z");
+    formula.addClauses(col);
+    // we only really need to know whether x⊕y is at most 1, equal to 2, or at least 3
+    System.out.println(col);
+    assertTrue(col.contains("¬x≥2 ∨ x⊕y≥2"));        // x ≥ 2 → x⊕y ≥ 2
+    assertTrue(col.contains("¬x≥3 ∨ x⊕y≥3"));        // x ≥ 2 → x⊕y ≥ 3
+    assertTrue(col.contains("¬y≥2 ∨ x⊕y≥2"));        // y ≥ 2 → x⊕y ≥ 2
+    assertTrue(col.contains("¬y≥3 ∨ x⊕y≥3"));        // y ≥ 2 → x⊕y ≥ 3
+    assertTrue(col.contains("¬x≥1 ∨ ¬y≥1 ∨ x⊕y≥2")); // x ≥ 1 ∧ y ≥ 1 → x⊕y ≥ 2
+    assertTrue(col.contains("¬x≥1 ∨ ¬y≥2 ∨ x⊕y≥3")); // x ≥ 1 ∧ y ≥ 2 → x⊕y ≥ 3
+    assertTrue(col.contains("¬x≥2 ∨ ¬y≥1 ∨ x⊕y≥3")); // x ≥ 2 ∧ y ≥ 1 → x⊕y ≥ 3
+    assertTrue(col.contains("x≥1 ∨ y≥2 ∨ ¬x⊕y≥2"));  // x ≤ 0 ∧ y ≤ 1 → x⊕y ≤ 1
+    assertTrue(col.contains("x≥2 ∨ y≥1 ∨ ¬x⊕y≥2"));  // x ≤ 1 ∧ y ≤ 0 → x⊕y ≤ 1
+    assertTrue(col.contains("x≥2 ∨ y≥2 ∨ ¬x⊕y≥3"));  // x ≤ 1 ∧ y ≤ 1 → x⊕y ≤ 2
+    assertTrue(col.contains("x≥3 ∨ y≥1 ∨ ¬x⊕y≥3"));  // x ≤ 2 ∧ y ≤ 0 → x⊕y ≤ 2
+    assertTrue(col.contains("x≥1 ∨ y≥3 ∨ ¬x⊕y≥3"));  // x ≤ 0 ∧ y ≤ 2 → x⊕y ≤ 2
+    assertTrue(col.contains("¬x⊕y≥3"));              // x⊕y is at most 2 = zmax
+    assertTrue(col.contains("z≥2 ∨ ¬x⊕y≥2"));        // z≤1 → x⊕y≤1
+    assertTrue(col.size() == 14);
+  }
+
+  @Test
   public void testAddClausesDefMultipleAtoms() {
     Variable.reset();
     Geq formula = new Geq(makeVar("x", 1, 5), makeVar("y", 3, 7), false);

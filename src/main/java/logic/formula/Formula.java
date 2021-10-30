@@ -66,6 +66,11 @@ public abstract class Formula {
     return _usedParameters.size() == 0;
   }
 
+  /** Returns the parameters used in this formula. */
+  public TreeSet<String> queryParameters() {
+    return new TreeSet<String>(_usedParameters);
+  }
+
   /** A Formula representing the negation of the present one. */
   public abstract Formula negate();
   

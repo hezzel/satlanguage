@@ -38,29 +38,24 @@ define BPMAX (TOTALWEIGHT * MAXPOOLSIZE * (100 + DEVIATION) - 1) / (NUMPLAYERS *
 
 ### variables
 
-declare poolof[player]         :: Int ∈ {1..NUMPOOLS}    for player ∈ {1..NUMPLAYERS}
-declare poolsize[pool,player]  :: Int ∈ {0..MAXPOOLSIZE} for pool ∈ {1..NUMPOOLS}, player ∈ {0..NUMPLAYERS}
-declare poolscore[pool,player] :: Int ∈ {0..BPMAX}       for pool ∈ {1..NUMPOOLS}, player ∈ {0..NUMPLAYERS}
+declare poolof[player]  :: Int ∈ {1..NUMPOOLS}              for player ∈ {1..NUMPLAYERS}
+declare poolsize[pool]  :: Int ∈ {MINPOOLSIZE..MAXPOOLSIZE} for pool ∈ {1..NUMPOOLS}
+declare poolscore[pool] :: Int ∈ {0..BPMAX}                 for pool ∈ {1..NUMPOOLS}
 
 ### requirements
 
-∀ pool ∈ {1..NUMPOOLS}. poolsize[pool,0] = 0
-∀ pool ∈ {1..NUMPOOLS}. poolsize[pool,NUMPLAYERS] ≥ MINPOOLSIZE
-∀ pool ∈ {1..NUMPOOLS}. ∀ player ∈ {1..NUMPLAYERS}. poolof[player] = pool → poolsize[pool,player] = poolsize[pool,player-1] + 1
-∀ pool ∈ {1..NUMPOOLS}. ∀ player ∈ {1..NUMPLAYERS}. poolof[player] != pool → poolsize[pool,player] = poolsize[pool,player-1]
+∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = Σ { (poolof[player] = pool) ? 1 | player ∈ {1..NUMPLAYERS} }
+∀ pool ∈ {1..NUMPOOLS}. poolscore[pool] = Σ { (poolof[player] = pool) ? WEIGHT(player) | player ∈ {1..NUMPLAYERS} }
 
-∀ pool ∈ {1..NUMPOOLS}. poolscore[pool,0] = 0
-∀ pool ∈ {1..NUMPOOLS}. poolsize[pool, NUMPLAYERS] = MINPOOLSIZE → (poolscore[pool,16] >= SPMIN ∧ poolscore[pool,16] <= SPMAX)
-∀ pool ∈ {1..NUMPOOLS}. poolsize[pool, NUMPLAYERS] = MAXPOOLSIZE → (poolscore[pool,16] >= BPMIN ∧ poolscore[pool,16] <= BPMAX)
-∀ pool ∈ {1..NUMPOOLS}. ∀ player ∈ {1..NUMPLAYERS}. poolof[player] = pool → poolscore[pool,player] = poolscore[pool,player-1] + WEIGHT(player)
-∀ pool ∈ {1..NUMPOOLS}. ∀ player ∈ {1..NUMPLAYERS}. poolof[player] != pool → poolscore[pool,player] = poolscore[pool,player-1]
+∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = MINPOOLSIZE → (poolscore[pool] >= SPMIN ∧ poolscore[pool] <= SPMAX)
+∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = MAXPOOLSIZE → (poolscore[pool] >= BPMIN ∧ poolscore[pool] <= BPMAX)
 
 ∀ player ∈ {1..NUMPOOLS}. poolof[player] = player
 
 ================
 
 for pool := 1 to NUMPOOLS do {
-  println("Pool ", pool, " (", poolscore[pool,NUMPLAYERS], ")")
+  println("Pool ", pool, " (", poolscore[pool], ")")
   for player := 1 to NUMPLAYERS do {
     if poolof[player] = pool then println("  Player ", player)
   }

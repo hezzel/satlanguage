@@ -499,15 +499,21 @@ public class InputReader {
     return readParameter(tree.getChild(0));
   }
 
-  private ParameterList readParameterList(ParseTree tree) throws ParserException {
-    ArrayList<Parameter> pars = new ArrayList<Parameter>();
+  /** Reads a ParameterList without checking that no fresh parameters are used in it. */
+  private ArrayList<Parameter> readOpenParameterList(ParseTree tree) throws ParserException {
+    ArrayList<Parameter> ret = new ArrayList<Parameter>();
     verifyChildIsRule(tree, 0, "parameter", "a parameter");
-    pars.add(readParameter(tree.getChild(0)));
+    ret.add(readParameter(tree.getChild(0)));
     for (int i = 1; i < tree.getChildCount(); i += 2) {
       verifyChildIsToken(tree, i, "COMMA", "a comma");
       verifyChildIsRule(tree, i+1, "parameter", "a parameter");
-      pars.add(readParameter(tree.getChild(i+1)));
+      ret.add(readParameter(tree.getChild(i+1)));
     }
+    return ret;
+  }
+
+  private ParameterList readParameterList(ParseTree tree) throws ParserException {
+    ArrayList<Parameter> pars = readOpenParameterList(tree);
     try {
       ParameterList ret = new ParameterList(pars);
       return ret;
@@ -743,6 +749,23 @@ public class InputReader {
         verifyChildIsToken(child, 2, "BRACKETCLOSE", "closing bracket )");
         ret.add(readIntegerExpression(child.getChild(1), lst));
       }
+      if (kind.equals("rule condition")) {
+        verifyChildIsToken(child, 1, "QUESTION", "a question mark");
+        verifyChildIsRule(child, 2, "intexpression", "an integer expression");
+        QuantifiedRangeInteger expr = readIntegerExpression(child.getChild(2), lst);
+        Formula form = readCondition(child.getChild(0), lst);
+        return new QuantifiedConditionalRangeInteger(form, expr, lst.queryTrueVariable());
+      }
+      if (kind.equals("token SUM")) {
+        verifyChildIsToken(child, 1, "BRACEOPEN", "opening brace {");
+        verifyChildIsRule(child, 2, "intexpression", "integer expression");
+        verifyChildIsToken(child, 3, "MID", "|");
+        verifyChildIsRule(child, 4, "parameterlist", "a parameter list");
+        verifyChildIsToken(child, 5, "BRACECLOSE", "closing brace }");
+        QuantifiedRangeInteger expr = readIntegerExpression(child.getChild(2), lst);
+        ArrayList<Parameter> params = readOpenParameterList(child.getChild(4));
+        return new QuantifiedRangeSum(params, expr);
+      }
       if (kind.equals("rule paramvar")) {
         ArrayList<PExpression> args = new ArrayList<PExpression>();
         ParamRangeVar x = readQuantifiedRangeVariable(child.getChild(0), lst, args, false);
@@ -752,6 +775,20 @@ public class InputReader {
     if (ret.size() == 0) return null;
     if (ret.size() == 1) return ret.get(0);
     return new QuantifiedRangePlus(ret);
+  }
+
+  private Formula readCondition(ParseTree tree, VariableList lst) throws ParserException {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("token BRACKETOPEN")) {
+      verifyChildIsRule(tree, 1, "formula", "a formula");
+      return readFormula(tree.getChild(1), lst);
+    }
+    if (kind.equals("token NOT")) {
+      verifyChildIsRule(tree, 1, "condition", "a condition");
+      return readCondition(tree.getChild(1), lst).negate();
+    }
+    verifyChildIsRule(tree, 0, "variable", "a variable");
+    return readVariableFormula(tree.getChild(0), lst);
   }
 
   private String getRootOperator(ParseTree tree) {

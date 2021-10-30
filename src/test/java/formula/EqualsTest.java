@@ -206,6 +206,29 @@ public class EqualsTest {
   }
 
   @Test
+  public void testAddClausesEqualsRelevantBound() {
+    Variable.reset();
+    QuantifiedRangeInteger plus = new QuantifiedRangePlus(makeVar("x", 0, 5), makeVar("y", 0, 5));
+    Equals formula = new Equals(makeConstant(1), plus, true);
+    ClauseCollector col = new ClauseCollector();
+    col.addToMemory("rangevar x");
+    col.addToMemory("rangevar y");
+    formula.addClauses(col);
+    // the clauses should only check if x⊕y is ≤ 0, = 1 or ≥ 2
+    assertTrue(col.contains("¬x≥1 ∨ x⊕y≥1")); // x ≥ 1 → x⊕y ≥ 1
+    assertTrue(col.contains("¬x≥2 ∨ x⊕y≥2")); // x ≥ 2 → x⊕y ≥ 2
+    assertTrue(col.contains("¬y≥1 ∨ x⊕y≥1")); // y ≥ 1 → x⊕y ≥ 1
+    assertTrue(col.contains("¬y≥2 ∨ x⊕y≥2")); // y ≥ 2 → x⊕y ≥ 2
+    assertTrue(col.contains("¬x≥1 ∨ ¬y≥1 ∨ x⊕y≥2")); // x ≥ 1 ∧ y ≥ 1 → x⊕y ≥ 2
+    assertTrue(col.contains("x≥1 ∨ y≥1 ∨ ¬x⊕y≥1")); // x ≤ 0 ∧ y ≤ 0 → x⊕y ≤ 0
+    assertTrue(col.contains("x≥2 ∨ y≥1 ∨ ¬x⊕y≥2")); // x ≤ 1 ∧ y ≤ 0 → x⊕y ≤ 1
+    assertTrue(col.contains("x≥1 ∨ y≥2 ∨ ¬x⊕y≥2")); // x ≤ 0 ∧ y ≤ 1 → x⊕y ≤ 1
+    assertTrue(col.contains("x⊕y≥1"));  // for the Equals: we want x⊕y to be at least 1
+    assertTrue(col.contains("¬x⊕y≥2"));  // for the Equals: we want x⊕y to be at most 1
+    assertTrue(col.size() == 10);
+  }
+
+  @Test
   public void testAddClausesDefSingleAtom() {
     Variable.reset();
     Equals formula = new Equals(makeVar("x", 1, 5), makeConstant(3), true);

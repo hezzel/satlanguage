@@ -115,6 +115,10 @@ SEMICOLON           : ';' ;
 
 DOTS                : '..' ;
 
+SUM                 : 'Σ' | 'SUM' ;
+
+MID                 : '|' ;
+
 FORALL              : ('∀' | '?A' | '\\forall') ;
 
 EXISTS              : ('∃' | '?E' | '\\exists') ;

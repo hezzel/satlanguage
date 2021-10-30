@@ -89,6 +89,25 @@ public class ParseComparisonTest {
     assertTrue(form.toString().equals("y ≠ i+1"));
   }
 
+  @Test
+  public void testConditionalExpressions() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x    :: Bool", vars);
+    InputReader.declare("y[i] :: Bool for i ∈ {1..5}", vars);
+    InputReader.declare("z[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
+    Formula form = InputReader.readFormulaFromString("x?3 > (¬x → y[j]) ? z[a+1]", vars);
+    assertTrue(form.toString().equals("(¬x → y[j]) ? z[a+1] < x ? 3"));
+  }
+
+  @Test
+  public void testSumExpression() throws ParserException{
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i] :: Bool for i ∈ {1..5}", vars);
+    Formula form =
+      InputReader.readFormulaFromString("Σ { x[i]?i | i ∈ {1..a} with i % 2 = 0 } ≥ 5", vars);
+    assertTrue(form.toString().equals("Σ { x[i] ? i | i ∈ {1..a} with i%2 = 0 } ≥ 5"));
+  }
+
   @Test(expected = language.parser.ParserException.class)
   public void testComparisonWithUndeclaredVariable() throws ParserException {
     VariableList vars = new VariableList();
@@ -100,6 +119,14 @@ public class ParseComparisonTest {
     VariableList vars = new VariableList();
     InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..10}", vars);
     Formula form = InputReader.readFormulaFromString("x[x[4]] = 3", vars);
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testConditionalExpressionWithoutBrackets() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x :: Bool", vars);
+    InputReader.declare("y :: Bool", vars);
+    Formula form = InputReader.readFormulaFromString("3 = x ∧ y ? 4", vars);
   }
 }
 

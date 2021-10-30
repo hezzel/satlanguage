@@ -98,8 +98,8 @@ public class RangePlus implements RangeInteger {
    * _right.
    */
   public void addWelldefinednessClauses(ClauseCollection col) {
-    if (col.isInMemory("sum: " + toString())) return;
-    col.addToMemory("sum: " + toString());
+    if (col.isInMemory("plus: " + toString())) return;
+    col.addToMemory("plus: " + toString());
 
     _left.addWelldefinednessClauses(col);
     _right.addWelldefinednessClauses(col);
