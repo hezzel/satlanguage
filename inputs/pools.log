@@ -6,22 +6,22 @@ define NUMPLAYERS 16
 define NUMPOOLS    3
 define DEVIATION   0    # the percentage we are allowed to deviate from the ideal pool weight
 
-mapping WEIGHT { 1 : 1 ;
-                 2 : 1 ;
-                 3 : 1 ;
-                 4 : 2 ;
-                 5 : 2 ;
-                 6 : 2 ;
-                 7 : 2 ;
-                 8 : 2 ;
-                 9 : 3 ;
-                 10 : 3 ;
-                 11 : 3 ;
-                 12 : 3 ;
-                 13 : 3 ;
-                 14 : 4 ;
-                 15 : 4 ;
-                 16 : 4 }
+function WEIGHT(player) { 1 ⇒ 1 ;
+                          2 ⇒ 1 ;
+                          3 ⇒ 1 ;
+                          4 ⇒ 2 ;
+                          5 ⇒ 2 ;
+                          6 ⇒ 2 ;
+                          7 ⇒ 2 ;
+                          8 ⇒ 2 ;
+                          9 ⇒ 3 ;
+                          10 ⇒ 3 ;
+                          11 ⇒ 3 ;
+                          12 ⇒ 3 ;
+                          13 ⇒ 3 ;
+                          14 ⇒ 4 ;
+                          15 ⇒ 4 ;
+                          16 ⇒ 4 }
 
 define TOTALWEIGHT 40   # the sum of all weights in the WEIGHT mapping
 
@@ -44,8 +44,8 @@ declare poolscore[pool] :: Int ∈ {0..BPMAX}                 for pool ∈ {1..N
 
 ### requirements
 
-∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = Σ { (poolof[player] = pool) ? 1 | player ∈ {1..NUMPLAYERS} }
-∀ pool ∈ {1..NUMPOOLS}. poolscore[pool] = Σ { (poolof[player] = pool) ? WEIGHT(player) | player ∈ {1..NUMPLAYERS} }
+∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = Σ { 1 | player ∈ {1..NUMPLAYERS} | poolof[player] = pool }
+∀ pool ∈ {1..NUMPOOLS}. poolscore[pool] = Σ { WEIGHT(player) | player ∈ {1..NUMPLAYERS} | poolof[player] = pool }
 
 ∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = MINPOOLSIZE → (poolscore[pool] >= SPMIN ∧ poolscore[pool] <= SPMAX)
 ∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = MAXPOOLSIZE → (poolscore[pool] >= BPMIN ∧ poolscore[pool] <= BPMAX)

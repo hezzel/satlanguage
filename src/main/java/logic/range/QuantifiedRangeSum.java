@@ -17,16 +17,20 @@ import java.util.ArrayList;
 public class QuantifiedRangeSum implements QuantifiedRangeInteger {
   private ArrayList<Parameter> _params;
   private QuantifiedRangeInteger _expression;
+  private Variable _truth;
 
-  public QuantifiedRangeSum(ArrayList<Parameter> params, QuantifiedRangeInteger expr) {
+  public QuantifiedRangeSum(ArrayList<Parameter> params, QuantifiedRangeInteger expr,
+                            Variable truevar) {
     _params = new ArrayList<Parameter>(params);
     _expression = expr;
+    _truth = truevar;
   }
 
-  public QuantifiedRangeSum(Parameter param, QuantifiedRangeInteger expr) {
+  public QuantifiedRangeSum(Parameter param, QuantifiedRangeInteger expr, Variable truevar) {
     _params = new ArrayList<Parameter>();
     _params.add(param);
     _expression = expr;
+    _truth = truevar;
   }
 
   public Set<String> queryParameters() {
@@ -55,7 +59,7 @@ public class QuantifiedRangeSum implements QuantifiedRangeInteger {
       newparams.add(new Parameter(_params.get(i).queryName(), min, max, phi));
     }
     QuantifiedRangeInteger expr = _expression.substitute(gamma);
-    return new QuantifiedRangeSum(newparams, expr);
+    return new QuantifiedRangeSum(newparams, expr, _truth);
   }
 
   /** Public for the sake of unit-testing. */
@@ -90,6 +94,7 @@ public class QuantifiedRangeSum implements QuantifiedRangeInteger {
     ArrayList<RangeInteger> parts = new ArrayList<RangeInteger>();
     if (ass == null) ass = new Assignment();
     addComponents(0, ass, parts);
+    if (parts.size() == 0) return new RangeConstant(0, _truth);
     return split(parts, 0, parts.size()-1);
   }
 

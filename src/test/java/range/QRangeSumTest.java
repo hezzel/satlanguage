@@ -43,11 +43,15 @@ public class QRangeSumTest {
     return ret;
   }
 
+  private Variable truth() {
+    return new Variable("TRUE");
+  }
+
   @Test
   public void testSimpleToString() {
     QuantifiedRangeVariable x = createVariable("i");
     Parameter p = new Parameter("i", 1, 10);
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(p, x);
+    QuantifiedRangeSum sum = new QuantifiedRangeSum(p, x, truth());
     assertTrue(sum.toString().equals("Σ { v[i] | i ∈ {1..10} }"));
   }
 
@@ -56,7 +60,7 @@ public class QRangeSumTest {
     ArrayList<Parameter> ps = params("i ∈ {1..5}", "j ∈ {0..i} with i % 2 = 0", "k ∈ {a..b}");
     QuantifiedRangeVariable x = createVariable("a+j");
     QuantifiedRangeInteger expr = new QuantifiedRangePlus(x, createConstant("j - 1"));
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, expr);
+    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, expr, truth());
     assertTrue(sum.toString().equals(
       "Σ { v[a+j] ⊕ j-1 | i ∈ {1..5}, j ∈ {0..i} with i%2 = 0, k ∈ {a..b} }"));
   }
@@ -65,7 +69,7 @@ public class QRangeSumTest {
   public void testParametersOnlyInArgumentsList() {
     ArrayList<Parameter> ps = params("i ∈ {1..a}", "j ∈ {b..2} with j % c + i = 0", null);
     QuantifiedRangeVariable x = createVariable("1");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x);
+    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
     Set<String> parameters = sum.queryParameters();
     assertTrue(parameters.size() == 3);
     assertTrue(parameters.contains("a"));
@@ -77,7 +81,7 @@ public class QRangeSumTest {
   public void testLaterParameterOccursInEarlier() {
     ArrayList<Parameter> ps = params("i ∈ {1..j}", "j ∈ {1..3} with j != k", "k ∈ {i..4}");
     QuantifiedRangeVariable x = createVariable("1");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x);
+    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
     Set<String> parameters = sum.queryParameters();
     assertTrue(parameters.size() == 2);
     assertTrue(parameters.contains("j"));
@@ -88,7 +92,7 @@ public class QRangeSumTest {
   public void testQuantifiersRemovedFromParameters() {
     ArrayList<Parameter> ps = params("i ∈ {1..5}", "j ∈ {1..5}", null);
     QuantifiedRangeVariable x = createVariable("i+j-k");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x);
+    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
     Set<String> parameters = sum.queryParameters();
     assertTrue(parameters.size() == 1);
     assertTrue(parameters.contains("k"));
@@ -101,7 +105,7 @@ public class QRangeSumTest {
     QuantifiedRangeVariable x = createVariable("i+j-k+a+b");
     QuantifiedRangeConstant u = createConstant("u+c");
     QuantifiedRangePlus plus = new QuantifiedRangePlus(u, x);
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, plus);
+    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, plus, truth());
     Substitution subst = new Substitution("i", expr("1"), "j", expr("2"), "k", expr("x"));
     subst.put("a", expr("3"));
     subst.put("b", expr("4"));
@@ -117,7 +121,7 @@ public class QRangeSumTest {
     ArrayList<Parameter> ps = params("i ∈ {1..a} with b != i", "j ∈ {i..3}", null);
     QuantifiedRangeVariable x = createVariable("i+2*j-1");
     QuantifiedRangeConstant u = createConstant("u");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, new QuantifiedRangePlus(x, u));
+    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, new QuantifiedRangePlus(x, u), truth());
     Assignment ass = new Assignment("a", 4, "b", 3, "u", 0);
     ass.put("i", 2);
     ass.put("j", 3);
@@ -136,7 +140,7 @@ public class QRangeSumTest {
   public void testInstantiate() {
     ArrayList<Parameter> ps = params("i ∈ {1..k}", "j ∈ {0..k-1}", null);
     QuantifiedRangeVariable x = createVariable("k*j+i");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x);
+    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
     Assignment ass = new Assignment("k", 3);
     RangeInteger result = sum.instantiate(ass);
     assertTrue(result.toString().equals(

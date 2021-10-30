@@ -1,7 +1,6 @@
 package logic;
 
-import logic.sat.Variable;
-import logic.sat.ClauseCollection;
+import logic.sat.*;
 import logic.parameter.Parameter;
 import logic.parameter.ParameterList;
 import logic.parameter.Substitution;
@@ -112,6 +111,8 @@ public class VariableList {
 
   /** Adds clauses to col which necessitate that every integer variable is really an integer. */
   public void addWelldefinednessClauses(ClauseCollection col) {
+    col.addClause(new Clause(new Atom(queryTrueVariable(), true)));
+    col.addClause(new Clause(new Atom(queryFalseVariable(), false)));
     for (RangeVariable x : _rangevars.values()) x.addWelldefinednessClauses(col);
     for (ParamRangeVar y : _paramrangevars.values()) y.addWelldefinednessClauses(col);
   }
