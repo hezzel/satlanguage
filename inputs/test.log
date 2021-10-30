@@ -44,8 +44,8 @@ declare poolscore[pool] :: Int ∈ {0..BPMAX}                 for pool ∈ {1..N
 
 ### requirements
 
-∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = Σ { (poolof[player] = pool) ? 1 | player ∈ {1..NUMPLAYERS} }
-∀ pool ∈ {1..NUMPOOLS}. poolscore[pool] = Σ { (poolof[player] = pool) ? WEIGHT(player) | player ∈ {1..NUMPLAYERS} }
+∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = Σ { 1 | player ∈ {1..NUMPLAYERS} | poolof[player] = pool }
+∀ pool ∈ {1..NUMPOOLS}. poolscore[pool] = Σ { WEIGHT(player) | player ∈ {1..NUMPLAYERS} | poolof[player] = pool }
 
 ∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = MINPOOLSIZE → (poolscore[pool] >= SPMIN ∧ poolscore[pool] <= SPMAX)
 ∀ pool ∈ {1..NUMPOOLS}. poolsize[pool] = MAXPOOLSIZE → (poolscore[pool] >= BPMIN ∧ poolscore[pool] <= BPMAX)

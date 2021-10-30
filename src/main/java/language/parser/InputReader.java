@@ -761,9 +761,17 @@ public class InputReader {
         verifyChildIsRule(child, 2, "intexpression", "integer expression");
         verifyChildIsToken(child, 3, "MID", "|");
         verifyChildIsRule(child, 4, "parameterlist", "a parameter list");
-        verifyChildIsToken(child, 5, "BRACECLOSE", "closing brace }");
         QuantifiedRangeInteger expr = readIntegerExpression(child.getChild(2), lst);
         ArrayList<Parameter> params = readOpenParameterList(child.getChild(4));
+        if (child.getChildCount() == 6) {
+          verifyChildIsToken(child, 5, "BRACECLOSE", "closing brace }");
+          return new QuantifiedRangeSum(params, expr);
+        }
+        verifyChildIsToken(child, 5, "MID", "|");
+        verifyChildIsRule(child, 6, "formula", "a formula");
+        verifyChildIsToken(child, 7, "BRACECLOSE", "closing brace }");
+        Formula formula = readFormula(child.getChild(6), lst);
+        expr = new QuantifiedConditionalRangeInteger(formula, expr, lst.queryTrueVariable());
         return new QuantifiedRangeSum(params, expr);
       }
       if (kind.equals("rule paramvar")) {

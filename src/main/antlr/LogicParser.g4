@@ -175,7 +175,7 @@ rangeplus           : RANGEPLUS
 intexpressionmain   : IDENTIFIER
                     | BRACKETOPEN intexpression BRACKETCLOSE
                     | condition QUESTION intexpression
-                    | SUM BRACEOPEN intexpression MID parameterlist BRACECLOSE
+                    | SUM BRACEOPEN intexpression MID parameterlist (MID formula)? BRACECLOSE
                     | paramvar
                     | pexpressionminus
                     ;

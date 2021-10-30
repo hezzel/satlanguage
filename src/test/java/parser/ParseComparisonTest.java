@@ -104,7 +104,7 @@ public class ParseComparisonTest {
     VariableList vars = new VariableList();
     InputReader.declare("x[i] :: Bool for i ∈ {1..5}", vars);
     Formula form =
-      InputReader.readFormulaFromString("Σ { x[i]?i | i ∈ {1..a} with i % 2 = 0 } ≥ 5", vars);
+      InputReader.readFormulaFromString("Σ { i | i ∈ {1..a} with i % 2 = 0 | x[i] } ≥ 5", vars);
     assertTrue(form.toString().equals("Σ { x[i] ? i | i ∈ {1..a} with i%2 = 0 } ≥ 5"));
   }
 
