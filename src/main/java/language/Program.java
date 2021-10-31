@@ -56,20 +56,12 @@ public class Program {
     catch (ParserException e) { throw new Error(e); }
   }
 
-  public void execute() {
-    Solution sol = _reqs.solve();
+  public void execute(boolean debug) {
+    Solution sol = _reqs.solve(debug);
     if (sol == null) System.out.println("Could not determine whether the problem is solvable.");
     else if (!sol.querySatisfiable()) System.out.println("The problem is not solvable.");
     else if (_statement == null) System.out.println("The problem is solvable.");
     else _statement.execute(new ProgramState(sol));
-  }
-
-  public void debugOutput() {
-    String db = _reqs.queryDebugOutput();
-    if (db == null) {
-      System.out.println("You cannot print debug output until the program has been executed.");
-    }
-    else System.out.println(db);
   }
 }
 

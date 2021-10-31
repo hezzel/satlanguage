@@ -70,12 +70,12 @@ public class Clause {
 
   /** Returns a human-readable description of the clause. */
   public String toString() {
-    String ret = "";
+    StringBuilder ret = new StringBuilder();
     for (int i = 0; i < _atoms.size(); i++) {
-      if (i != 0) ret += " ∨ ";
-      ret += _atoms.get(i).toString();
+      if (i != 0) ret.append(" ∨ ");
+      ret.append(_atoms.get(i).toString());
     }
-    return ret;
+    return ret.toString();
   }
 
   /** Returns whether the given clause returns exactly the same atoms as the other one. */

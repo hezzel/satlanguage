@@ -33,11 +33,12 @@ public class ClauseCollection {
 
   /** Prints the current collection to a string in a human-readable way. */
   public String toString() {
-    String ret = ""; 
+    StringBuilder ret = new StringBuilder();
     for (int i = 0; i < _clauses.size(); i++) {
-      ret += _clauses.get(i).toString() + "\n";
+      ret.append(_clauses.get(i).toString());
+      ret.append("\n");
     }   
-    return ret;
+    return ret.toString();
   }
 }
 

@@ -35,6 +35,14 @@ public class ParseDefinitionTest {
     assertTrue(square == 9);
   }
 
+  @Test
+  public void testUseNegativeMacro() throws ParserException {
+    DefinitionData dd = defs();
+    int a = InputReader.readMacroFromString("define A 3", dd);
+    int b = InputReader.readMacroFromString("define B -A", dd);
+    assertTrue(b == -3);
+  }
+
   @Test(expected = language.parser.ParserException.class)
   public void testUseUndefinedDefinitions() throws ParserException {
     InputReader.readMacroFromString("define SQUARE SIZE * SIZE", defs());

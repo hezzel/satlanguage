@@ -13,12 +13,10 @@ import java.util.ArrayList;
 public class RequirementsList {
   private VariableList _variables;
   private ArrayList<Formula> _formulas;
-  private String _debugOutput;
 
   public RequirementsList(VariableList vars) {
     _variables = vars;
     _formulas = new ArrayList<Formula>();
-    _debugOutput = null;
   }
 
   public VariableList queryVariables() {
@@ -37,9 +35,13 @@ public class RequirementsList {
    * and only if the other is.
    */
   public SatProblem createSat() {
+    System.err.println("Generating SAT problem...");
     SatProblem problem = new SatProblem();
     _variables.addWelldefinednessClauses(problem);
-    for (int i = 0; i < _formulas.size(); i++) _formulas.get(i).addClauses(problem);
+    for (int i = 0; i < _formulas.size(); i++) {
+      System.err.println(_formulas.get(i).toString());
+      _formulas.get(i).addClauses(problem);
+    }
     return problem;
   }
 
@@ -48,18 +50,15 @@ public class RequirementsList {
    * exists.  If not, the negative Solution is returned.
    * If the sat solver cannot decide the problem or a file issue occurs, null is returned instead.
    */
-  public Solution solve() {
+  public Solution solve(boolean debug) {
     SatProblem problem = createSat();
-    _debugOutput = problem.toString();
+    if (debug) {
+      System.err.println("Creating debug output...");
+      String debugOutput = problem.toString();
+      System.out.println(debugOutput);
+    }
+    System.err.println("Sending problem to SAT solver...");
     return problem.solve();
-  }
-
-  /**
-   * Returns a string description of the SAT problem corresponding to this requirements list, as it
-   * was created when the program was executed.
-   */
-  public String queryDebugOutput() {
-    return _debugOutput;
   }
 
   /** This returns a human-readable presentation of the requirements list. */

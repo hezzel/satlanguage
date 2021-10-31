@@ -165,8 +165,8 @@ public class QRangePlusTest {
     RangeInteger i = plus.instantiate(ass);
     assertTrue(i.toString().equals(
       "bplus(0, 18, " +
-        "bplus(0, 12, qrpt[5] ⊕ qrpt[7]) ⊕ " +    // this first because of re-ordering in RangePlus
-        "bplus(0, 6, bplus(0, 3, qrpt[1] ⊕ qrpt[2]) ⊕ qrpt[3]))"));
+        "bplus(0, 6, bplus(0, 3, qrpt[1] ⊕ qrpt[2]) ⊕ qrpt[3]) ⊕ " +
+        "bplus(0, 12, qrpt[5] ⊕ qrpt[7]))"));
   }
 }
 

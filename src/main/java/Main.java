@@ -24,7 +24,6 @@ public class Main {
       "}");
     */
     program.readFromFile("inputs/test.log");
-    program.execute();
-    //program.debugOutput();
+    program.execute(false);
   }
 }

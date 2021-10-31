@@ -145,7 +145,7 @@ public class RangePlusTest {
     Variable t = new Variable("TRUE");
     RangeVariable x = new RangeVariable("x", 1, 5, t);
     RangeConstant two = new RangeConstant(2, t);
-    RangePlus p = new RangePlus(x, two);
+    RangePlus p = new RangePlus(two, x);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     p.addWelldefinednessClauses(col);

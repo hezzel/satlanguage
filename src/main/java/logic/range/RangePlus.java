@@ -22,14 +22,8 @@ public class RangePlus implements RangeInteger {
    * a + b where the given minimum and maximum are exactly the true minimum and maximum of a + b.
    */
   public RangePlus(RangeInteger left, RangeInteger right) {
-    if (left.toString().compareTo(right.toString()) < 0) {
-      _left = left;
-      _right = right;
-    }
-    else {
-      _left = right;
-      _right = left;
-    }
+    _left = left;
+    _right = right;
     _minimum = _left.queryMinimum() + _right.queryMinimum();
     _maximum = _left.queryMaximum() + _right.queryMaximum();
     _vars = null;

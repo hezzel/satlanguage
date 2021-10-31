@@ -292,23 +292,28 @@ public class InputReader {
   }
 
   private int readInteger(ParseTree tree) throws ParserException {
+    int multiplier = 1;
+    int i = 0;
     String kind = checkChild(tree, 0);
-    if (kind.equals("token INTEGER")) {
-      try { return Integer.parseInt(tree.getText()); }
-      catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
-    }
+    
     if (kind.equals("token MINUS")) {
-      verifyChildIsToken(tree, 1, "INTEGER", "a positive integer");
-      try { return Integer.parseInt(tree.getText()); }
+      multiplier = -1;
+      i = 1;
+      kind = checkChild(tree, 1);
+    }
+
+    if (kind.equals("token INTEGER")) {
+      try { return multiplier * Integer.parseInt(tree.getChild(i).getText()); }
       catch (NumberFormatException exc) { throw buildError(tree, "could not parse integer"); }
     }
     if (kind.equals("token DEFINITION")) {
-      String name = tree.getChild(0).getText();
+      String name = tree.getChild(i).getText();
       if (!_defs._macros.containsKey(name)) {
         throw new ParserException(firstToken(tree), "Encountered undefined macro " + name);
       }
-      return _defs._macros.get(name);
+      return multiplier * _defs._macros.get(name);
     }
+
     throw buildError(tree, "unexpected " + kind + " in integer");
   }
 

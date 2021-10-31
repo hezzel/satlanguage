@@ -1,0 +1,29 @@
+define SIZE 40
+
+declare queen[x,y] :: Bool for x ∈ {1..SIZE}, y ∈ {1..SIZE}
+declare rowindex[y] :: Int ∈ {1..SIZE} for y ∈ {1..SIZE}
+declare colindex[x] :: Int ∈ {1..SIZE} for x ∈ {1..SIZE}
+declare diag1index[i] :: Int ∈ {1..SIZE} for i ∈ {2..SIZE*2}
+declare diag2index[i] :: Int ∈ {1..SIZE} for i ∈ {-1*SIZE..SIZE}
+
+# there is a queen in every row
+∀ y ∈ {1..SIZE}.∃ x ∈ {1..SIZE}.queen[x,y]
+
+# there is at most one queen per row
+∀ y ∈ {1..SIZE}. ∀ x ∈ {1..SIZE}. queen[x,y] → rowindex[y] = x
+# there is only one queen per column
+∀ x ∈ {1..SIZE}. ∀ y ∈ {1..SIZE}. queen[x,y] → colindex[x] = y
+# there is only one queen per diagonal
+∀ i ∈ {2..SIZE*2}.     ∀ x ∈ {1..SIZE}. ∀ y ∈ {1..SIZE} with x + y = i. queen[x,y] → diag1index[i] = x
+∀ i ∈ {-1*SIZE..SIZE}. ∀ x ∈ {1..SIZE}. ∀ y ∈ {1..SIZE} with x - y = i. queen[x,y] → diag2index[i] = x
+
+===============
+
+for y := 1 to SIZE do {
+  for x := 1 to SIZE do {
+    if queen[x,y] then print("Q")
+    else print(".")
+  }
+  println()
+}
+

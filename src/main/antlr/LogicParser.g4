@@ -13,6 +13,7 @@ options {
 integer             : INTEGER
                     | MINUS INTEGER
                     | DEFINITION
+                    | MINUS DEFINITION
                     ;
 
 /********** PExpression **********/
