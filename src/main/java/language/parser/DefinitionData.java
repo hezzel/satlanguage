@@ -6,10 +6,10 @@ import language.execution.StringFunction;
 import java.util.TreeMap;
 
 public class DefinitionData {
-  TreeMap<String,Integer> _macros;
-  TreeMap<String,Function> _functions;
-  TreeMap<String,Property> _properties;
-  TreeMap<String,StringFunction> _enums;
+  private TreeMap<String,Integer> _macros;
+  private TreeMap<String,Function> _functions;
+  private TreeMap<String,Property> _properties;
+  private TreeMap<String,StringFunction> _enums;
 
   public DefinitionData() {
     _macros = new TreeMap<String,Integer>();
@@ -22,15 +22,19 @@ public class DefinitionData {
     _macros.put(m, value);
   }
 
-  public void setFunction(String m, Function value) {
-    _functions.put(m, value);
+  public void setFunction(String f, Function value) {
+    _functions.put(f, value);
+  }
+
+  public void setProperty(String p, Property value) {
+    _properties.put(p, value);
   }
 
   public void setEnum(String s, StringFunction value) {
     _enums.put(s, value);
   }
 
-  public int getMacro(String m) {
+  public Integer getMacro(String m) {
     return _macros.get(m);
   }
   

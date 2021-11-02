@@ -47,9 +47,11 @@ DATA                : 'data' ;
 
 ENUM                : 'enum' ;
 
-IDENTIFIER          : [a-z] [a-z0-9A-Z_]* ;
+SUM                 : 'Σ' | 'SUM' ;
 
-DEFINITION          : [A-Z] [a-z0-9A-Z_]* ;
+UNDERSCORE          : '_' ;
+
+IDENTIFIER          : [a-zA-Z_] [a-z0-9A-Z_]* ;
 
 INTEGER             : '0' | [1-9] [0-9]* ;
 
@@ -115,8 +117,6 @@ IFF                 : ('↔' | '<->' | '\\leftrightarrow') ;
 
 FUNCARROW           : ('⇒' | '=>' | '\\Rightarrow') ;
 
-UNDERSCORE          : '_' ;
-
 QUESTION            : '?' ;
 
 COLON               : ':' ;
@@ -124,8 +124,6 @@ COLON               : ':' ;
 SEMICOLON           : ';' ;
 
 DOTS                : '..' ;
-
-SUM                 : 'Σ' | 'SUM' ;
 
 MID                 : '|' ;
 

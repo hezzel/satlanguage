@@ -52,19 +52,23 @@ public class ParseQuantifiedFormulaTest {
     assertTrue(form.toString().equals("x[2+5,3]"));
   }
 
-  @Test
-  public void testBasicForall() {
+  @Test(expected = language.parser.ParserException.class)
+  public void testQuantifierParameterIsFunction() throws ParserException {
     VariableList vars = new VariableList();
-    try {
-      InputReader.declare("x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}", vars);
-      Formula form = InputReader.readFormulaFromString("∀ i ∈ {2..5}.x[i- 1, a]", vars);
-      assertTrue(form instanceof Forall);
-      assertFalse(form.queryClosed());
-      assertTrue(form.toString().equals("∀ i ∈ {2..5}. x[i-1,a]"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    DefinitionData defs = new DefinitionData();
+    defs.setFunction("x", new logic.parameter.Function("x", "y"));
+    InputReader.declare("y :: Bool", vars);
+    InputReader.readClosedFormulaFromString("∀ x ∈ {1..2}.y", vars, defs);
+  }
+
+  @Test
+  public void testBasicForall() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}", vars);
+    Formula form = InputReader.readFormulaFromString("∀ i ∈ {2..5}.x[i- 1, a]", vars);
+    assertTrue(form instanceof Forall);
+    assertFalse(form.queryClosed());
+    assertTrue(form.toString().equals("∀ i ∈ {2..5}. x[i-1,a]"));
   }
 
   @Test

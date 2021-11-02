@@ -10,17 +10,21 @@ options {
 
 /********** general **********/
 
-integer             : INTEGER
-                    | MINUS INTEGER
-                    | DEFINITION
-                    | MINUS DEFINITION
-                    | STRING
+integer             : MINUS? INTEGER
+                    | MINUS? IDENTIFIER
+                    | MINUS? STRING
+                    ;
+
+/********** parametrised variables **********/
+
+paramvar            : IDENTIFIER SBRACKETOPEN pexpression (COMMA pexpression)* SBRACKETCLOSE
+                    ;
+
+variable            : IDENTIFIER
+                    | paramvar
                     ;
 
 /********** PExpression **********/
-
-onlypexpression     : pexpression EOF
-                    ;
 
 pexpression         : pexpressionminus
                     | pexpression PLUS pexpressionminus
@@ -36,23 +40,23 @@ pexpressiontimes    : pexpressionunit
                     | pexpressiontimes MOD pexpressionunit
                     ;
 
-pexpressionunit     : IDENTIFIER
+pexpressionunit     : MINUS? IDENTIFIER
+                    | integer
                     | MIN BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
                     | MAX BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
                     | BRACKETOPEN pexpression BRACKETCLOSE
-                    | DEFINITION BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
-                    | MID DEFINITION MID
-                    | integer
+                    | IDENTIFIER BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
+                    | MID IDENTIFIER MID
                     | paramvar
+                    ;
+
+onlypexpression     : pexpression EOF
                     ;
 
 /********** PConstraint **********/
 
-onlypconstraint     : pconstraint EOF
-                    ;
-
-pconstraint         : pconstraintunit pconstraintand*
-                    | pconstraintunit pconstraintor*
+pconstraint         : pconstraintunit (AND pconstraintunit)*
+                    | pconstraintunit (OR pconstraintunit)*
                     ;
 
 pconstraintunit     : BRACKETOPEN pconstraint BRACKETCLOSE
@@ -64,13 +68,7 @@ pconstraintunit     : BRACKETOPEN pconstraint BRACKETCLOSE
                     | variable
                     ;
 
-pconstraintand      : AND pconstraintunit
-                    ;
-
-pconstraintor       : OR pconstraintunit
-                    ;
-
-pconstraintproperty : DEFINITION BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
+pconstraintproperty : IDENTIFIER BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
                     ;
 
 pconstraintrelation : pexpression GREATER pexpression
@@ -81,10 +79,10 @@ pconstraintrelation : pexpression GREATER pexpression
                     | pexpression EQUALS pexpression
                     ;
 
-/********** Parameter and parameterlist **********/
-
-onlyparameter       : parameter EOF
+onlypconstraint     : pconstraint EOF
                     ;
+
+/********** Parameter and parameterlist **********/
 
 parameter           : IDENTIFIER IN range
                     ;
@@ -95,14 +93,10 @@ range               : BRACEOPEN pexpression DOTS pexpression BRACECLOSE (WITH pc
 parameterlist       : parameter (COMMA parameter)*
                     ;
 
-/********** (parametrised) variables **********/
-
-paramvar            : IDENTIFIER SBRACKETOPEN pexprlist SBRACKETCLOSE
+onlyparameter       : parameter EOF
                     ;
 
-pexprlist           :
-                    | pexpression (COMMA pexpression)*
-                    ;
+/********** declarations **********/
 
 boolvardec          : IDENTIFIER TYPEOF BOOLTYPE
                     ;
@@ -145,10 +139,6 @@ smallformula        : BRACKETOPEN formula BRACKETCLOSE
                     | ITE BRACKETOPEN formula COMMA formula COMMA formula BRACKETCLOSE
                     | intcomparison
                     | variable
-                    ;
-
-variable            : IDENTIFIER
-                    | paramvar
                     ;
 
 junction            : smallformula AND formula
@@ -198,11 +188,6 @@ onlyformula         : formula EOF
 
 /********** The execution language **********/
 
-stringexpr          : STRING
-                    | DEFINITION BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
-                    | pexpression
-                    ;
-
 statement           : ifstatement
                     | forstatement
                     | printstatement
@@ -222,21 +207,29 @@ printstatement      : PRINT BRACKETOPEN BRACKETCLOSE
                     | PRINTLN BRACKETOPEN stringexpr ( COMMA stringexpr)* BRACKETCLOSE
                     ;
 
+stringexpr          : STRING
+                    | IDENTIFIER BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
+                    | pexpression
+                    ;
+
 block               : BRACEOPEN statement* BRACECLOSE
                     ;
 
 /********** Functions and properties **********/
 
-macro               : DEFINE DEFINITION pexpression
+macro               : DEFINE IDENTIFIER pexpression
                     ;
 
-function            : FUNCTION DEFINITION BRACKETOPEN IDENTIFIER (COMMA IDENTIFIER)* BRACKETCLOSE BRACEOPEN (mappingentry SEMICOLON)* mappingentry BRACECLOSE
+function            : FUNCTION IDENTIFIER BRACKETOPEN funcargs BRACKETCLOSE BRACEOPEN funcentries BRACECLOSE
+                    ;
+
+funcargs            : IDENTIFIER (COMMA IDENTIFIER)*
+                    ;
+
+funcentries         : mappingentry (SEMICOLON mappingentry)* SEMICOLON?
                     ;
 
 mappingentry        : match FUNCARROW pexpression
-                    ;
-
-property            : PROPERTY DEFINITION BRACEOPEN (match SEMICOLON)* match BRACECLOSE
                     ;
 
 match               : optionalinteger
@@ -247,14 +240,30 @@ optionalinteger     : integer
                     | UNDERSCORE
                     ;
 
-enumerate           : ENUM DEFINITION BRACEOPEN (STRING | DEFINITION) (SEMICOLON (STRING | DEFINITION))* BRACECLOSE
+property            : PROPERTY IDENTIFIER BRACEOPEN propentries BRACECLOSE
                     ;
 
-data                : DATA DEFINITION BRACKETOPEN DEFINITION (COMMA DEFINITION)* BRACKETCLOSE BRACEOPEN dataentry (SEMICOLON dataentry)* BRACECLOSE
+propentries         : match (SEMICOLON match)* SEMICOLON?
                     ;
 
-dataentry           : (STRING | DEFINITION) FUNCARROW integer
-                    | (STRING | DEFINITION) FUNCARROW BRACKETOPEN integer (COMMA integer)* BRACKETCLOSE
+enumerate           : ENUM IDENTIFIER BRACEOPEN enumentries BRACECLOSE
+                    ;
+
+enumentries         : enumkey (SEMICOLON enumkey)* SEMICOLON?
+                    ;
+
+enumkey             : STRING
+                    | IDENTIFIER
+                    ;
+
+data                : DATA IDENTIFIER BRACKETOPEN funcargs BRACKETCLOSE BRACEOPEN dataentries BRACECLOSE
+                    ;
+
+dataentries         : dataentry (SEMICOLON dataentry)* SEMICOLON?
+                    ;
+
+dataentry           : enumkey FUNCARROW integer
+                    | enumkey FUNCARROW BRACKETOPEN integer (COMMA integer)* BRACKETCLOSE
                     ;
 
 definition          : macro

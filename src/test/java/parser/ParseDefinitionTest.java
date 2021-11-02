@@ -71,8 +71,8 @@ public class ParseDefinitionTest {
   @Test
   public void testMappingInDefsAfterReading() throws ParserException {
     DefinitionData dd = defs();
-    Function f = InputReader.readFunctionFromString("function TEST(i) { 1 ⇒ 2 ; 3 ⇒ 4 }", dd);
-    assertTrue(dd.getFunction("TEST") == f);
+    Function f = InputReader.readFunctionFromString("function test(i) { 1 ⇒ 2 ; 3 ⇒ 4 }", dd);
+    assertTrue(dd.getFunction("test") == f);
   }
 
   @Test
@@ -94,7 +94,7 @@ public class ParseDefinitionTest {
   @Test
   public void testReadLongUnaryFunction() throws ParserException {
     Function f = InputReader.readFunctionFromString(
-      "function HELLO(i) { 1 => 7 ; 2 => -4 ; -1 => 3 ; _ => i }", defs());
+      "function HELLO(i) { 1 => 7 ; 2 => -4 ; -1 => 3 ; _ => i ; }", defs());
     assertTrue(f.lookup(1) == 7);
     assertTrue(f.lookup(2) == -4);
     assertTrue(f.lookup(-1) == 3);
@@ -122,7 +122,7 @@ public class ParseDefinitionTest {
   @Test
   public void testCatchAll() throws ParserException {
     Function f = InputReader.readFunctionFromString(
-      "function HELLO(i,j) { _ ⇒ 9 ; _ ⇒ 10 }", defs());
+      "function HELLO(i,j) { _ ⇒ 9 ; _ ⇒ 10 ; }", defs());
     ArrayList<Integer> arr = new ArrayList<Integer>();
     arr.add(5);
     arr.add(7);
@@ -152,9 +152,9 @@ public class ParseDefinitionTest {
     assertTrue(dd.getMacro("ThatOne") == 2);
     // check if the functions are well-defined
     Function kind = dd.getFunction("KIND");
-    assertTrue(kind.toString().equals("KIND(student) { 1 ⇒ 3 ; 2 ⇒ 7 }"));
+    assertTrue(kind.toString().equals("KIND(STUDENT) { 1 ⇒ 3 ; 2 ⇒ 7 }"));
     Function lunch = dd.getFunction("WANTSLUNCH");
-    assertTrue(lunch.toString().equals("WANTSLUNCH(student) { 1 ⇒ 1 ; 2 ⇒ 0 }"));
+    assertTrue(lunch.toString().equals("WANTSLUNCH(STUDENT) { 1 ⇒ 1 ; 2 ⇒ 0 }"));
   }
 
   @Test
@@ -163,7 +163,7 @@ public class ParseDefinitionTest {
     InputReader.readDataFromString(
       "data STUDENT(KIND) {" +
       "  \"This one\" ⇒ 3 ; " +
-      "  ThatOne      ⇒ 6 " +
+      "  ThatOne      ⇒ 6 ; " +
       "}", dd);
     
     // check if the enum is well-defined
@@ -171,7 +171,7 @@ public class ParseDefinitionTest {
     assertTrue(student != null);
     // check if the functions are well-defined
     Function kind = dd.getFunction("KIND");
-    assertTrue(kind.toString().equals("KIND(student) { 1 ⇒ 3 ; 2 ⇒ 6 }"));
+    assertTrue(kind.toString().equals("KIND(STUDENT) { 1 ⇒ 3 ; 2 ⇒ 6 }"));
   }
 
   @Test(expected = language.parser.ParserException.class)
@@ -294,6 +294,11 @@ public class ParseDefinitionTest {
   public void testReadDataDuplicateFunction() throws ParserException {
     InputReader.readDataFromString(
       "data STUDENT(KIND, KIND) {\"This one\" ⇒ (3, 1) }", defs());
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testReadFunctionWithDuplicateArgument() throws ParserException {
+    InputReader.readFunctionFromString("function f(a, b, a) { (1,2,1) ⇒ 9 }", defs());
   }
 }
 

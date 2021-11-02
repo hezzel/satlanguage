@@ -6,6 +6,7 @@ import logic.formula.*;
 import logic.VariableList;
 import language.parser.InputReader;
 import language.parser.ParserException;
+import language.parser.DefinitionData;
 
 public class ParseComparisonTest {
   @Test
@@ -106,6 +107,16 @@ public class ParseComparisonTest {
     Formula form =
       InputReader.readFormulaFromString("Σ { i | i ∈ {1..a} with i % 2 = 0 | x[i] } ≥ 5", vars);
     assertTrue(form.toString().equals("Σ { x[i] ? i | i ∈ {1..a} with i%2 = 0 } ≥ 5"));
+  }
+
+  @Test
+  public void testComparisonWithMacro() throws ParserException {
+    VariableList vars = new VariableList();
+    DefinitionData dd = new DefinitionData();
+    InputReader.readMacroFromString("define A 5", dd);
+    InputReader.declare("x :: Int ∈ {1..10}", vars);
+    Formula form = InputReader.readClosedFormulaFromString("x ≥ A", vars, dd);
+    assertTrue(form.toString().equals("x ≥ 5"));
   }
 
   @Test(expected = language.parser.ParserException.class)

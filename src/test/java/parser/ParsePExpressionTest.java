@@ -49,7 +49,7 @@ public class ParsePExpressionTest {
 
   @Test(expected = language.parser.ParserException.class)
   public void testReadParamWithIllegalStart() throws ParserException {
-    PExpression e = InputReader.readPExpressionFromString("Hello");
+    PExpression e = InputReader.readPExpressionFromString("0Hello");
   }
 
   @Test

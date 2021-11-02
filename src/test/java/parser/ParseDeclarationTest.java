@@ -10,6 +10,7 @@ import logic.range.ParamRangeVar;
 import logic.VariableList;
 import language.parser.InputReader;
 import language.parser.ParserException;
+import language.parser.DefinitionData;
 
 public class ParseDeclarationTest {
   @Test
@@ -198,6 +199,22 @@ public class ParseDeclarationTest {
   public void testExpressionsInRangeDeclaration() throws ParserException {
     VariableList lst = new VariableList();
     InputReader.declare("hello[i+1] :: Int ∈ {0..10} for i ∈ {0..3}", lst);
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testDeclareVariableDefinedAsProperty() throws ParserException {
+    VariableList lst = new VariableList();
+    DefinitionData defs = new DefinitionData();
+    InputReader.readPropertyFromString("property p { (1,1) ; (2,2) ; }", defs);
+    InputReader.declare("p[i] :: Bool for i ∈ {1..10}", lst, defs);
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testDeclareVariableArgumentDefinedAsEnum() throws ParserException {
+    VariableList lst = new VariableList();
+    DefinitionData defs = new DefinitionData();
+    InputReader.readEnumFromString("enum e { x ; y }", defs);
+    InputReader.declare("p[e] :: Bool for e ∈ {1..10}", lst, defs);
   }
 }
 
