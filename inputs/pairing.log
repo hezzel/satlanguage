@@ -27,22 +27,18 @@ define TotalFighterWeight 20
 # an even number of fighters.  Hence, if you want 5 fights each, one fighter (or 3, 5, or 7) should
 # be given 6 or 4 fights instead.  Use this function to specify how many fights everyone gets.
 function FightsPP(fighter) {
-  "Mary"  ⇒ 1 ;
-  "Emily" ⇒ 6 ;
+  "Carol" ⇒ 6 ;
   _       ⇒ 5
 }
 
-# This lists the players we have lost, and for whom we do not need to optimise fight weight.
-property DroppedOut { "Mary" }
-
 # To calculate the total number of fights, add FightsPP(fighter) for all the fighters, and divide
 # by 2.
-define NumFights (6 * 1 + 1 * 1 + 5 * 7) / 2
+define NumFights (6 * 1 + 5 * 8) / 2
 
 # Use this to set how much the expected total weight per player is allowed to deviate from the
 # average.  With a higher value, the problem becomes easier to solve, but a lower value gives a
 # better fight division.  The deviation is a percentage, so should be between 0 and 10.
-define Deviation 3
+define Deviation 0
 
 # Use this to set the gap between fights each player should have
 define MINGAP 2
@@ -80,8 +76,8 @@ declare player2[i] :: Int ∈ {2..NumFighters} for i ∈ {1..NumFights}
 ∀ x ∈ {1..NumFighters}. Σ { 1 | y ∈ {1..NumFighters} | fights[x,y] } = FightsPP(x) + 0    # + 0 because otherwise (x) is parsed as a formula!
 
 # the totalweight variable represents the weights of everyone's fights, plus their own
-# (due to the way the variables are declared, this immediately guarantees that the sum is in the expected range)
-∀ x ∈ {1..NumFighters} with ¬DroppedOut(x). totalweight[x] = Weight(x) + Σ { Weight(y) | y ∈ {1..NumFighters} | fights[x,y] }
+# (ue to the way the variables are declared, this immediately guarantees that the sum is in the expected range)
+∀ x ∈ {1..NumFighters}. totalweight[x] = Weight(x) + Σ { Weight(y) | y ∈ {1..NumFighters} | fights[x,y] }
 
 # every scheduled fight contains two distinct fighters
 ∀ i ∈ {1..NumFights}. player1[i] < player2[i]
@@ -93,20 +89,11 @@ declare player2[i] :: Int ∈ {2..NumFighters} for i ∈ {1..NumFights}
 ∀ k ∈ {1..MINGAP}. ∀ i ∈ {1..NumFights-k}. ∀ x ∈ {1..NumFighters}. player1[i] != player1[i+k] ∧ player1[i] != player2[i+k] ∧ player2[i] != player1[i+k] ∧ player2[i] != player2[i+k]
 
 # ... but I do fight again in the next MAXGAP+1 rounds
-∀ i ∈ {1..NumFights-MAXGAP-1}. ∀ x ∈ {1..NumFighters-1} with ¬DroppedOut(x). player1[i] = x → ∃ k ∈ {MINGAP+1..MAXGAP+1}. player1[i+k] = x ∨ player2[i+k] = x
-∀ i ∈ {1..NumFights-MAXGAP-1}. ∀ x ∈ {2..NumFighters} with ¬DroppedOut(x). player2[i] = x → ∃ k ∈ {MINGAP+1..MAXGAP+1}. player1[i+k] = x ∨ player2[i+k] = x
+∀ i ∈ {1..NumFights-MAXGAP-1}. ∀ x ∈ {1..NumFighters-1}. player1[i] = x → ∃ k ∈ {MINGAP+1..MAXGAP+1}. player1[i+k] = x ∨ player2[i+k] = x
+∀ i ∈ {1..NumFights-MAXGAP-1}. ∀ x ∈ {2..NumFighters}. player2[i] = x → ∃ k ∈ {MINGAP+1..MAXGAP+1}. player1[i+k] = x ∨ player2[i+k] = x
 
 # There is a system of rounds: in each round, a player fights at most once
 ∀ r ∈ {0..NumRounds-1}. ∀ x ∈ {1..NumFighters}. Σ { 1 | i ∈ {1..NumFights} with (i-1)/RoundSize = r | player1[i] = x ∨ player2[i] = x } ≤ 1
-
-player1[1] = "Tanya"
-player2[1] = "Ilse"
-player1[2] = "Paula"
-player2[2] = "Sophie"
-player1[3] = "Carol"
-player2[3] = "Betty"
-player1[4] = "Mary"
-player2[4] = "Emily"
 
 ===============================================================================
 
