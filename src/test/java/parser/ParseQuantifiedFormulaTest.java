@@ -5,52 +5,51 @@ import logic.formula.*;
 import logic.VariableList;
 import language.parser.InputReader;
 import language.parser.ParserException;
+import language.parser.DefinitionData;
 
 public class ParseQuantifiedFormulaTest {
   @Test
-  public void testReadSimpleParametrisedBooleanVariable() {
+  public void testReadSimpleParametrisedBooleanVariable() throws ParserException {
     VariableList vars = new VariableList();
-    try {
-      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
-      Formula form = InputReader.readFormulaFromString("x[b]", vars);
-      assertTrue(form instanceof QuantifiedAtom);
-      assertFalse(form.queryClosed());
-      assertTrue(form.toString().equals("x[b]"));
-      assertTrue(form.queryAtom() == null);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
+    Formula form = InputReader.readFormulaFromString("x[b]", vars);
+    assertTrue(form instanceof QuantifiedAtom);
+    assertFalse(form.queryClosed());
+    assertTrue(form.toString().equals("x[b]"));
+    assertTrue(form.queryAtom() == null);
   }
 
   @Test
-  public void testReadClosedParametrisedBooleanVariable() {
+  public void testReadClosedParametrisedBooleanVariable() throws ParserException {
     VariableList vars = new VariableList();
-    try {
-      InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
-      Formula form = InputReader.readFormulaFromString("x[2]", vars);
-      assertTrue(form instanceof QuantifiedAtom);
-      assertTrue(form.queryClosed());
-      assertTrue(form.queryAtom() != null);
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    InputReader.declare("x[i] :: Bool for i ∈ {1..10}", vars);
+    Formula form = InputReader.readFormulaFromString("x[2]", vars);
+    assertTrue(form instanceof QuantifiedAtom);
+    assertTrue(form.queryClosed());
+    assertTrue(form.queryAtom() != null);
   }
 
   @Test
-  public void testReadParametrisedBooleanVariableWithExpressions() {
+  public void testReadParametrisedBooleanVariableWithExpressions() throws ParserException {
     VariableList vars = new VariableList();
-    try {
-      InputReader.declare("x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}", vars);
-      Formula form = InputReader.readFormulaFromString("x[i - 1, a]", vars);
-      assertTrue(form instanceof QuantifiedAtom);
-      assertFalse(form.queryClosed());
-      assertTrue(form.toString().equals("x[i-1,a]"));
-    }
-    catch (ParserException exc) {
-      assertTrue(exc.toString(), false);
-    }
+    InputReader.declare("x[i,j] :: Bool for i ∈ {1..4}, j ∈ {1..4}", vars);
+    Formula form = InputReader.readFormulaFromString("x[i - 1, a]", vars);
+    assertTrue(form instanceof QuantifiedAtom);
+    assertFalse(form.queryClosed());
+    assertTrue(form.toString().equals("x[i-1,a]"));
+  }
+
+  @Test
+  public void testReadParametrisedBooleanVariableWithMacros() throws ParserException {
+    VariableList vars = new VariableList();
+    DefinitionData defs = new DefinitionData();
+    defs.setMacro("\"test\"", 3);
+    defs.setMacro("XXX", 5);
+    InputReader.declare("x[i,j] :: Bool for i ∈ {1..10}, j ∈ {1..10}", vars);
+    Formula form = InputReader.readClosedFormulaFromString("x[2+XXX,\"test\"]", vars, defs);
+    assertTrue(form instanceof QuantifiedAtom);
+    assertTrue(form.queryClosed());
+    assertTrue(form.toString().equals("x[2+5,3]"));
   }
 
   @Test

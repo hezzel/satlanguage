@@ -45,6 +45,29 @@ public class StatementTest {
   }
 
   @Test
+  public void testPrintWithFunction() {
+    StringFunction f = new StringFunction("f", 2);
+    f.setValue(new Match(0, null), "Hello");
+    f.setValue(new Match(null, 1), "World");
+    ArrayList<PExpression> args = new ArrayList<PExpression>();
+    args.add(new ConstantExpression(0));
+    args.add(new ConstantExpression(17));
+    StringExpression e1 = new StringExpression(f, args);
+    args.set(0, new ConstantExpression(12));
+    args.set(1, new ConstantExpression(1));
+    StringExpression e2 = new StringExpression(f, args);
+    Output o = new Output();
+    ArrayList<StringExpression> parts = new ArrayList<StringExpression>();
+    parts.add(e1);
+    parts.add(new StringExpression(" "));
+    parts.add(e2);
+    Print pr = new NewPrint(o, parts);
+    assertTrue(pr.toString().equals("print(f(0,17), \" \", f(12,1))"));
+    pr.execute(new ProgramState(new Solution(new TreeSet<Integer>())));
+    assertTrue(o._txt.equals("Hello World"));
+  }
+
+  @Test
   public void testIfThenElse() {
     Output o = new Output();
     Print pr1 = new NewPrint(o, new StringExpression("a"));

@@ -187,6 +187,22 @@ public class ParsePExpressionTest {
   }
 
   @Test
+  public void testPExpressionWithFunctionSize() throws ParserException {
+    DefinitionData dd = new DefinitionData();
+    InputReader.readFunctionFromString("function A(i) { 1 ⇒ 2 ; 3 ⇒ 4 }", dd);
+    PExpression e = InputReader.readPExpressionFromString("a * |A| - 7", dd);
+    assertTrue(e.toString().equals("a*2-7"));
+  }
+
+  @Test
+  public void testPExpressionWithEnumSize() throws ParserException {
+    DefinitionData dd = new DefinitionData();
+    InputReader.readEnumFromString("enum B { C ; D ; E }", dd);
+    PExpression e = InputReader.readPExpressionFromString("a / |B|", dd);
+    assertTrue(e.toString().equals("a/3"));
+  }
+
+  @Test
   public void testUnaryMappingExpression() throws ParserException {
     DefinitionData dd = new DefinitionData();
     InputReader.readFunctionFromString("function A(i) { 1 ⇒ 2 ; 3 ⇒ 4 ; _ ⇒ i }", dd);
@@ -198,7 +214,7 @@ public class ParsePExpressionTest {
   @Test
   public void testBinaryExpression() throws ParserException {
     DefinitionData dd = new DefinitionData();
-    InputReader.readFunctionFromString("function A(i) { (1,2) ⇒ 2 ; (3,4) ⇒ 3 ; _ ⇒ i }", dd);
+    InputReader.readFunctionFromString("function A(i, j) { (1,2) ⇒ 2 ; (3,4) ⇒ 3 ; _ ⇒ i }", dd);
     PExpression e = InputReader.readPExpressionFromString("A(i, 7)", dd);
     assertTrue(e.queryKind() == PExpression.FUNCTION);
     assertTrue(e.toString().equals("A(i,7)"));

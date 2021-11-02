@@ -313,6 +313,14 @@ public class InputReader {
       }
       return multiplier * _defs._macros.get(name);
     }
+    if (kind.equals("token STRING")) {
+      String str = tree.getText();
+      if (!_defs._macros.containsKey(str)) {
+        throw new ParserException(firstToken(tree), "Encountered string " + str + " as index, " +
+          "which is not defined as a macro.");
+      }
+      return _defs._macros.get(str);
+    }
 
     throw buildError(tree, "unexpected " + kind + " in integer");
   }
@@ -355,6 +363,19 @@ public class InputReader {
         parts.add(readPExpression(tree.getChild(i), lst));
       }
       return new FunctionExpression(_defs._functions.get(name), parts);
+    }
+    if (kind.equals("token MID")) {
+      verifyChildIsToken(tree, 1, "DEFINITION", "a function or enum name");
+      verifyChildIsToken(tree, 2, "MID", "mid |");
+      String name = tree.getChild(1).getText();
+      if (_defs._functions.containsKey(name)) {
+        return new ConstantExpression(_defs.getFunction(name).size());
+      }
+      if (_defs._enums.containsKey(name)) {
+        return new ConstantExpression(_defs.getEnum(name).size());
+      }
+      throw new ParserException(firstToken(tree), "Trying to get size of " + name + ", which is " +
+        "not defined as a function or enum!");
     }
     if (kind.equals("rule integer")) {
       return new ConstantExpression(readInteger(tree.getChild(0)));
@@ -426,6 +447,9 @@ public class InputReader {
       verifyChildIsRule(tree, 1, "pconstraintunit", "a basic pconstraint");
       return readPConstraintUnit(tree.getChild(1), lst).negate();
     }
+    if (kind.equals("rule pconstraintproperty")) {
+      return readPConstraintProperty(tree.getChild(0), lst);
+    }
     if (kind.equals("rule pconstraintrelation")) {
       return readPConstraintRelation(tree.getChild(0), lst);
     }
@@ -449,6 +473,31 @@ public class InputReader {
       ParamBoolVar x = readQuantifiedBooleanVariable(tree.getChild(0), lst, exprs, true);
       return new ParamBoolVarConstraint(x, exprs, true);
     }
+  }
+
+  private PConstraint readPConstraintProperty(ParseTree tree, VariableList lst)
+                                                                           throws ParserException {
+    verifyChildIsToken(tree, 0, "DEFINITION", "keyword definition");
+    String name = tree.getChild(0).getText();
+    Property prop = _defs.getProperty(name);
+    if (prop == null) {
+      if (_defs.defines(name)) {
+        throw new ParserException(firstToken(tree), "Parameter constraint " + tree.getText() +
+          " uses " + name + " as a property, while it is defined as a " + _defs.definedAsWhat(name)
+          + ".");
+      }
+      else {
+        throw new ParserException(firstToken(tree), "Reading parameter constraint " +
+          tree.getText() + " with undefined property " + name + ".");
+      }
+    }
+    verifyChildIsToken(tree, 1, "BRACKETOPEN", "opening bracket");
+    ArrayList<PExpression> parts = new ArrayList<PExpression>();
+    for (int i = 2; i < tree.getChildCount(); i += 2) {
+      verifyChildIsRule(tree, i, "pexpression", "an expression");
+      parts.add(readPExpression(tree.getChild(i), lst));
+    }
+    return new PropertyConstraint(prop, parts, true);
   }
 
   private PConstraint readPConstraintRelation(ParseTree tree, VariableList lst)
@@ -891,12 +940,22 @@ public class InputReader {
   private StringExpression readStringExpression(ParseTree tree, VariableList lst)
                                                                     throws ParserException {
     String kind = checkChild(tree, 0);
+    if (kind.equals("token STRING")) {
+      String s = tree.getText();
+      return new StringExpression(s.substring(1,s.length()-1));
+    }
     if (kind.equals("rule pexpression")) {
       return new StringExpression(readPExpression(tree.getChild(0), lst));
     }
-    verifyChildIsToken(tree, 0, "STRING", "a string");
-    String s = tree.getText();
-    return new StringExpression(s.substring(1,s.length()-1));
+    verifyChildIsToken(tree, 0, "DEFINITION", "the name of an enum");
+    String name = tree.getChild(0).getText();
+    StringFunction f = _defs.getEnum(name);
+    if (f == null) return new StringExpression(readPExpressionUnit(tree, lst));
+    ArrayList<PExpression> parts = new ArrayList<PExpression>();
+    for (int i = 2; i < tree.getChildCount(); i += 2) {
+      parts.add(readPExpression(tree.getChild(i), lst));
+    }
+    return new StringExpression(f, parts);
   }
 
   private Statement readPrint(ParseTree tree, VariableList lst) throws ParserException {
@@ -967,9 +1026,9 @@ public class InputReader {
     if (_defs._macros.containsKey(name)) {
       throw new ParserException(firstToken(tree), "Redefining previously declared macro " + name);
     }
-    if (_defs._functions.containsKey(name)) {
+    if (_defs.defines(name)) {
       throw new ParserException(firstToken(tree), "Redefining macro previously defined as " +
-        "function: " + name);
+        _defs.definedAsWhat(name) + ": " + name);
     }
     PExpression expr = readPExpression(tree.getChild(2), null);
     if (expr.queryParameters().size() != 0) {
@@ -1007,45 +1066,163 @@ public class InputReader {
       throw new ParserException(firstToken(tree), "Defining function " + name + " which already " +
         "exists.");
     }
-    if (_defs._macros.containsKey(name)) {
-      throw new ParserException(firstToken(tree), "Defining function " + name + " when a macro " +
-        "by that name already exists.");
+    if (_defs.defines(name)) {
+      throw new ParserException(firstToken(tree), "Defining function " + name + " previously " +
+        "defined as " + _defs.definedAsWhat(name) + ".");
     }
     _defs._functions.put(name, func);
     return func;
   }
 
+  private Property readProperty(ParseTree tree) throws ParserException {
+    verifyChildIsToken(tree, 0, "PROPERTY", "keyword property");
+    verifyChildIsToken(tree, 1, "DEFINITION", "a definition");
+    String name = tree.getChild(1).getText();
+    verifyChildIsToken(tree, 2, "BRACEOPEN", "opening brace {");
+    verifyChildIsToken(tree, tree.getChildCount()-1, "BRACECLOSE", "closing brace }");
+    Property prop = new Property(name);
+    for (int i = 3; i < tree.getChildCount(); i += 2) {
+      verifyChildIsRule(tree, i, "match", "a match");
+      Match m = readMatch(tree.getChild(i), 0);
+      prop.add(m);
+    }
+    if (_defs._properties.containsKey(name)) {
+      throw new ParserException(firstToken(tree), "Defining property " + name + " which already " +
+        "exists.");
+    }
+    if (_defs.defines(name)) {
+      throw new ParserException(firstToken(tree), "Defining property " + name + " previously " +
+        "defined as " + _defs.definedAsWhat(name) + ".");
+    }
+    _defs._properties.put(name, prop);
+    return prop;
+  }
+
+  private StringFunction readEnum(ParseTree tree) throws ParserException {
+    verifyChildIsToken(tree, 0, "ENUM", "keyword enum");
+    verifyChildIsToken(tree, 1, "DEFINITION", "a definition");
+    String name = tree.getChild(1).getText();
+    if (_defs.defines(name)) {
+      throw new ParserException(firstToken(tree), "Redefining " + name + " (previously defined " +
+        "as " + _defs.definedAsWhat(name) + ").");
+    }
+    StringFunction ret = new StringFunction(name, 1);
+    verifyChildIsToken(tree, 2, "BRACEOPEN", "opening brace {");
+    for (int i = 3; i < tree.getChildCount(); i += 2) {
+      if (i >= tree.getChildCount()) break;
+      String key = tree.getChild(i).getText();
+      if (_defs.defines(key)) {
+        throw new ParserException(firstToken(tree), "Redefining " + key+ " in enum " + name +
+          " (previously defined as " + _defs.definedAsWhat(name) + ").");
+      }
+      int k = (i-1)/2;
+      _defs._macros.put(key, k);
+      if (checkChild(tree, i).equals("token STRING")) key = key.substring(1, key.length()-1);
+      ret.setValue(new Match(k), key);
+    }
+    _defs._enums.put(name, ret);
+    return ret;
+  }
+
+  private void readData(ParseTree tree) throws ParserException {
+    verifyChildIsToken(tree, 0, "DATA", "keyword data");
+    verifyChildIsToken(tree, 1, "DEFINITION", "name of the enum");
+    String name = tree.getChild(1).getText();
+    if (_defs.defines(name)) {
+      throw new ParserException(firstToken(tree), "Redefining " + name + " (previously defined " +
+        "as " + _defs.definedAsWhat(name) + ").");
+    }
+    StringFunction sfunc = new StringFunction(name, 1);
+    _defs._enums.put(name, sfunc);
+    verifyChildIsToken(tree, 2, "BRACKETOPEN", "opening bracket");
+    int i;
+    ArrayList<Function> funcs = new ArrayList<Function>();
+    for (i = 3; checkChild(tree, i).equals("token DEFINITION"); i += 2) {
+      String fname = tree.getChild(i).getText();
+      if (_defs.defines(fname)) {
+        throw new ParserException(firstToken(tree.getChild(i)), "Redefining " + fname +
+          " (previously defined as " + _defs.definedAsWhat(name) + ").");
+      }
+      Function f = new Function(fname, name.toLowerCase());
+      funcs.add(f);
+      _defs._functions.put(fname, f);
+    }
+    verifyChildIsToken(tree, i, "BRACEOPEN", "opening brace");
+    i++;
+    for (int k = 1; i < tree.getChildCount(); i += 2, k++) {
+      verifyChildIsRule(tree, i, "dataentry", "a data entry");
+      ParseTree child = tree.getChild(i);
+      // read the key (an entry to the enum sfun)
+      String key = child.getChild(0).getText();
+      if (_defs.defines(key)) {
+        throw new ParserException(firstToken(child), "Redefining " + key + " in data " + name +
+          " (previously defined as " + _defs.definedAsWhat(name) + ").");
+      }
+      _defs._macros.put(key, k);
+      if (checkChild(child, 0).equals("token STRING")) key = key.substring(1, key.length()-1);
+      sfunc.setValue(new Match(k), key);
+      // read each of the values
+      verifyChildIsToken(child, 1, "FUNCARROW", "function arrow ⇒");
+      ArrayList<Integer> parts = new ArrayList<Integer>();
+      int j = 2;
+      if (checkChild(child, j).equals("token BRACKETOPEN")) j++;
+      for (; j < child.getChildCount(); j += 2) {
+        verifyChildIsRule(child, j, "integer", "an integer");
+        parts.add(readInteger(child.getChild(j)));
+      }
+      if (parts.size() != funcs.size()) {
+        throw new ParserException(firstToken(child), "Expected " + funcs.size() + " function " +
+          "entries, but was given " + parts.size() + ".");
+      }
+      for (j = 0; j < funcs.size(); j++) {
+        funcs.get(j).setValue(new Match(k), parts.get(j));
+      }
+    }
+  }
+
   private void readMappingEntry(ParseTree tree, ArrayList<String> argNames, Function func)
                                                                            throws ParserException {
-    verifyChildIsToken(tree, tree.getChildCount()-2, "FUNCARROW", "function arrow ⇒");
-    verifyChildIsRule(tree, tree.getChildCount()-1, "pexpression", "a parameter expression");
-    PExpression result = readPExpression(tree.getChild(tree.getChildCount()-1), null);
-    ArrayList<Integer> values = new ArrayList<Integer>();
+    verifyChildIsRule(tree, 0, "match", "a match");
+    verifyChildIsToken(tree, 1, "FUNCARROW", "function arrow ⇒");
+    verifyChildIsRule(tree, 2, "pexpression", "a parameter expression");
+    Match m = readMatch(tree.getChild(0), func.arity());
+    PExpression result = readPExpression(tree.getChild(2), null);
 
+    // does the match have the expected length?
+    if (m.length() != func.arity()) {
+      throw new ParserException(firstToken(tree), "function entry given of length " + m.length() +
+        ", while function " + func.queryName() + " was declared with " + func.arity() + " args.");
+    }
+
+    // does the result use only the declared parameters?
     Set<String> params = result.queryParameters();
     for (int i = 0; i < argNames.size(); i++) params.remove(argNames.get(i));
     if (params.size() > 0) {
       throw new ParserException(firstToken(tree), "Expression " + result.toString() +
         " in function " + func.queryName() + " uses unexpected parameters " + params);
     }
-    
+
+    func.setValue(m, result);
+  }
+
+  private Match readMatch(ParseTree tree, int funcArity) throws ParserException {
+    ArrayList<Integer> values = new ArrayList<Integer>();
     String kind = checkChild(tree, 0);
     
     if (kind.equals("rule optionalinteger")) {
       ParseTree child = tree.getChild(0);
-      // _ ⇒ expr may be used regardless of how many parameters the function has
+      // _ may be used in functions, and generates a catch-all match of the function's arity;
+      // it may not be used in properties
       if (checkChild(child, 0).equals("token UNDERSCORE")) {
-        for (int i = 0; i < func.arity(); i++) values.add(null);
+        if (funcArity == 0) {
+          throw new ParserException(firstToken(tree), "catch-all underscore may only be used " +
+            "when defining functions");
+        }
+        for (int i = 0; i < funcArity; i++) values.add(null);
       }
       else {
-        // i ⇒ expr may only be used if the function has exactly one parameter
         verifyChildIsRule(child, 0, "integer", "an integer");
-        int k = readInteger(child.getChild(0));
-        if (func.arity() != 1) {
-          throw new ParserException(firstToken(tree), "function entry should be a tuple with " +
-            func.arity() + " arguments, as this is how the function is declared!");
-        }
-        values.add(k);
+        values.add(readInteger(child.getChild(0)));
       }
     }
     else {
@@ -1058,7 +1235,16 @@ public class InputReader {
       }
     }
 
-    func.setValue(new Match(values), result);
+    return new Match(values);
+  }
+
+  private void readDefinition(ParseTree tree) throws ParserException {
+    String kind = checkChild(tree, 0);
+    if (kind.equals("rule macro")) readMacro(tree.getChild(0));
+    else if (kind.equals("rule function")) readFunction(tree.getChild(0));
+    else if (kind.equals("rule property")) readProperty(tree.getChild(0));
+    else if (kind.equals("rule enumerate")) readEnum(tree.getChild(0));
+    else if (kind.equals("rule data")) readData(tree.getChild(0));
   }
 
   private Statement readProgram(ParseTree tree, RequirementsList lst) throws ParserException {
@@ -1067,20 +1253,16 @@ public class InputReader {
     // read declarations and requirements
     for (; i < tree.getChildCount(); i++) {
       String kind = checkChild(tree, i);
-      if (kind.equals("token SEPARATOR")) break;
-      if (kind.equals("rule statement")) {
-        throw new ParserException(firstToken(tree.getChild(i)),
-          "Encountered a statement before the program separator ===.");
-      }
-      if (kind.equals("rule macro")) readMacro(tree.getChild(i));
-      else if (kind.equals("rule function")) readFunction(tree.getChild(i));
+      if (kind.equals("token SEPARATOR")) continue;
+      else if (kind.equals("rule definition")) readDefinition(tree.getChild(i));
       else if (kind.equals("rule declaration")) readDeclaration(tree.getChild(i), vars);
       else if (kind.equals("rule formula")) lst.add(readClosedFormula(tree.getChild(i), vars));
+      else if (kind.equals("rule statement")) break;
       else throw buildError(tree.getChild(i), "unexpected: " + kind);
     }
     // read statements
     ArrayList<Statement> stats = new ArrayList<Statement>();
-    for (i++; i < tree.getChildCount()-1; i++) {
+    for (; i < tree.getChildCount()-1; i++) {
       verifyChildIsRule(tree, i, "statement", "a statement");
       stats.add(readStatement(tree.getChild(i), vars));
     }
@@ -1129,13 +1311,20 @@ public class InputReader {
   }
 
   /** Yields a PConstraint without variables in it. */
-  public static PConstraint readPConstraintFromString(String str) throws ParserException {
+  public static PConstraint readPConstraintFromString(String str, DefinitionData defs)
+                                                                          throws ParserException {
     ErrorCollector collector = new ErrorCollector();
     LogicParser parser = createParserFromString(str, collector);
     InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
     ParseTree tree = parser.onlypconstraint();
     collector.throwCollectedExceptions();
     return reader.readFullPConstraint(tree, null);
+  }
+
+  /** Only really used for more convenient unit testing. */
+  public static PConstraint readPConstraintFromString(String str) throws ParserException {
+    return readPConstraintFromString(str, null);
   }
 
   /** Yields a PConstraint which may have variables in it. */
@@ -1245,6 +1434,38 @@ public class InputReader {
     ParseTree tree = parser.function();
     collector.throwCollectedExceptions();
     return reader.readFunction(tree);
+  }
+
+  public static Property readPropertyFromString(String str, DefinitionData defs)
+                                                                        throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
+    ParseTree tree = parser.property();
+    collector.throwCollectedExceptions();
+    return reader.readProperty(tree);
+  }
+
+  public static StringFunction readEnumFromString(String str, DefinitionData defs)
+                                                                        throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
+    ParseTree tree = parser.enumerate();
+    collector.throwCollectedExceptions();
+    return reader.readEnum(tree);
+  }
+
+  public static void readDataFromString(String str, DefinitionData defs) throws ParserException {
+    ErrorCollector collector = new ErrorCollector();
+    LogicParser parser = createParserFromString(str, collector);
+    InputReader reader = new InputReader();
+    if (defs != null) reader._defs = defs;
+    ParseTree tree = parser.data();
+    collector.throwCollectedExceptions();
+    reader.readData(tree);
   }
 
   /** Sets up a (lexer and) parser from the given file, using the given error collector. */

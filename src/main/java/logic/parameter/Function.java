@@ -70,6 +70,10 @@ public class Function {
     return _argumentNames.size();
   }
 
+  public int size() {
+    return _matches.size();
+  }
+
   /**
    * Returns the value associated with the given match, or throws an Error if there is no
    * associated value.  Matching goes first-to-last; that is, if two distinct matches both match,

@@ -2,6 +2,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.parameter.*;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class PConstraintTest {
@@ -112,6 +113,38 @@ public class PConstraintTest {
       new OrConstraint(new AndConstraint(b,c),d), e));
     PConstraint constr = form.negate();
     assertTrue(constr.toString().equals("j < i ∨ ((2 ≠ k ∨ j = a) ∧ ⊥) ∨ ⊤"));
+  }
+
+  @Test
+  public void testProperty() {
+    Property p = new Property("p");
+    p.add(new Match(1, null, 2));
+    p.add(new Match(7, 3));
+    ArrayList<PExpression> parts = new ArrayList<PExpression>();
+    parts.add(new ParameterExpression("i"));
+    parts.add((new ParameterExpression("j")).add(3));
+    PConstraint c = new PropertyConstraint(p, parts, true);
+    
+    assertTrue(c.toString().equals("p(i,j+3)"));
+    c = c.negate();
+    assertTrue(c.toString().equals("¬p(i,j+3)"));
+    c = c.negate();
+    assertTrue(c.toString().equals("p(i,j+3)"));
+
+    Set<String> params = c.queryParameters();
+    assertTrue(params.size() == 2);
+    assertTrue(params.contains("i"));
+    assertTrue(params.contains("j"));
+
+    Assignment ass = new Assignment("i", 7, "j", 0);
+    assertTrue(c.evaluate(ass));
+    ass = new Assignment("i", 8, "j", 10);
+    assertFalse(c.evaluate(ass));
+    assertTrue(c.negate().evaluate(ass));
+
+    Substitution subst = new Substitution("i", new ParameterExpression("a"),
+                                          "j", new ConstantExpression(4));
+    assertTrue(c.substitute(subst).toString().equals("p(a,7)"));
   }
 }
 

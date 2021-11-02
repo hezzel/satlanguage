@@ -1,25 +1,111 @@
-define SIZE 50
 
-declare queen[x,y] :: Bool for x ∈ {1..SIZE}, y ∈ {1..SIZE}
+data STUDENT(PROGRAMMING, BUSINESS, IDEA) {
+  "Ege Saraydar"        ⇒ (2,0,0) ;
+  "Mees Spaan"          ⇒ (0,2,0) ;
+  "Wesley Spip"         ⇒ (0,2,0) ;
+  "Mitchell Albers"     ⇒ (1,0,1) ;
+  "Gea Hendrix"         ⇒ (2,0,0) ;
+  "Beate Stevens"       ⇒ (0,1,0) ;
+  "Rosalie van Ark"     ⇒ (1,1,0) ;
+  "Jochem van der Meer" ⇒ (2,1,0) ;
+  "Twan Bolwerk"        ⇒ (2,0,2) ;
+  "Roel Koopman"        ⇒ (2,0,2) ;
+  "Ruben Hensen"        ⇒ (1,0,0) ;
+  "Christian Zielke"    ⇒ (2,1,0) ;
+  "Emma Schipper"       ⇒ (0,2,2) ;
+  "Eva Jagodic"         ⇒ (2,0,0) ;
+  "Rico Jansen"         ⇒ (1,1,0) ;
+  "Hildert Vogt"        ⇒ (1,1,1) ;
+  "Tuan-Ahn Nguyen"     ⇒ (2,0,0) ;
+  "Koen Berkhout"       ⇒ (2,0,0) ;
+  "Martijn Vogelaar"    ⇒ (2,0,0) ;
+  "Samule Vrieling"     ⇒ (0,2,2) ;
+  "Pascal Schröder"     ⇒ (1,0,2) ;
+  "Joshua Steinmann"    ⇒ (2,0,1) ;
+  "Dorukhan Nerede"     ⇒ (2,1,0) ;
+  "Max Philipsen"       ⇒ (1,2,0) ;
+  "Romy Stähli"         ⇒ (2,0,0) ;
+  "Jari Immerzeel"      ⇒ (1,0,0) ;
+  "Kasper Karelse"      ⇒ (2,0,2) ;
+  "Hans Schmetz"        ⇒ (2,0,0) ;
+  "Simon Arends"        ⇒ (0,2,1) ;
+  "Gianni Monteban"     ⇒ (2,0,0) ;
+  "Jelmer Tiernessen"   ⇒ (0,2,1) ;
+  "Eduard Bakouev"      ⇒ (2,0,0) ;
+  "Tom Ruitenbeek"      ⇒ (0,2,0) ;
+  "Bart Vulpen"         ⇒ (2,0,0) ;
+  "Nikolay Kyosev"      ⇒ (1,1,0) ;
+  "Floris Hendriks"     ⇒ (2,0,0) ;
+  "Michiel Verloop"     ⇒ (2,0,0) ;
+  "Dave Artz"           ⇒ (2,1,1) ;
+  "Helena Simon"        ⇒ (1,2,0) ;
+  "Fleur Vercoutre"     ⇒ (2,0,0) ;
+  "Bram van der Venne"  ⇒ (1,0,0) ;
+  "Renato Feroce"       ⇒ (2,0,0) ;
+  "Niek Heijnen"        ⇒ (2,0,0) ;
+  "Lars Sluijter"       ⇒ (2,0,0)
+}
 
-# there is a queen in every row
-∀ y ∈ {1..SIZE}.∃ x ∈ {1..SIZE}.queen[x,y]
+property UNCERTAIN { "Beate Stevens" ; "Emma Schipper" ; "Pascal Schröder" ; "Lars Sluijter" }
 
-# there is at most one queen per row
-∀ y ∈ {1..SIZE}. Σ { 1 | x ∈ {1..SIZE} | queen[x,y] } ≤ 1
-# there is only one queen per column
-∀ x ∈ {1..SIZE}. Σ { 1 | y ∈ {1..SIZE} | queen[x,y] } ≤ 1
-# there is only one queen per diagonal
-∀ i ∈ {2..SIZE*2}.     Σ { 1 | x ∈ {1..SIZE}, y ∈ {1..SIZE} with x + y = i | queen[x,y] } ≤ 1
-∀ i ∈ {-1*SIZE..SIZE}. Σ { 1 | x ∈ {1..SIZE}, y ∈ {1..SIZE} with x - y = i | queen[x,y] } ≤ 1
+property AVAILABLE {
+}
 
-===============
+define NUMSTUDENTS |STUDENT|
+define NUMGROUPS 11
+define MINGROUPSIZE 4
+define MAXGROUPSIZE 4
 
-for y := 1 to SIZE do {
-  for x := 1 to SIZE do {
-    if queen[x,y] then print("Q")
-    else print(".")
+===================================================================================================
+
+declare groupof[student] :: Int ∈ {1..NUMGROUPS} for student ∈ {1..NUMSTUDENTS}
+declare groupsize[group] :: Int ∈ {MINGROUPSIZE..MAXGROUPSIZE} for group ∈ {1..NUMGROUPS}
+
+# definition of groupsize: all groups have a size between MINGROUPSIZE and MAXGROUPSIZE
+∀ group ∈ {1..NUMGROUPS}. groupsize[group] = Σ { 1 | student ∈ {1..NUMSTUDENTS} | groupof[student] = group }
+
+# the true business students are in separate groups
+∀ s1 ∈ {1..NUMSTUDENTS-1} with BUSINESS(s1) = 2. ∀ s2 ∈ {s1+1..NUMSTUDENTS} with BUSINESS(s2) = 2. groupof[s1] != groupof[s2]
+
+# but all groups have a score between 2 and 3 in business
+∀ group ∈ {1..NUMGROUPS}. Σ { BUSINESS(student) | student ∈ {1..NUMSTUDENTS} | groupof[student] = group } ≥ 2
+∀ group ∈ {1..NUMGROUPS}. Σ { BUSINESS(student) | student ∈ {1..NUMSTUDENTS} | groupof[student] = group } ≤ 3
+
+# the students with strong ideas are all in separate groups
+∀ s1 ∈ {1..NUMSTUDENTS-1} with IDEA(s1) = 2. ∀ s2 ∈ {s1+1..NUMSTUDENTS} with IDEA(s2) = 2. groupof[s1] != groupof[s2]
+
+# but all groups have a score between 1 and 2 in idea-having
+∀ group ∈ {1..NUMGROUPS}. Σ { IDEA(student) | student ∈ {1..NUMSTUDENTS} | groupof[student] = group } ≥ 1
+∀ group ∈ {1..NUMGROUPS}. Σ { IDEA(student) | student ∈ {1..NUMSTUDENTS} | groupof[student] = group } ≤ 2
+
+# all groups have two top programmers
+∀ group ∈ {1..NUMGROUPS}. ∃ s1 ∈ {1..NUMSTUDENTS-1} with PROGRAMMING(s1) = 2. ∃ s2 ∈ {s1+1..NUMSTUDENTS} with PROGRAMMING(s2) = 2. groupof[s1] = group ∧ groupof[s2] = group
+
+# and no group has a score of more than 6 in programming
+∀ group ∈ {1..NUMGROUPS}. Σ { PROGRAMMING(student) | student ∈ {1..NUMSTUDENTS} | groupof[student] = group } ≤ 6
+
+# there is no more than one uncertain person per group
+∀ group ∈ {1..NUMGROUPS}. Σ { 1 | student ∈ {1..NUMSTUDENTS} with UNCERTAIN(student) | groupof[student] = group } ≤ 1
+
+===================================================================================================
+
+println()
+for i := 1 to NUMGROUPS do {
+  println("Group ", i)
+  for student := 1 to NUMSTUDENTS do {
+    if groupof[student] = i then {
+      print("  ")
+      if BUSINESS(student) = 2 then print("B ")
+      else if BUSINESS(student) = 1 then print("b ")
+      else print("  ")
+      if PROGRAMMING(student) = 2 then print("P ")
+      else if PROGRAMMING(student) = 1 then print("p ")
+      else print("  ")
+      if IDEA(student) = 2 then print("I ")
+      else if IDEA(student) = 1 then print("i ")
+      else print("  ")
+      println(STUDENT(student))
+    }
   }
-  println()
 }
 

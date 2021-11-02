@@ -6,6 +6,7 @@ import language.execution.Statement;
 import language.execution.If;
 import language.parser.InputReader;
 import language.parser.ParserException;
+import language.parser.DefinitionData;
 
 public class ParseStatementTest {
   @Test
@@ -59,6 +60,24 @@ public class ParseStatementTest {
     VariableList vars = new VariableList();
     Statement stat = InputReader.readStatementFromString("for i := 1 to k + 1 do println(i)", vars);
     assertTrue(stat.toString().equals("for i := 1 to k+1 do print(i, \"\\n\")"));
+  }
+
+  @Test
+  public void testPrintEnum() throws ParserException {
+    VariableList vars = new VariableList();
+    DefinitionData dd = new DefinitionData();
+    InputReader.readEnumFromString("enum TEST { \"a\" ; \"b c\" }", dd);
+    Statement stat = InputReader.readStatementFromString("print(TEST(1))", vars, dd);
+    assertTrue(stat.toString().equals("print(TEST(1))"));
+  }
+
+  @Test
+  public void testPrintFunction() throws ParserException {
+    VariableList vars = new VariableList();
+    DefinitionData dd = new DefinitionData();
+    InputReader.readFunctionFromString("function TEST(i, j) { (1,2) ⇒ 3 ; _ ⇒ 4 }", dd);
+    Statement stat = InputReader.readStatementFromString("print(TEST(1, 2))", vars, dd);
+    assertTrue(stat.toString().equals("print(TEST(1,2))"));
   }
 
   @Test(expected = language.parser.ParserException.class)

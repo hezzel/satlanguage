@@ -14,6 +14,7 @@ integer             : INTEGER
                     | MINUS INTEGER
                     | DEFINITION
                     | MINUS DEFINITION
+                    | STRING
                     ;
 
 /********** PExpression **********/
@@ -40,6 +41,7 @@ pexpressionunit     : IDENTIFIER
                     | MAX BRACKETOPEN pexpression COMMA pexpression BRACKETCLOSE
                     | BRACKETOPEN pexpression BRACKETCLOSE
                     | DEFINITION BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
+                    | MID DEFINITION MID
                     | integer
                     | paramvar
                     ;
@@ -57,6 +59,7 @@ pconstraintunit     : BRACKETOPEN pconstraint BRACKETCLOSE
                     | TOP
                     | BOTTOM
                     | (NOT | MINUS) pconstraintunit
+                    | pconstraintproperty
                     | pconstraintrelation
                     | variable
                     ;
@@ -65,6 +68,9 @@ pconstraintand      : AND pconstraintunit
                     ;
 
 pconstraintor       : OR pconstraintunit
+                    ;
+
+pconstraintproperty : DEFINITION BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
                     ;
 
 pconstraintrelation : pexpression GREATER pexpression
@@ -193,6 +199,7 @@ onlyformula         : formula EOF
 /********** The execution language **********/
 
 stringexpr          : STRING
+                    | DEFINITION BRACKETOPEN pexpression (COMMA pexpression)* BRACKETCLOSE
                     | pexpression
                     ;
 
@@ -220,22 +227,46 @@ block               : BRACEOPEN statement* BRACECLOSE
 
 /********** Functions and properties **********/
 
+macro               : DEFINE DEFINITION pexpression
+                    ;
+
 function            : FUNCTION DEFINITION BRACKETOPEN IDENTIFIER (COMMA IDENTIFIER)* BRACKETCLOSE BRACEOPEN (mappingentry SEMICOLON)* mappingentry BRACECLOSE
                     ;
 
-mappingentry        : optionalinteger FUNCARROW pexpression
-                    | BRACKETOPEN (optionalinteger COMMA)* optionalinteger BRACKETCLOSE FUNCARROW pexpression
+mappingentry        : match FUNCARROW pexpression
+                    ;
+
+property            : PROPERTY DEFINITION BRACEOPEN (match SEMICOLON)* match BRACECLOSE
+                    ;
+
+match               : optionalinteger
+                    | BRACKETOPEN optionalinteger (COMMA optionalinteger)* BRACKETCLOSE
                     ;
 
 optionalinteger     : integer
                     | UNDERSCORE
                     ;
 
-/********** Full programs **********/
-
-macro               : DEFINE DEFINITION pexpression
+enumerate           : ENUM DEFINITION BRACEOPEN (STRING | DEFINITION) (SEMICOLON (STRING | DEFINITION))* BRACECLOSE
                     ;
 
-program             : (declaration | macro | function)* formula* SEPARATOR statement* EOF
+data                : DATA DEFINITION BRACKETOPEN DEFINITION (COMMA DEFINITION)* BRACKETCLOSE BRACEOPEN dataentry (SEMICOLON dataentry)* BRACECLOSE
+                    ;
+
+dataentry           : (STRING | DEFINITION) FUNCARROW integer
+                    | (STRING | DEFINITION) FUNCARROW BRACKETOPEN integer (COMMA integer)* BRACKETCLOSE
+                    ;
+
+definition          : macro
+                    | function
+                    | property
+                    | enumerate
+                    | data
+                    ;
+
+/********** Full programs **********/
+
+
+program             : definition* SEPARATOR? (declaration | formula)* SEPARATOR? statement* EOF
                     ;
 

@@ -143,7 +143,6 @@ public class QRangeSumTest {
     QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
     Assignment ass = new Assignment("k", 3);
     RangeInteger result = sum.instantiate(ass);
-    System.out.println("result = " + result);
     assertTrue(result.toString().equals(
       "bplus(0, 45, " + // (v[1] + v[4] + v[7] + v[2] + v[5]) + (v[8] + v[3] + v[6] + v[9])
         "bplus(0, 19, " + // (v[1] + v[4] + v[7]) + (v[2] + v[5])

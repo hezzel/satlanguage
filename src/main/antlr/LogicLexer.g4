@@ -41,6 +41,12 @@ DEFINE              : 'define' ;
 
 FUNCTION            : 'function' ;
 
+PROPERTY            : 'property' ;
+
+DATA                : 'data' ;
+
+ENUM                : 'enum' ;
+
 IDENTIFIER          : [a-z] [a-z0-9A-Z_]* ;
 
 DEFINITION          : [A-Z] [a-z0-9A-Z_]* ;
