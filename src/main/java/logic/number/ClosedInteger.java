@@ -8,9 +8,9 @@ import logic.number.binary.BinaryInteger;
  * variables) but does not contain unbound parameters (they may be bound by a sum quantifier).
  */
 public interface ClosedInteger {
-  static final int RANGE  = 0;
-  static final int BINARY = 1;
-  static final int BOTH   = 2;
+  static final int BOTH   = 0;
+  static final int RANGE  = 1;
+  static final int BINARY = 2;
 
   /** the bottom value for the range (inclusive) */
   public int queryMinimum();
