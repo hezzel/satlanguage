@@ -1,8 +1,11 @@
 package language.parser;
 
 import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.parameter.*;
-import logic.range.*;
+import logic.number.*;
+import logic.number.range.ParamRangeVar;
+import logic.number.range.RangeVariable;
 import logic.formula.*;
 import logic.VariableList;
 import logic.RequirementsList;
@@ -834,7 +837,7 @@ public class InputReader {
       }
     }
     if (expr == null) return null;
-    return new QuantifiedRangeConstant(expr, lst.queryTrueVariable());
+    return new QuantifiedRangeConstant(expr, new Atom(lst.queryTrueVariable(), true));
   }
 
   /**
@@ -843,6 +846,7 @@ public class InputReader {
    */
   private QuantifiedRangeInteger getNonConstantPart(ParseTree tree, VariableList lst)
                                                                           throws ParserException {
+    Atom truth = new Atom(lst.queryTrueVariable(), true);
     ArrayList<QuantifiedRangeInteger> ret = new ArrayList<QuantifiedRangeInteger>();
     for (int i = 0; i < tree.getChildCount(); i += 2) {
       ParseTree child = tree.getChild(i);
@@ -867,7 +871,7 @@ public class InputReader {
         verifyChildIsRule(child, 2, "intexpression", "an integer expression");
         QuantifiedRangeInteger expr = readIntegerExpression(child.getChild(2), lst);
         Formula form = readCondition(child.getChild(0), lst);
-        return new QuantifiedConditionalRangeInteger(form, expr, lst.queryTrueVariable());
+        return new QuantifiedConditionalRangeInteger(form, expr, truth);
       }
       // SUM BRACEOPEN intexpression MID parameterlist (MID formula)? BRACECLOSE
       if (kind.equals("token SUM")) {
@@ -879,14 +883,14 @@ public class InputReader {
         ArrayList<Parameter> params = readOpenParameterList(child.getChild(4));
         if (child.getChildCount() == 6) {
           verifyChildIsToken(child, 5, "BRACECLOSE", "closing brace }");
-          return new QuantifiedRangeSum(params, expr, lst.queryTrueVariable());
+          return new QuantifiedRangeSum(params, expr, truth);
         }
         verifyChildIsToken(child, 5, "MID", "|");
         verifyChildIsRule(child, 6, "formula", "a formula");
         verifyChildIsToken(child, 7, "BRACECLOSE", "closing brace }");
         Formula formula = readFormula(child.getChild(6), lst);
-        expr = new QuantifiedConditionalRangeInteger(formula, expr, lst.queryTrueVariable());
-        return new QuantifiedRangeSum(params, expr, lst.queryTrueVariable());
+        expr = new QuantifiedConditionalRangeInteger(formula, expr, truth);
+        return new QuantifiedRangeSum(params, expr, truth);
       }
       // paramvar
       if (kind.equals("rule paramvar")) {

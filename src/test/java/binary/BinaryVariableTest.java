@@ -3,7 +3,7 @@ import static org.junit.Assert.*;
 
 import logic.sat.Variable;
 import logic.sat.Atom;
-import logic.binary.BinaryVariable;
+import logic.number.binary.BinaryVariable;
 
 public class BinaryVariableTest {
   @Test

@@ -4,7 +4,8 @@ import static org.junit.Assert.*;
 import logic.sat.Variable;
 import logic.sat.Atom;
 import logic.parameter.*;
-import logic.range.*;
+import logic.number.*;
+import logic.number.range.*;
 import logic.formula.Formula;
 import logic.formula.Equals;
 import logic.VariableList;
@@ -13,12 +14,12 @@ import language.parser.ParserException;
 
 public class EqualsTest {
   private QuantifiedRangeInteger makeVar(String name, int min, int max) {
-    RangeInteger ri = new RangeVariable(name, min, max, new Variable("TRUE"));
+    RangeInteger ri = new RangeVariable(name, min, max, new Atom(new Variable("TRUE"), true));
     return new QuantifiedRangeWrapper(ri);
   }
 
   private QuantifiedRangeInteger makeConstant(int num) {
-    return new QuantifiedRangeWrapper(new RangeConstant(num, new Variable("TRUE")));
+    return new QuantifiedRangeWrapper(new RangeConstant(num, new Atom(new Variable("TRUE"), true)));
   }
 
   /** Helper function for tests that compare an integer with a constant. */

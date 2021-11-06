@@ -6,8 +6,8 @@ import logic.sat.Clause;
 import logic.sat.ClauseCollection;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
-import logic.range.RangeInteger;
-import logic.range.QuantifiedRangeInteger;
+import logic.number.range.RangeInteger;
+import logic.number.QuantifiedRangeInteger;
 import java.util.ArrayList;
 
 public class Geq extends Formula {

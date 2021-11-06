@@ -7,7 +7,7 @@ import logic.parameter.ProductExpression;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
-import logic.range.RangeVariable;
+import logic.number.range.RangeVariable;
 
 import java.util.TreeSet;
 

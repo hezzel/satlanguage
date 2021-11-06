@@ -1,12 +1,15 @@
-package logic.range;
+package logic.number;
 
-import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.PConstraint;
 import logic.parameter.ConstantExpression;
 import logic.parameter.Parameter;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
+import logic.number.range.RangeInteger;
+import logic.number.range.RangeConstant;
+import logic.number.range.RangePlus;
 import java.util.Set;
 import java.util.ArrayList;
 
@@ -17,20 +20,20 @@ import java.util.ArrayList;
 public class QuantifiedRangeSum implements QuantifiedRangeInteger {
   private ArrayList<Parameter> _params;
   private QuantifiedRangeInteger _expression;
-  private Variable _truth;
+  private Atom _truth;
 
   public QuantifiedRangeSum(ArrayList<Parameter> params, QuantifiedRangeInteger expr,
-                            Variable truevar) {
+                            Atom truth) {
     _params = new ArrayList<Parameter>(params);
     _expression = expr;
-    _truth = truevar;
+    _truth = truth;
   }
 
-  public QuantifiedRangeSum(Parameter param, QuantifiedRangeInteger expr, Variable truevar) {
+  public QuantifiedRangeSum(Parameter param, QuantifiedRangeInteger expr, Atom truth) {
     _params = new ArrayList<Parameter>();
     _params.add(param);
     _expression = expr;
-    _truth = truevar;
+    _truth = truth;
   }
 
   public Set<String> queryParameters() {

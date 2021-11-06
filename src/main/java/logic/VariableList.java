@@ -5,8 +5,8 @@ import logic.parameter.Parameter;
 import logic.parameter.ParameterList;
 import logic.parameter.Substitution;
 import logic.parameter.ParamBoolVar;
-import logic.range.RangeVariable;
-import logic.range.ParamRangeVar;
+import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -58,7 +58,7 @@ public class VariableList {
   public RangeVariable registerRangeVariable(Parameter param) {
     String name = param.queryName();
     checkAcceptableName(name);
-    RangeVariable v = new RangeVariable(param, queryTrueVariable());
+    RangeVariable v = new RangeVariable(param, new Atom(queryTrueVariable(), true));
     _rangevars.put(name, v);
     _usednames.add(name);
     return v;
@@ -75,7 +75,7 @@ public class VariableList {
   public ParamRangeVar registerParametrisedRangeVariable(Parameter count, ParameterList params) {
     String name = count.queryName();
     checkAcceptableName(name);
-    ParamRangeVar v = new ParamRangeVar(count, params, queryTrueVariable());
+    ParamRangeVar v = new ParamRangeVar(count, params, new Atom(queryTrueVariable(), true));
     _paramrangevars.put(name, v);
     _usednames.add(name);
     return v;

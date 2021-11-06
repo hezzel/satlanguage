@@ -7,8 +7,8 @@ import logic.parameter.PConstraint;
 import logic.parameter.Assignment;
 import logic.parameter.ParameterList;
 import logic.parameter.ParamBoolVar;
-import logic.range.RangeVariable;
-import logic.range.ParamRangeVar;
+import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
 
 import java.util.Set;
 import java.util.ArrayList;

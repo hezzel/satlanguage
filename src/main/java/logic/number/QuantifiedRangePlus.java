@@ -1,9 +1,13 @@
-package logic.range;
+package logic.number;
 
 import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
+import logic.number.range.RangeInteger;
+import logic.number.range.RangeConstant;
+import logic.number.range.RangeShift;
+import logic.number.range.RangePlus;
 import java.util.Set;
 import java.util.ArrayList;
 

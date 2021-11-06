@@ -3,9 +3,9 @@ import static org.junit.Assert.*;
 
 import logic.sat.Variable;
 import logic.sat.Atom;
-import logic.binary.BinaryConstant;
-import logic.binary.BinaryVariable;
-import logic.binary.BinaryPlus;
+import logic.number.binary.BinaryConstant;
+import logic.number.binary.BinaryVariable;
+import logic.number.binary.BinaryPlus;
 
 public class BinaryPlusTest {
   private void setIntCol(ClauseCollector col, String name, int len, int value) {

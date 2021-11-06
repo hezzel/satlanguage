@@ -2,24 +2,29 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
-import logic.range.QuantifiedRangeInteger;
-import logic.range.QuantifiedRangeConstant;
-import logic.range.RangeConstant;
+import logic.number.QuantifiedRangeInteger;
+import logic.number.QuantifiedRangeConstant;
+import logic.number.range.RangeConstant;
 import language.parser.InputReader;
 import language.parser.ParserException;
 import java.util.Set;
 
 public class QRangeConstantTest {
+  private Atom truth() {
+    return new Atom(new Variable("TRUE"), true);
+  }
+
   private PExpression expr(String txt) {
     try { return InputReader.readPExpressionFromString(txt); }
     catch (ParserException e) { return null; }
   }
 
   private QuantifiedRangeConstant createConstant() {
-    return new QuantifiedRangeConstant(expr("a + b - 3 * a"), new Variable("TRUE"));
+    return new QuantifiedRangeConstant(expr("a + b - 3 * a"), truth());
   }
 
   @Test
@@ -38,7 +43,7 @@ public class QRangeConstantTest {
   @Test
   public void testClosed() {
     assertFalse(createConstant().queryClosed());
-    QuantifiedRangeConstant c = new QuantifiedRangeConstant(expr("1"), new Variable("TRUE"));
+    QuantifiedRangeConstant c = new QuantifiedRangeConstant(expr("1"), truth());
     assertTrue(c.queryClosed());
   }
 
@@ -60,7 +65,7 @@ public class QRangeConstantTest {
 
   @Test
   public void testNullInstantiate() {
-    QuantifiedRangeConstant q = new QuantifiedRangeConstant(expr("1+2"), new Variable("TRUE"));
+    QuantifiedRangeConstant q = new QuantifiedRangeConstant(expr("1+2"), truth());
     RangeConstant c = q.instantiate(null);
     assertTrue(c.queryMinimum() == 3);
     assertTrue(c.queryMaximum() == 3);

@@ -8,8 +8,8 @@ import logic.parameter.ConstantExpression;
 import logic.parameter.Parameter;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
-import logic.range.RangeInteger;
-import logic.range.QuantifiedRangeInteger;
+import logic.number.range.RangeInteger;
+import logic.number.QuantifiedRangeInteger;
 import java.util.Set;
 import java.util.ArrayList;
 
@@ -20,13 +20,13 @@ import java.util.ArrayList;
 public class QuantifiedConditionalRangeInteger implements QuantifiedRangeInteger {
   private Formula _condition;
   private QuantifiedRangeInteger _value;
-  private Variable _truth;
+  private Atom _truth;
 
   public QuantifiedConditionalRangeInteger(Formula formula, QuantifiedRangeInteger value,
-                                           Variable truevar) {
+                                           Atom truth) {
     _condition = formula;
     _value = value;
-    _truth = truevar;
+    _truth = truth;
   }
 
   public Set<String> queryParameters() {

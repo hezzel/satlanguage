@@ -4,9 +4,9 @@ import static org.junit.Assert.*;
 import logic.sat.Variable;
 import logic.sat.Atom;
 import logic.sat.Clause;
-import logic.range.RangeInteger;
-import logic.range.RangeConstant;
-import logic.range.RangeVariable;
+import logic.number.range.RangeInteger;
+import logic.number.range.RangeConstant;
+import logic.number.range.RangeVariable;
 import logic.formula.Formula;
 import logic.formula.And;
 import logic.formula.AtomicFormula;
@@ -14,6 +14,10 @@ import logic.formula.ConditionalRangeInteger;
 import java.util.ArrayList;
 
 public class ConditionalRangeIntegerTest {
+  private Atom truth() {
+    return new Atom(new Variable("TRUE"), true);
+  }
+
   private Formula makeAtom(String varname, boolean value) {
     Variable x = new Variable(varname);
     return new AtomicFormula(new Atom(x, value));
@@ -21,37 +25,33 @@ public class ConditionalRangeIntegerTest {
 
   @Test
   public void testUnboundedToString() {
-    Variable t = new Variable("TRUE");
-    RangeInteger a = new RangeVariable("a", 1, 5, t);
+    RangeInteger a = new RangeVariable("a", 1, 5, truth());
     Formula z = makeAtom("z", true);
-    RangeInteger cri = new ConditionalRangeInteger(z, a, t);
+    RangeInteger cri = new ConditionalRangeInteger(z, a, truth());
     assertTrue(cri.toString().equals("z?a"));
   }
 
   @Test
   public void testSemiBoundedToString() {
-    Variable t = new Variable("TRUE");
-    RangeInteger a = new RangeVariable("a", 1, 5, t);
+    RangeInteger a = new RangeVariable("a", 1, 5, truth());
     Formula z = new And(makeAtom("z", true), makeAtom("q", false));
-    RangeInteger cri = new ConditionalRangeInteger(z, a, new Atom(t, true), 0, 6);
+    RangeInteger cri = new ConditionalRangeInteger(z, a, truth(), 0, 6);
     assertTrue(cri.toString().equals("⟦z ∧ ¬q⟧?a"));
   }
 
   @Test
   public void testBoundedToString() {
-    Variable t = new Variable("TRUE");
-    RangeInteger a = new RangeVariable("a", 1, 5, t);
+    RangeInteger a = new RangeVariable("a", 1, 5, truth());
     Formula z = makeAtom("z", true);
-    RangeInteger cri = new ConditionalRangeInteger(z, a, new Atom(t, true), 0, 4);
+    RangeInteger cri = new ConditionalRangeInteger(z, a, truth(), 0, 4);
     assertTrue(cri.toString().equals("cond(0, 4, z?a)"));
   }
 
   @Test
   public void testPositiveConstant() {
-    Variable t = new Variable("TRUE");
-    RangeInteger n = new RangeConstant(4, t);
+    RangeInteger n = new RangeConstant(4, truth());
     Formula x = makeAtom("x", true);
-    RangeInteger cri = new ConditionalRangeInteger(x, n, t);
+    RangeInteger cri = new ConditionalRangeInteger(x, n, truth());
     assertTrue(cri.queryGeqAtom(-1).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(0).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(1).toString().equals("x"));
@@ -65,10 +65,9 @@ public class ConditionalRangeIntegerTest {
 
   @Test
   public void testNegativeConstant() {
-    Variable t = new Variable("TRUE");
-    RangeInteger n = new RangeConstant(-4, t);
+    RangeInteger n = new RangeConstant(-4, truth());
     Formula x = new And(makeAtom("x", false), makeAtom("y", true));
-    RangeInteger cri = new ConditionalRangeInteger(x, n, t);
+    RangeInteger cri = new ConditionalRangeInteger(x, n, truth());
     assertTrue(cri.queryGeqAtom(1).toString().equals("¬TRUE"));
     assertTrue(cri.queryGeqAtom(0).toString().equals("¬⟦¬x ∧ y⟧"));
     assertTrue(cri.queryGeqAtom(-3).toString().equals("¬⟦¬x ∧ y⟧"));
@@ -86,10 +85,9 @@ public class ConditionalRangeIntegerTest {
   @Test
   public void testPositiveRange() {
     Variable.reset();
-    Variable t = new Variable("TRUE");
     Formula x = makeAtom("x", true);
-    RangeInteger y = new RangeVariable("y", 2, 5, t);
-    RangeInteger cri = new ConditionalRangeInteger(x, y, t);
+    RangeInteger y = new RangeVariable("y", 2, 5, truth());
+    RangeInteger cri = new ConditionalRangeInteger(x, y, truth());
     assertTrue(cri.queryGeqAtom(-1).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(0).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(1).toString().equals("x"));
@@ -110,10 +108,9 @@ public class ConditionalRangeIntegerTest {
   @Test
   public void testNegativeRange() {
     Variable.reset();
-    Variable t = new Variable("TRUE");
     Formula x = new And(makeAtom("x", true), makeAtom("q", false));
-    RangeInteger y = new RangeVariable("y", -3, -1, t);
-    RangeInteger cri = new ConditionalRangeInteger(x, y, t);
+    RangeInteger y = new RangeVariable("y", -3, -1, truth());
+    RangeInteger cri = new ConditionalRangeInteger(x, y, truth());
     assertTrue(cri.queryGeqAtom(1).toString().equals("¬TRUE"));
     assertTrue(cri.queryGeqAtom(0).toString().equals("¬⟦x ∧ ¬q⟧"));
     assertTrue(cri.queryGeqAtom(-1).toString().equals("⟦x ∧ ¬q⟧?y≥-1"));
@@ -133,10 +130,9 @@ public class ConditionalRangeIntegerTest {
   @Test
   public void testNegativePositiveRange() {
     Variable.reset();
-    Variable t = new Variable("TRUE");
     Formula x = makeAtom("x", true);
-    RangeInteger y = new RangeVariable("y", -3, 4, t);
-    RangeInteger cri = new ConditionalRangeInteger(x, y, t);
+    RangeInteger y = new RangeVariable("y", -3, 4, truth());
+    RangeInteger cri = new ConditionalRangeInteger(x, y, truth());
     assertTrue(cri.queryGeqAtom(-3).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(-2).toString().equals("x?y≥-2"));
     assertTrue(cri.queryGeqAtom(0).toString().equals("x?y≥0"));
@@ -156,10 +152,9 @@ public class ConditionalRangeIntegerTest {
 
   @Test
   public void testRangeWithBounds() {
-    Variable t = new Variable("TRUE");
-    RangeInteger a = new RangeVariable("a", -10, 10, t);
+    RangeInteger a = new RangeVariable("a", -10, 10, truth());
     Formula z = makeAtom("z", true);
-    RangeInteger cri = new ConditionalRangeInteger(z, a, new Atom(t, true), 2, 5);
+    RangeInteger cri = new ConditionalRangeInteger(z, a, truth(), 2, 5);
     assertTrue(cri.queryGeqAtom(-1).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(1).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(3).toString().equals("z?a≥3"));
@@ -173,10 +168,9 @@ public class ConditionalRangeIntegerTest {
 
   @Test
   public void testAvoidDuplicateWelldefinednessClauses() {
-    Variable t = new Variable("TRUE");
-    RangeInteger a = new RangeVariable("a", -10, 10, t);
+    RangeInteger a = new RangeVariable("a", -10, 10, truth());
     Formula form = new And(makeAtom("z", true), makeAtom("x", true));
-    RangeInteger cri = new ConditionalRangeInteger(form, a, new Atom(t, true), 2, 5);
+    RangeInteger cri = new ConditionalRangeInteger(form, a, truth(), 2, 5);
     ClauseCollector col = new ClauseCollector();
     cri.addWelldefinednessClauses(col);
     assertTrue(col.size() == 12);   // this is the usual number

@@ -1,4 +1,4 @@
-package logic.range;
+package logic.number;
 
 import logic.sat.Variable;
 import logic.parameter.PExpression;
@@ -6,6 +6,9 @@ import logic.parameter.ParameterExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.parameter.ParameterList;
+import logic.number.range.RangeInteger;
+import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
 import java.util.ArrayList;
 import java.util.TreeSet;
 

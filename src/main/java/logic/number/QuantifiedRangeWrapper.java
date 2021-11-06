@@ -1,7 +1,8 @@
-package logic.range;
+package logic.number;
 
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
+import logic.number.range.RangeInteger;
 import java.util.TreeSet;
 
 /**

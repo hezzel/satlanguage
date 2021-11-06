@@ -1,9 +1,10 @@
-package logic.range;
+package logic.number;
 
-import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
+import logic.number.range.RangeConstant;
 import java.util.Set;
 
 /**
@@ -12,11 +13,11 @@ import java.util.Set;
  */
 public class QuantifiedRangeConstant implements QuantifiedRangeInteger {
   private PExpression _constant;
-  private Variable _truevar;
+  private Atom _truth;
 
-  public QuantifiedRangeConstant(PExpression expression, Variable truevar) {
+  public QuantifiedRangeConstant(PExpression expression, Atom truth) {
     _constant = expression;
-    _truevar = truevar;
+    _truth = truth;
   }
 
   public Set<String> queryParameters() {
@@ -28,11 +29,11 @@ public class QuantifiedRangeConstant implements QuantifiedRangeInteger {
   }
 
   public QuantifiedRangeConstant substitute(Substitution subst) {
-    return new QuantifiedRangeConstant(_constant.substitute(subst), _truevar);
+    return new QuantifiedRangeConstant(_constant.substitute(subst), _truth);
   }
 
   public RangeConstant instantiate(Assignment ass) {
-    return new RangeConstant(_constant.evaluate(ass), _truevar);
+    return new RangeConstant(_constant.evaluate(ass), _truth);
   }
 
   public String toString() {

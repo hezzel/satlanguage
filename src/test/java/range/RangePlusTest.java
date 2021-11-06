@@ -5,26 +5,28 @@ import logic.sat.Variable;
 import logic.sat.Atom;
 import logic.sat.Solution;
 import logic.parameter.Parameter;
-import logic.range.RangeInteger;
-import logic.range.RangeConstant;
-import logic.range.RangeVariable;
-import logic.range.RangePlus;
+import logic.number.range.RangeInteger;
+import logic.number.range.RangeConstant;
+import logic.number.range.RangeVariable;
+import logic.number.range.RangePlus;
 import language.parser.InputReader;
 import language.parser.ParserException;
 import java.util.TreeSet;
 
 public class RangePlusTest {
+  private Atom truth() {
+    return new Atom(new Variable("TRUE"), true);
+  }
+
   private RangePlus createUnboundedPlus() {
-    Variable t = new Variable("TRUE");
-    RangeVariable x = new RangeVariable("x", 1, 5, t);
-    RangeVariable y = new RangeVariable("y", 3, 7, t);
+    RangeVariable x = new RangeVariable("x", 1, 5, truth());
+    RangeVariable y = new RangeVariable("y", 3, 7, truth());
     return new RangePlus(x, y);
   }
 
   private RangePlus createBoundedPlus() {
-    Variable t = new Variable("TRUE");
-    RangeVariable x = new RangeVariable("x", 1, 5, t);
-    RangeVariable y = new RangeVariable("y", 3, 7, t);
+    RangeVariable x = new RangeVariable("x", 1, 5, truth());
+    RangeVariable y = new RangeVariable("y", 3, 7, truth());
     return new RangePlus(x, y, 5, 10);
   }
 
@@ -34,7 +36,7 @@ public class RangePlusTest {
     assertTrue(rp.queryMinimum() == 4);
     assertTrue(rp.queryMaximum() == 12);
     assertTrue(rp.toString().equals("bplus(4, 12, x ⊕ y)"));
-    assertTrue(rp.queryGeqAtom(2).equals(new Atom(new Variable("TRUE"), true)));
+    assertTrue(rp.queryGeqAtom(2).equals(truth()));
     assertTrue(rp.queryGeqAtom(4).toString().equals("TRUE"));
     assertTrue(rp.queryGeqAtom(6).toString().equals("x⊕y≥6"));
     assertTrue(rp.queryGeqAtom(12).toString().equals("x⊕y≥12"));
@@ -56,9 +58,8 @@ public class RangePlusTest {
 
   @Test
   public void testRedundantBounds() {
-    Variable t = new Variable("TRUE");
-    RangeVariable x = new RangeVariable("x", 1, 2, t);
-    RangeVariable y = new RangeVariable("y", 1, 2, t);
+    RangeVariable x = new RangeVariable("x", 1, 2, truth());
+    RangeVariable y = new RangeVariable("y", 1, 2, truth());
     RangePlus p = new RangePlus(x, y, 1, 4);
     assertTrue(p.queryMinimum() == 2);
     assertTrue(p.queryMaximum() == 4);
@@ -69,11 +70,10 @@ public class RangePlusTest {
 
   @Test
   public void setMiddleBoundsInBigSum() {
-    Variable t = new Variable("TRUE");
-    RangeVariable a = new RangeVariable("a", 1, 10, t);
-    RangeVariable b = new RangeVariable("b", 0, 10, t);
-    RangeVariable c = new RangeVariable("c", 0, 10, t);
-    RangeVariable d = new RangeVariable("d", 1, 10, t);
+    RangeVariable a = new RangeVariable("a", 1, 10, truth());
+    RangeVariable b = new RangeVariable("b", 0, 10, truth());
+    RangeVariable c = new RangeVariable("c", 0, 10, truth());
+    RangeVariable d = new RangeVariable("d", 1, 10, truth());
     RangePlus abcd = new RangePlus(new RangePlus(a,b), new RangePlus(c,d));
     RangeInteger bounded = abcd.setPracticalBounds(4,7);
     assertTrue(bounded.toString().equals(
@@ -83,10 +83,9 @@ public class RangePlusTest {
 
   @Test
   public void setZeroBoundsInPlusMinusSum() {
-    Variable t = new Variable("TRUE");
-    RangeVariable a = new RangeVariable("a", -10, 5, t);
-    RangeVariable b = new RangeVariable("b", -10, 5, t);
-    RangeVariable c = new RangeVariable("c", 0, 3, t);
+    RangeVariable a = new RangeVariable("a", -10, 5, truth());
+    RangeVariable b = new RangeVariable("b", -10, 5, truth());
+    RangeVariable c = new RangeVariable("c", 0, 3, truth());
     RangePlus abcd = new RangePlus(new RangePlus(a,b), c);
     RangeInteger bounded = abcd.setPracticalBounds(-1,1);
     assertTrue(bounded.toString().equals(
@@ -96,11 +95,10 @@ public class RangePlusTest {
 
   @Test
   public void setLowBounds() {
-    Variable t = new Variable("TRUE");
-    RangeVariable a = new RangeVariable("a", 1, 10, t);
-    RangeVariable b = new RangeVariable("b", 0, 8, t);
-    RangeVariable c = new RangeVariable("c", -4, 2, t);
-    RangeVariable d = new RangeVariable("d", 1, 7, t);
+    RangeVariable a = new RangeVariable("a", 1, 10, truth());
+    RangeVariable b = new RangeVariable("b", 0, 8, truth());
+    RangeVariable c = new RangeVariable("c", -4, 2, truth());
+    RangeVariable d = new RangeVariable("d", 1, 7, truth());
     RangePlus abcd = new RangePlus(new RangePlus(a,b), new RangePlus(c,d));
     RangeInteger bounded = abcd.setPracticalBounds(-5,0);
     assertTrue(bounded.toString().equals(
@@ -109,10 +107,9 @@ public class RangePlusTest {
 
   @Test
   public void setHighBounds() {
-    Variable t = new Variable("TRUE");
-    RangeVariable a = new RangeVariable("a", 1, 10, t);
-    RangeVariable b = new RangeVariable("b", 0, 8, t);
-    RangeVariable c = new RangeVariable("c", -4, 2, t);
+    RangeVariable a = new RangeVariable("a", 1, 10, truth());
+    RangeVariable b = new RangeVariable("b", 0, 8, truth());
+    RangeVariable c = new RangeVariable("c", -4, 2, truth());
     RangePlus abc = new RangePlus(a, new RangePlus(b, c));
     RangeInteger bounded = abc.setPracticalBounds(18, 23);
     assertTrue(bounded.toString().equals("bplus(18, 20, a ⊕ bplus(8, 10, b ⊕ c))"));
@@ -120,9 +117,8 @@ public class RangePlusTest {
 
   @Test
   public void setUnreasonableBounds() {
-    Variable t = new Variable("TRUE");
-    RangeVariable a = new RangeVariable("a", 0, 8, t);
-    RangeVariable b = new RangeVariable("b", 0, 8, t);
+    RangeVariable a = new RangeVariable("a", 0, 8, truth());
+    RangeVariable b = new RangeVariable("b", 0, 8, truth());
     RangePlus ab = new RangePlus(a, b);
     RangeInteger bounded = ab.setPracticalBounds(-5, -3);
     assertTrue(bounded.toString().equals("bplus(0, 0, a ⊕ b)"));
@@ -130,11 +126,10 @@ public class RangePlusTest {
 
   @Test
   public void setConflictingBounds() {
-    Variable t = new Variable("TRUE");
-    RangeVariable a = new RangeVariable("a", 0, 8, t);
-    RangeVariable b = new RangeVariable("b", 0, 8, t);
-    RangeVariable c = new RangeVariable("c", 0, 8, t);
-    RangeVariable d = new RangeVariable("d", 0, 8, t);
+    RangeVariable a = new RangeVariable("a", 0, 8, truth());
+    RangeVariable b = new RangeVariable("b", 0, 8, truth());
+    RangeVariable c = new RangeVariable("c", 0, 8, truth());
+    RangeVariable d = new RangeVariable("d", 0, 8, truth());
     RangePlus abcd = new RangePlus(new RangePlus(a, b), new RangePlus(c, d));
     RangeInteger bounded = abcd.setPracticalBounds(5, 4);
     assertTrue(bounded.toString().equals("bplus(4, 4, bplus(0, 4, a ⊕ b) ⊕ bplus(0, 4, c ⊕ d))"));
@@ -142,9 +137,8 @@ public class RangePlusTest {
 
   @Test
   public void testVariablePlusConstantClauses() {
-    Variable t = new Variable("TRUE");
-    RangeVariable x = new RangeVariable("x", 1, 5, t);
-    RangeConstant two = new RangeConstant(2, t);
+    RangeVariable x = new RangeVariable("x", 1, 5, truth());
+    RangeConstant two = new RangeConstant(2, truth());
     RangePlus p = new RangePlus(two, x);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
@@ -160,9 +154,8 @@ public class RangePlusTest {
 
   @Test
   public void testVariablePlusConstantBoundedClauses() {
-    Variable t = new Variable("TRUE");
-    RangeVariable x = new RangeVariable("x", 1, 5, t);
-    RangeConstant two = new RangeConstant(2, t);
+    RangeVariable x = new RangeVariable("x", 1, 5, truth());
+    RangeConstant two = new RangeConstant(2, truth());
     RangePlus p = new RangePlus(two, x, 4, 6);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
@@ -225,11 +218,10 @@ public class RangePlusTest {
 
   @Test
   public void testNestedPlusClausesExpectedCount() {
-    Variable t = new Variable("TRUE");
-    RangeVariable a = new RangeVariable("a", 1, 5, t);
-    RangeVariable b = new RangeVariable("b", 1, 5, t);
-    RangeVariable c = new RangeVariable("c", 1, 5, t);
-    RangeVariable d = new RangeVariable("d", 1, 5, t);
+    RangeVariable a = new RangeVariable("a", 1, 5, truth());
+    RangeVariable b = new RangeVariable("b", 1, 5, truth());
+    RangeVariable c = new RangeVariable("c", 1, 5, truth());
+    RangeVariable d = new RangeVariable("d", 1, 5, truth());
     RangePlus ab = new RangePlus(a, b);
     RangePlus cd = new RangePlus(c, d);
     RangePlus rp = new RangePlus(ab, cd, 19, 20);

@@ -2,10 +2,12 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
-import logic.range.*;
+import logic.number.*;
+import logic.number.range.*;
 import logic.VariableList;
 import language.parser.InputReader;
 import language.parser.ParserException;
@@ -29,7 +31,7 @@ public class QRangePlusTest {
   }
 
   private QuantifiedRangeConstant createConstant(String txt) {
-    return new QuantifiedRangeConstant(expr(txt), new Variable("TRUE"));
+    return new QuantifiedRangeConstant(expr(txt), new Atom(new Variable("TRUE"), true));
   }
 
   /** Creates x[i] + <the expression given by txt> */

@@ -2,11 +2,14 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.parameter.Parameter;
-import logic.range.*;
+import logic.number.*;
+import logic.number.range.RangeInteger;
+import logic.number.range.ParamRangeVar;
 import logic.VariableList;
 import language.parser.InputReader;
 import language.parser.ParserException;
@@ -29,8 +32,12 @@ public class QRangeSumTest {
     } catch (ParserException e) { return null; }
   }
 
+  private Atom truth() {
+    return new Atom(new Variable("TRUE"), true);
+  }
+
   private QuantifiedRangeConstant createConstant(String txt) {
-    return new QuantifiedRangeConstant(expr(txt), new Variable("TRUE"));
+    return new QuantifiedRangeConstant(expr(txt), truth());
   }
 
   private ArrayList<Parameter> params(String p1, String p2, String p3) {
@@ -41,10 +48,6 @@ public class QRangeSumTest {
       if (p3 != null) ret.add(InputReader.readParameterFromString(p3));
     } catch (ParserException e) { return null; }
     return ret;
-  }
-
-  private Variable truth() {
-    return new Variable("TRUE");
   }
 
   @Test

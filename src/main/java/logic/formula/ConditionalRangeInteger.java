@@ -1,7 +1,7 @@
 package logic.formula;
 
 import logic.sat.*;
-import logic.range.RangeInteger;
+import logic.number.range.RangeInteger;
 import java.util.TreeMap;
 
 /**
@@ -32,8 +32,8 @@ public class ConditionalRangeInteger implements RangeInteger {
     _variables = null;
   }
 
-  public ConditionalRangeInteger(Formula cond, RangeInteger value, Variable truevar) {
-    setup(cond, value, new Atom(truevar, true));
+  public ConditionalRangeInteger(Formula cond, RangeInteger value, Atom truth) {
+    setup(cond, value, truth);
   }
 
   public ConditionalRangeInteger(Formula cond, RangeInteger value, Atom truth, int min, int max) {

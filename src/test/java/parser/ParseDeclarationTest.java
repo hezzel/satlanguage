@@ -5,8 +5,9 @@ import static org.junit.Assert.*;
 
 import logic.parameter.ParameterList;
 import logic.parameter.ParamBoolVar;
-import logic.range.RangeVariable;
-import logic.range.ParamRangeVar;
+import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
+import logic.number.binary.BinaryVariable;
 import logic.VariableList;
 import language.parser.InputReader;
 import language.parser.ParserException;

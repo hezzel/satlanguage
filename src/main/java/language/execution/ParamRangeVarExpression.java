@@ -2,8 +2,8 @@ package language.execution;
 
 import logic.sat.Variable;
 import logic.parameter.*;
-import logic.range.RangeVariable;
-import logic.range.ParamRangeVar;
+import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
 
 import java.util.ArrayList;
 import java.util.TreeSet;

@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 import logic.sat.Variable;
 import logic.sat.Solution;
 import logic.parameter.*;
-import logic.range.*;
+import logic.number.range.*;
 import logic.VariableList;
 import language.execution.UndeclaredVariableError;
 import language.execution.ProgramState;

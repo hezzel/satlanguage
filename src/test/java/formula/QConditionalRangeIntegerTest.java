@@ -7,11 +7,11 @@ import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.parameter.ParamBoolVar;
-import logic.range.ParamRangeVar;
-import logic.range.RangeInteger;
-import logic.range.QuantifiedRangeInteger;
-import logic.range.QuantifiedRangeConstant;
-import logic.range.QuantifiedRangeVariable;
+import logic.number.range.ParamRangeVar;
+import logic.number.range.RangeInteger;
+import logic.number.QuantifiedRangeInteger;
+import logic.number.QuantifiedRangeConstant;
+import logic.number.QuantifiedRangeVariable;
 import logic.formula.Formula;
 import logic.formula.AtomicFormula;
 import logic.formula.Or;
@@ -55,14 +55,14 @@ public class QConditionalRangeIntegerTest {
   }
 
   private QuantifiedRangeConstant createConstant(String txt) {
-    return new QuantifiedRangeConstant(expr(txt), new Variable("TRUE"));
+    return new QuantifiedRangeConstant(expr(txt), new Atom(new Variable("TRUE"), true));
   }
 
   private QuantifiedConditionalRangeInteger createTest() {
     Formula formula = new Or(makeAtom("x", true), createParamBoolVar("j-1"));
     QuantifiedRangeInteger value = createVariable("i+3");
-    Variable truevar = new Variable("TRUE");
-    return new QuantifiedConditionalRangeInteger(formula, value, truevar);
+    Atom truth = new Atom(new Variable("TRUE"), true);
+    return new QuantifiedConditionalRangeInteger(formula, value, truth);
   }
 
   @Test

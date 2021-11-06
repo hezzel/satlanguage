@@ -2,16 +2,17 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.sat.Variable;
+import logic.sat.Atom;
 import logic.parameter.Assignment;
 import logic.parameter.Parameter;
 import logic.parameter.ParameterList;
-import logic.range.RangeVariable;
-import logic.range.ParamRangeVar;
+import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
 import language.parser.InputReader;
 import language.parser.ParserException;
 
 public class ParamRangeVarTest {
-  private Variable truth() { return new Variable("TRUE"); }
+  private Atom truth() { return new Atom(new Variable("TRUE"), true); }
 
   @Test
   public void testSimpleRangeVar() throws ParserException {
