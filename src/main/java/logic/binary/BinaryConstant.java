@@ -48,10 +48,6 @@ public class BinaryConstant implements BinaryInteger {
     return _parts.size();
   }
 
-  public BinaryConstant setPracticalBounds(int newmin, int newmax) {
-    return this;
-  }
-
   public Atom queryBit(int i) {
     if (i < _parts.size()) return _parts.get(i);
     return _negativeBit;

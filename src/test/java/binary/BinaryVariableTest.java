@@ -76,7 +76,6 @@ public class BinaryVariableTest {
     assertTrue(col.contains("¬x⟨0⟩ ∨ ¬x⟨1⟩ ∨ ¬x⟨2⟩ ∨ x⟨-⟩"));
     // -3 = NEG 101, so x ≥ -3 if x is not negative or x ∈ {-3..-1}, so if x is not negative or
     // (x⟨2⟩ = 1 and not (x⟨1⟩ and x⟨0⟩ both false))
-    System.out.println(col);
     assertTrue(col.contains("x⟨2⟩ ∨ ¬x⟨-⟩"));
     assertTrue(col.contains("x⟨0⟩ ∨ x⟨1⟩ ∨ ¬x⟨-⟩"));
     assertTrue(col.size() == 3);

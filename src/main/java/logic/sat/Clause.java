@@ -78,6 +78,11 @@ public class Clause {
     return ret.toString();
   }
 
+  /** Returns the atoms making up this Clause. */
+  public ArrayList<Atom> getParts() {
+    return new ArrayList<Atom>(_atoms);
+  }
+
   /** Returns whether the given clause returns exactly the same atoms as the other one. */
   public boolean equals(Clause c) {
     if (_atoms.size() != c._atoms.size()) return false;

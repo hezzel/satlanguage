@@ -66,10 +66,6 @@ public class BinaryVariable implements BinaryInteger {
     return _parts.size();
   }
 
-  public BinaryVariable setPracticalBounds(int newmin, int newmax) {
-    return this;
-  }
-
   public Atom queryBit(int i) {
     if (i < _parts.size()) return _parts.get(i);
     return _negativeBit;

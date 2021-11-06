@@ -18,17 +18,6 @@ public interface BinaryInteger {
   public int length();
 
   /**
-   * This function returns a BinaryInteger y with the following properties:
-   * - if x ≤ newmin then y ≤ newmin
-   * - if y ≥ newmax then y ≥ newmax
-   * - else y = x
-   * This new BinaryInteger may be equal to x, or completely different outside the given range.
-   * This is intended to be used to avoid creating more boolean variables and well-definedness
-   * clauses than necessary.
-   */
-  public BinaryInteger setPracticalBounds(int newmin, int newmax);
-
-  /**
    * An atom representing the ith bit, where queryBit(0) represents 1, queryBit(2) represents
    * 4, and so on.
    */
