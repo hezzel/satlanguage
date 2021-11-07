@@ -3,12 +3,18 @@ import static org.junit.Assert.*;
 
 import logic.sat.Variable;
 import logic.sat.Atom;
+import logic.sat.Solution;
 import logic.number.binary.BinaryVariable;
+import java.util.TreeSet;
 
 public class BinaryVariableTest {
+  private Atom truth() {
+    return new Atom(new Variable("TRUE"), true);
+  }
+
   @Test
   public void testStandardNegativeBinaryVariable() {
-    BinaryVariable x = new BinaryVariable("x", 4, true, new Atom(new Variable("TRUE"), true));
+    BinaryVariable x = new BinaryVariable("x", 4, true, truth());
     assertTrue(x.queryMinimum() == -16);
     assertTrue(x.queryMaximum() == 15);
     assertTrue(x.length() == 4);
@@ -26,7 +32,7 @@ public class BinaryVariableTest {
 
   @Test
   public void testNonNegativeBinaryVariable() {
-    BinaryVariable x = new BinaryVariable("x", 4, false, new Atom(new Variable("TRUE"), true));
+    BinaryVariable x = new BinaryVariable("x", 4, false, truth());
     assertTrue(x.queryMinimum() == 0);
     assertTrue(x.queryMaximum() == 15);
     assertTrue(x.length() == 4);
@@ -44,7 +50,7 @@ public class BinaryVariableTest {
 
   @Test
   public void testMixedMinimumMaximumExactBoundaries() {
-    BinaryVariable x = new BinaryVariable("x", -16, 15, new Atom(new Variable("TRUE"), true));
+    BinaryVariable x = new BinaryVariable("x", -16, 15, truth());
     assertTrue(x.queryMinimum() == -16);
     assertTrue(x.queryMaximum() == 15);
     assertTrue(x.length() == 4);
@@ -62,7 +68,7 @@ public class BinaryVariableTest {
 
   @Test
   public void testMinimumMaximumMixedBoundariesPositiveStronger() {
-    BinaryVariable x = new BinaryVariable("x", -3, 6, new Atom(new Variable("TRUE"), true));
+    BinaryVariable x = new BinaryVariable("x", -3, 6, truth());
     assertTrue(x.queryMinimum() == -3);
     assertTrue(x.queryMaximum() == 6);
     assertTrue(x.length() == 3);
@@ -83,7 +89,7 @@ public class BinaryVariableTest {
 
   @Test
   public void testMinimumMaximumMixedBoundariesNegativeStronger() {
-    BinaryVariable x = new BinaryVariable("x", -8, 2, new Atom(new Variable("TRUE"), true));
+    BinaryVariable x = new BinaryVariable("x", -8, 2, truth());
     assertTrue(x.queryMinimum() == -8);
     assertTrue(x.queryMaximum() == 2);
     assertTrue(x.length() == 3);
@@ -102,7 +108,7 @@ public class BinaryVariableTest {
 
   @Test
   public void testMinimumMaximumPositiveBoundaries() {
-    BinaryVariable x = new BinaryVariable("x", 1, 12, new Atom(new Variable("TRUE"), true));
+    BinaryVariable x = new BinaryVariable("x", 1, 12, truth());
     assertTrue(x.queryMinimum() == 1);
     assertTrue(x.queryMaximum() == 12);
     assertTrue(x.length() == 4);
@@ -121,7 +127,7 @@ public class BinaryVariableTest {
 
   @Test
   public void testMinimumMaximumNegativeBoundaries() {
-    BinaryVariable x = new BinaryVariable("x", -7, -3, new Atom(new Variable("TRUE"), true));
+    BinaryVariable x = new BinaryVariable("x", -7, -3, truth());
     assertTrue(x.queryMinimum() == -7);
     assertTrue(x.queryMaximum() == -3);
     assertTrue(x.length() == 3);
@@ -134,6 +140,36 @@ public class BinaryVariableTest {
     // -7 = 1...1001, so x ≥ -7 if at least one x⟨i⟩ holds
     assertTrue(col.contains("x⟨0⟩ ∨ x⟨1⟩ ∨ x⟨2⟩"));
     assertTrue(col.size() == 2);
+  }
+
+  @Test
+  public void testGetPositiveValue() {
+    BinaryVariable x = new BinaryVariable("x", 8, true, truth());
+    TreeSet<Integer> sol = new TreeSet<Integer>();
+    // 1000111
+    sol.add((new Variable("TRUE")).queryIndex());
+    sol.add((new Variable("x⟨0⟩")).queryIndex());
+    sol.add((new Variable("x⟨1⟩")).queryIndex());
+    sol.add((new Variable("x⟨2⟩")).queryIndex());
+    sol.add((new Variable("x⟨6⟩")).queryIndex());
+    Solution solution = new Solution(sol);
+    assertTrue(x.getValue(solution) == 71);
+  }
+
+  @Test
+  public void testGetNegativeValue() {
+    BinaryVariable x = new BinaryVariable("x", 7, true, truth());
+    TreeSet<Integer> sol = new TreeSet<Integer>();
+    // -45: 11010011
+    sol.add((new Variable("TRUE")).queryIndex());
+    sol.add((new Variable("x⟨-⟩")).queryIndex());
+    sol.add((new Variable("x⟨0⟩")).queryIndex());
+    sol.add((new Variable("x⟨1⟩")).queryIndex());
+    sol.add((new Variable("x⟨4⟩")).queryIndex());
+    sol.add((new Variable("x⟨6⟩")).queryIndex());
+    sol.add((new Variable("x⟨7⟩")).queryIndex());
+    Solution solution = new Solution(sol);
+    assertTrue(x.getValue(solution) == -45);
   }
 }
 

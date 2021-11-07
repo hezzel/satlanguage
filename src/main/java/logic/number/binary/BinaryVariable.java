@@ -1,9 +1,6 @@
 package logic.number.binary;
 
-import logic.sat.Variable;
-import logic.sat.Atom;
-import logic.sat.Clause;
-import logic.sat.ClauseCollection;
+import logic.sat.*;
 import java.util.ArrayList;
 
 /**
@@ -116,6 +113,17 @@ public class BinaryVariable implements BinaryInteger {
         clause.remove(clause.size()-1);
       }
     }
+  }
+
+  public int getValue(Solution solution) {
+    boolean negative = solution.check(_negativeBit);
+    int ret = 0;
+    for (int i = 0, k = 1; i < _parts.size(); i++, k *= 2) {
+      Atom x = negative ? _parts.get(i).negate() : _parts.get(i);
+      if (solution.check(x)) ret += k;
+    }
+    if (negative) return -1-ret;
+    return ret;
   }
 
   public String toString() {

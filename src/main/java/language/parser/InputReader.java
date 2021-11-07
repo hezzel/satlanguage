@@ -4,8 +4,10 @@ import logic.sat.Variable;
 import logic.sat.Atom;
 import logic.parameter.*;
 import logic.number.*;
-import logic.number.range.ParamRangeVar;
 import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
+import logic.number.binary.BinaryVariable;
+import logic.number.binary.ParamBinaryVar;
 import logic.formula.*;
 import logic.VariableList;
 import logic.RequirementsList;
@@ -167,6 +169,14 @@ public class InputReader {
     return name;
   }
 
+  private void checkParameterSize(ParseTree tree, String varname, int expected, int given)
+                                                                           throws ParserException {
+    if (expected != given) {
+      throw new ParserException(firstToken(tree), "Illegal use of variable " + varname +
+        " declared with " + expected + " parameters, but used with " + given + " parameters.");
+    }
+  }
+
   /**
    * Returns the parametrised range variable represented by the identifier starting the tree, and
    * updates the given arguments list to add all the pexpressions in the arguments list to the
@@ -178,7 +188,7 @@ public class InputReader {
    * should read the arguments as extended PExpressions.
    */
   private ParamRangeVar readQuantifiedRangeVariable(ParseTree tree, VariableList lst,
-                        ArrayList<PExpression> args, boolean ivarsInParams) throws ParserException {
+                       ArrayList<PExpression> args, boolean ivarsInParams) throws ParserException {
     String name = splitParamVar(tree, args, ivarsInParams ? lst : null);
     ParamRangeVar x = lst.queryParametrisedRangeVariable(name);
     if (x == null) {
@@ -190,11 +200,34 @@ public class InputReader {
         throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
       }
     }
-    ParameterList expected = x.queryParameters();
-    if (expected.size() != args.size()) {
-      throw new ParserException(firstToken(tree), "Illegal use of variable " + name + " declared " +
-        "with " + expected.size() + " parameters, but used with " + args.size() + " parameters.");
+    checkParameterSize(tree, name, x.queryParameters().size(), args.size());
+    return x;
+  }
+
+  /**
+   * Returns the parametrised binary variable represented by the identifier starting the tree, and
+   * updates the given arguments list to add all the pexpressions in the arguments list to the
+   * variable.  (The args list is expected to be empty before the call.)
+   * If there is no ParamRangeVar declared with that name, or if the length of the arguments list
+   * does not match the expected number of parameters, a ParserException is thrown instead.  If
+   * ivarsInParams is false, then the parameters of the range var should be pure PExpressions; that
+   * is, they are not allowed to contain integer variables.  If ivarsInParams is true, then we
+   * should read the arguments as extended PExpressions.
+   */
+  private ParamBinaryVar readQuantifiedBinaryVariable(ParseTree tree, VariableList lst,
+                       ArrayList<PExpression> args, boolean ivarsInParams) throws ParserException {
+    String name = splitParamVar(tree, args, ivarsInParams ? lst : null);
+    ParamBinaryVar x = lst.queryParametrisedBinaryVariable(name);
+    if (x == null) {
+      if (lst.isDeclared(name)) {
+        throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
+          "as a parametrised bbinary variable but was not declared as such.");
+      }
+      else {
+        throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
+      }
     }
+    checkParameterSize(tree, name, x.queryParameters().size(), args.size());
     return x;
   }
 
@@ -221,11 +254,7 @@ public class InputReader {
         throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
       }
     }
-    ParameterList expected = x.queryParameters();
-    if (expected.size() != args.size()) {
-      throw new ParserException(firstToken(tree), "Illegal use of variable " + name + " declared " +
-        "with " + expected.size() + " parameters, but used with " + args.size() + " parameters.");
-    }
+    checkParameterSize(tree, name, x.queryParameters().size(), args.size());
     return x;
   }
 
@@ -311,13 +340,15 @@ public class InputReader {
 
   private PExpression readPExpressionUnit(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
-    // IDENTIFIER (a parameter or macro)
+    // IDENTIFIER (a parameter, macro or (range/binary) variable)
     if (kind.equals("token IDENTIFIER") && tree.getChildCount() == 1) {
       String name = tree.getText();
       if (_defs.defines(name)) return new ConstantExpression(readInteger(tree));
       RangeVariable x = (lst == null ? null : lst.queryRangeVariable(name));
       if (x != null) return new VariableExpression(x);
-      else return new ParameterExpression(tree.getText());
+      BinaryVariable y = (lst == null ? null : lst.queryBinaryVariable(name));
+      if (y != null) return new VariableExpression(y);
+      return new ParameterExpression(tree.getText());
     }
     // MINUS IDENTIFIER (where identifier is a parameter or macro)
     if (kind.equals("token MINUS") && checkChild(tree, 1).equals("token IDENTIFIER")) {
@@ -397,8 +428,24 @@ public class InputReader {
         "the program.");
     }
     ArrayList<PExpression> exprs = new ArrayList<PExpression>();
-    ParamRangeVar x = readQuantifiedRangeVariable(tree, lst, exprs, true);
-    return new ParamRangeVarExpression(x, exprs);
+    String name = splitParamVar(tree, exprs, lst);
+    ParamRangeVar x = lst.queryParametrisedRangeVariable(name);
+    if (x != null) {
+      checkParameterSize(tree, name, x.queryParameters().size(), exprs.size());
+      return new ParamVarExpression(x, exprs);
+    }
+    ParamBinaryVar y = lst.queryParametrisedBinaryVariable(name);
+    if (y != null) {
+      checkParameterSize(tree, name, y.queryParameters().size(), exprs.size());
+      return new ParamVarExpression(y, exprs);
+    }
+    if (lst.isDeclared(name)) {
+      throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
+        "as a parametrised range/binary variable but was not declared as such.");
+    }
+    else {
+      throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
+    }
   }
 
   /** Used for unit testing: read *only* an expression */

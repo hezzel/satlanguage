@@ -8,14 +8,22 @@ import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.number.range.RangeVariable;
+import logic.number.binary.BinaryVariable;
 
 import java.util.TreeSet;
 
 public class VariableExpression implements PExpression {
-  private RangeVariable _var;
+  private RangeVariable _rvar;
+  private BinaryVariable _bvar;
 
   public VariableExpression(RangeVariable x) {
-    _var = x;
+    _rvar = x;
+    _bvar = null;
+  }
+
+  public VariableExpression(BinaryVariable x) {
+    _rvar = null;
+    _bvar = x;
   }
 
   public PExpression substitute(Substitution subst) {
@@ -23,7 +31,10 @@ public class VariableExpression implements PExpression {
   }
 
   public int evaluate(Assignment ass) {
-    if (ass instanceof ProgramState) return ((ProgramState)ass).queryValue(_var);
+    if (ass instanceof ProgramState) {
+      if (_rvar != null) return ((ProgramState)ass).queryValue(_rvar);
+      else return ((ProgramState)ass).queryValue(_bvar);
+    }
     throw new Error("Evaluating VariableExpression with an Assignment that is not a ProgramState.");
   }
 
@@ -48,7 +59,7 @@ public class VariableExpression implements PExpression {
   }
 
   public String toString() {
-    return _var.toString();
+    return _rvar == null ? _bvar.toString() : _rvar.toString();
   }
 
   public TreeSet<String> queryParameters() {
@@ -68,6 +79,9 @@ public class VariableExpression implements PExpression {
 
   public boolean equals(PExpression other) {
     if (!(other instanceof VariableExpression)) return false;
-    return ((VariableExpression)other)._var.equals(_var);
+    VariableExpression o = (VariableExpression)other;
+    if (_rvar != null) return _rvar.equals(o._rvar);
+    return _bvar.equals(o._bvar);
   }
 }
+

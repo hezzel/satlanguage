@@ -9,6 +9,8 @@ import logic.parameter.ParameterList;
 import logic.parameter.ParamBoolVar;
 import logic.number.range.RangeVariable;
 import logic.number.range.ParamRangeVar;
+import logic.number.binary.BinaryVariable;
+import logic.number.binary.ParamBinaryVar;
 
 import java.util.Set;
 import java.util.ArrayList;
@@ -25,6 +27,10 @@ public class ProgramState extends Assignment {
   }
 
   public int queryValue(RangeVariable x) {
+    return x.getValue(_solution);
+  }
+
+  public int queryValue(BinaryVariable x) {
     return x.getValue(_solution);
   }
 
