@@ -1,7 +1,7 @@
 define N 3
 define SIZE N*N
 
-declare field[x,y] :: Int ∈ {1..SIZE} for x ∈ {1..SIZE}, y ∈ {1..SIZE}
+declare field[x,y] :: Number ∈ {1..SIZE} for x ∈ {1..SIZE}, y ∈ {1..SIZE}
 
 # every number occurs once in each row
 ∀ i ∈ {1..SIZE}.∀ y ∈ {1..SIZE}.∃ x ∈ {1..SIZE}. field[x,y] = i

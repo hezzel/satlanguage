@@ -1,10 +1,10 @@
 define SIZE 40
 
 declare queen[x,y] :: Bool for x ∈ {1..SIZE}, y ∈ {1..SIZE}
-declare rowindex[y] :: Int ∈ {1..SIZE} for y ∈ {1..SIZE}
-declare colindex[x] :: Int ∈ {1..SIZE} for x ∈ {1..SIZE}
-declare diag1index[i] :: Int ∈ {1..SIZE} for i ∈ {2..SIZE*2}
-declare diag2index[i] :: Int ∈ {1..SIZE} for i ∈ {-1*SIZE..SIZE}
+declare rowindex[y] :: Number ∈ {1..SIZE} for y ∈ {1..SIZE}
+declare colindex[x] :: Number ∈ {1..SIZE} for x ∈ {1..SIZE}
+declare diag1index[i] :: Number ∈ {1..SIZE} for i ∈ {2..SIZE*2}
+declare diag2index[i] :: Number ∈ {1..SIZE} for i ∈ {-1*SIZE..SIZE}
 
 # there is a queen in every row
 ∀ y ∈ {1..SIZE}.∃ x ∈ {1..SIZE}.queen[x,y]

@@ -23,7 +23,7 @@ public class QRangePlusTest {
   private QuantifiedRangeVariable createVariable(String index) {
     try {
       VariableList lst = new VariableList();
-      InputReader.declare("qrpt[i] :: Int ∈ {0..i} for i ∈ {1..10}", lst);
+      InputReader.declare("qrpt[i] :: Number ∈ {0..i} for i ∈ {1..10}", lst);
       ParamRangeVar qrpt = lst.queryParametrisedRangeVariable("qrpt");
       PExpression par = InputReader.readPExpressionFromString(index);
       return new QuantifiedRangeVariable(qrpt, new Substitution("i", par));
@@ -129,7 +129,7 @@ public class QRangePlusTest {
   @Test
   public void testInstantiateOneSideConstantVariable() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {1..i} for i ∈ {1..10}", lst);
+    InputReader.declare("x[i] :: Number ∈ {1..i} for i ∈ {1..10}", lst);
     ParamRangeVar x = lst.queryParametrisedRangeVariable("x");
     QuantifiedRangeVariable x1 = new QuantifiedRangeVariable(x, new Substitution());
     QuantifiedRangeVariable x2 = new QuantifiedRangeVariable(x, new Substitution("i", expr("j")));
@@ -143,7 +143,7 @@ public class QRangePlusTest {
   @Test
   public void testInstantiateTwoVariables() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {1..i} for i ∈ {1..10}", lst);
+    InputReader.declare("x[i] :: Number ∈ {1..i} for i ∈ {1..10}", lst);
     ParamRangeVar x = lst.queryParametrisedRangeVariable("x");
     QuantifiedRangeVariable x1 = new QuantifiedRangeVariable(x, new Substitution());
     QuantifiedRangeVariable x2 = new QuantifiedRangeVariable(x, new Substitution("i", expr("j")));

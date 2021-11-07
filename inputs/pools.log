@@ -38,9 +38,9 @@ define BPMAX (TOTALWEIGHT * MAXPOOLSIZE * (100 + DEVIATION) - 1) / (NUMPLAYERS *
 
 ### variables
 
-declare poolof[player]  :: Int ∈ {1..NUMPOOLS}              for player ∈ {1..NUMPLAYERS}
-declare poolsize[pool]  :: Int ∈ {MINPOOLSIZE..MAXPOOLSIZE} for pool ∈ {1..NUMPOOLS}
-declare poolscore[pool] :: Int ∈ {0..BPMAX}                 for pool ∈ {1..NUMPOOLS}
+declare poolof[player]  :: Number ∈ {1..NUMPOOLS}              for player ∈ {1..NUMPLAYERS}
+declare poolsize[pool]  :: Number ∈ {MINPOOLSIZE..MAXPOOLSIZE} for pool ∈ {1..NUMPOOLS}
+declare poolscore[pool] :: Number ∈ {0..BPMAX}                 for pool ∈ {1..NUMPOOLS}
 
 ### requirements
 

@@ -25,7 +25,13 @@ PRINTLN             : 'println' ;
 
 BOOLTYPE            : 'Bool' ;
 
-RANGETYPE           : 'Int' ;
+RANGETYPE           : 'Number' ;
+
+INTTYPE             : 'Int' [1-9] [0-9]* ;
+
+NATTYPE             : 'Nat' [1-9] [0-9]* ;
+
+FREEINTTYPE         : 'Int?' ;
 
 TO                  : 'to' ;
 

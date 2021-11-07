@@ -23,7 +23,7 @@ public class QRangeVariableTest {
   private QuantifiedRangeVariable createVariable() {
     try {
       VariableList lst = new VariableList();
-      InputReader.declare("qrvt[i,j] :: Int ∈ {0..j} with qrvt != i for i ∈ {1..5}, j ∈ {i+1..6}",
+      InputReader.declare("qrvt[i,j] :: Number ∈ {0..j} with qrvt != i for i ∈ {1..5}, j ∈ {i+1..6}",
                           lst);
       ParamRangeVar qrvt = lst.queryParametrisedRangeVariable("qrvt");
       Substitution subst = new Substitution("i", expr("a+b-1"), "j", expr("b"), "b", expr("1"));
@@ -52,7 +52,7 @@ public class QRangeVariableTest {
   @Test
   public void testClosed() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {0..10} for i ∈ {1..5}", lst);
+    InputReader.declare("x[i] :: Number ∈ {0..10} for i ∈ {1..5}", lst);
     ParamRangeVar x = lst.queryParametrisedRangeVariable("x");
     Substitution subst = new Substitution("i", expr("7"));
     QuantifiedRangeVariable qrv = new QuantifiedRangeVariable(x, subst);
@@ -79,7 +79,7 @@ public class QRangeVariableTest {
   @Test
   public void testNullInstantiate() throws ParserException {
     VariableList lst = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {0..10} for i ∈ {1..5}", lst);
+    InputReader.declare("x[i] :: Number ∈ {0..10} for i ∈ {1..5}", lst);
     ParamRangeVar x = lst.queryParametrisedRangeVariable("x");
     Substitution subst = new Substitution("i", expr("3"));
     QuantifiedRangeVariable qrv = new QuantifiedRangeVariable(x, subst);

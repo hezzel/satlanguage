@@ -373,7 +373,7 @@ public class GeqTest {
   @Test
   public void testBasics() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("x[i,j] :: Int ∈ {0..10} for i ∈ {1..3}, j ∈ {i+1..4}", vars);
+    InputReader.declare("x[i,j] :: Number ∈ {0..10} for i ∈ {1..3}, j ∈ {i+1..4}", vars);
     ParamRangeVar x = vars.queryParametrisedRangeVariable("x");
     Substitution subst = new Substitution("i", InputReader.readPExpressionFromString("a+j"),
                                           "j", InputReader.readPExpressionFromString("b"));

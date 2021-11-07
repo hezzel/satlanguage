@@ -21,7 +21,7 @@ data Fighter(Weight) {
 }
 
 # Set this value to the sum of all the fighter weights. (Sorry; can't do this automatically yet.)
-define TotalFighterWeight 20
+define TotalFighterWeight 19
 
 # It is not possible to give an odd number of fighters 5 fights each, because every fight contains
 # an even number of fighters.  Hence, if you want 5 fights each, one fighter (or 3, 5, or 7) should
@@ -42,7 +42,7 @@ define NumFights (6 * 1 + 1 * 1 + 5 * 7) / 2
 # Use this to set how much the expected total weight per player is allowed to deviate from the
 # average.  With a higher value, the problem becomes easier to solve, but a lower value gives a
 # better fight division.  The deviation is a percentage, so should be between 0 and 10.
-define Deviation 3
+define Deviation 0
 
 # Use this to set the gap between fights each player should have
 define MINGAP 2
@@ -66,9 +66,9 @@ define NumRounds (NumFights + RoundSize - 1) / RoundSize
 ===============================================================================
 
 declare fights[x,y] :: Bool for x ∈ {1..NumFighters}, y ∈ {1..NumFighters}
-declare totalweight[x] :: Int ∈ {MinimalWeightPP(x)..MaximalWeightPP(x)} for x ∈ {1..NumFighters}
-declare player1[i] :: Int ∈ {1..NumFighters-1} for i ∈ {1..NumFights}
-declare player2[i] :: Int ∈ {2..NumFighters} for i ∈ {1..NumFights}
+declare totalweight[x] :: Number ∈ {MinimalWeightPP(x)..MaximalWeightPP(x)} for x ∈ {1..NumFighters}
+declare player1[i] :: Number ∈ {1..NumFighters-1} for i ∈ {1..NumFights}
+declare player2[i] :: Number ∈ {2..NumFighters} for i ∈ {1..NumFights}
 
 # you cannot fight yourself
 ∀ x ∈ {1..NumFighters}. ¬fights[x,x]

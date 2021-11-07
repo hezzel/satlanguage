@@ -25,7 +25,7 @@ public class QRangeSumTest {
   private QuantifiedRangeVariable createVariable(String index) {
     try {
       VariableList lst = new VariableList();
-      InputReader.declare("v[i] :: Int ∈ {0..i} for i ∈ {1..10}", lst);
+      InputReader.declare("v[i] :: Number ∈ {0..i} for i ∈ {1..10}", lst);
       ParamRangeVar v = lst.queryParametrisedRangeVariable("v");
       PExpression par = InputReader.readPExpressionFromString(index);
       return new QuantifiedRangeVariable(v, new Substitution("i", par));

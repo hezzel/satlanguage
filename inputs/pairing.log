@@ -62,9 +62,9 @@ define NumRounds (NumFights + RoundSize - 1) / RoundSize
 ===============================================================================
 
 declare fights[x,y] :: Bool for x ∈ {1..NumFighters}, y ∈ {1..NumFighters}
-declare totalweight[x] :: Int ∈ {MinimalWeightPP(x)..MaximalWeightPP(x)} for x ∈ {1..NumFighters}
-declare player1[i] :: Int ∈ {1..NumFighters-1} for i ∈ {1..NumFights}
-declare player2[i] :: Int ∈ {2..NumFighters} for i ∈ {1..NumFights}
+declare totalweight[x] :: Number ∈ {MinimalWeightPP(x)..MaximalWeightPP(x)} for x ∈ {1..NumFighters}
+declare player1[i] :: Number ∈ {1..NumFighters-1} for i ∈ {1..NumFights}
+declare player2[i] :: Number ∈ {2..NumFighters} for i ∈ {1..NumFights}
 
 # you cannot fight yourself
 ∀ x ∈ {1..NumFighters}. ¬fights[x,x]

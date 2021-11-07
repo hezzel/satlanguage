@@ -1,12 +1,15 @@
 package logic;
 
 import logic.sat.*;
+import logic.parameter.PExpression;
 import logic.parameter.Parameter;
 import logic.parameter.ParameterList;
 import logic.parameter.Substitution;
 import logic.parameter.ParamBoolVar;
 import logic.number.range.RangeVariable;
 import logic.number.range.ParamRangeVar;
+import logic.number.binary.BinaryVariable;
+import logic.number.binary.ParamBinaryVar;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -21,15 +24,19 @@ public class VariableList {
   private TreeSet<String> _usednames;
   private TreeMap<String,Variable> _boolvars;
   private TreeMap<String,RangeVariable> _rangevars;
+  private TreeMap<String,BinaryVariable> _binaryvars;
   private TreeMap<String,ParamBoolVar> _paramboolvars;
   private TreeMap<String,ParamRangeVar> _paramrangevars;
+  private TreeMap<String,ParamBinaryVar> _parambinaryvars;
 
   public VariableList() {
     _usednames = new TreeSet<String>();
     _boolvars = new TreeMap<String,Variable>();
     _rangevars = new TreeMap<String,RangeVariable>();
+    _binaryvars = new TreeMap<String,BinaryVariable>();
     _paramboolvars = new TreeMap<String,ParamBoolVar>();
     _paramrangevars = new TreeMap<String,ParamRangeVar>();
+    _parambinaryvars = new TreeMap<String,ParamBinaryVar>();
 
     _boolvars.put("FALSE", new Variable("FALSE"));
     _boolvars.put("TRUE", new Variable("TRUE"));
@@ -47,6 +54,10 @@ public class VariableList {
     }
   }
 
+  private Atom truth() {
+    return new Atom(queryTrueVariable(), true);
+  }
+
   public Variable registerBooleanVariable(String name) {
     checkAcceptableName(name);
     Variable v = new Variable(name);
@@ -58,8 +69,24 @@ public class VariableList {
   public RangeVariable registerRangeVariable(Parameter param) {
     String name = param.queryName();
     checkAcceptableName(name);
-    RangeVariable v = new RangeVariable(param, new Atom(queryTrueVariable(), true));
+    RangeVariable v = new RangeVariable(param, truth());
     _rangevars.put(name, v);
+    _usednames.add(name);
+    return v;
+  }
+
+  public BinaryVariable registerBinaryVariable(String name, int length, boolean allowNegative) {
+    checkAcceptableName(name);
+    BinaryVariable v = new BinaryVariable(name, length, allowNegative, truth());
+    _binaryvars.put(name, v);
+    _usednames.add(name);
+    return v;
+  }
+
+  public BinaryVariable registerBinaryVariable(String name, int min, int max) {
+    checkAcceptableName(name);
+    BinaryVariable v = new BinaryVariable(name, min, max, truth());
+    _binaryvars.put(name, v);
     _usednames.add(name);
     return v;
   }
@@ -81,6 +108,24 @@ public class VariableList {
     return v;
   }
 
+  public ParamBinaryVar registerParametrisedBinaryVariable(String name, ParameterList params,
+                                                           int length, boolean allowNegative) {
+    checkAcceptableName(name);
+    ParamBinaryVar v = new ParamBinaryVar(name, params, length, allowNegative, truth());
+    _parambinaryvars.put(name, v);
+    _usednames.add(name);
+    return v;
+  }
+
+  public ParamBinaryVar registerParametrisedBinaryVariable(String name, ParameterList params,
+                                                           PExpression min, PExpression max) {
+    checkAcceptableName(name);
+    ParamBinaryVar v = new ParamBinaryVar(name, params, min, max, truth());
+    _parambinaryvars.put(name, v);
+    _usednames.add(name);
+    return v;
+  }
+
   public boolean isDeclared(String name) {
     return _usednames.contains(name);
   }
@@ -93,12 +138,20 @@ public class VariableList {
     return _rangevars.get(name);
   }
 
+  public BinaryVariable queryBinaryVariable(String name) {
+    return _binaryvars.get(name);
+  }
+
   public ParamBoolVar queryParametrisedBooleanVariable(String name) {
     return _paramboolvars.get(name);
   }
 
   public ParamRangeVar queryParametrisedRangeVariable(String name) {
     return _paramrangevars.get(name);
+  }
+
+  public ParamBinaryVar queryParametrisedBinaryVariable(String name) {
+    return _parambinaryvars.get(name);
   }
 
   public Variable queryFalseVariable() {
@@ -115,6 +168,8 @@ public class VariableList {
     col.addClause(new Clause(new Atom(queryFalseVariable(), false)));
     for (RangeVariable x : _rangevars.values()) x.addWelldefinednessClauses(col);
     for (ParamRangeVar y : _paramrangevars.values()) y.addWelldefinednessClauses(col);
+    for (BinaryVariable x : _binaryvars.values()) x.addWelldefinednessClauses(col);
+    for (ParamBinaryVar y : _parambinaryvars.values()) y.addWelldefinednessClauses(col);
   }
 
   /** This returns a human-readable presentation of the declared boolean variables. */
@@ -131,7 +186,17 @@ public class VariableList {
   private String printBasicRangeDeclarations() {
     String ret = "";
     for (RangeVariable x : _rangevars.values()) {
-      ret += "declare " + x.toString() + " :: Int ∈ " + x.queryRangeDescription() + "\n";
+      ret += "declare " + x.toString() + " :: Number ∈ " + x.queryRangeDescription() + "\n";
+    }
+    return ret;
+  }
+
+  /** This returns a human-readable presenttion of the declared binary variables. */
+  private String printBasicBinaryDeclarations() {
+    String ret = "";
+    for (BinaryVariable x : _binaryvars.values()) {
+      ret += "declare " + x.toString() + " :: Int? ∈ { " + x.queryMinimum() + ".." +
+             x.queryMaximum() + " }\n";
     }
     return ret;
   }
@@ -162,7 +227,17 @@ public class VariableList {
   private String printParametrisedRangeDeclarations() {
     String ret = "";
     for (ParamRangeVar x : _paramrangevars.values()) {
-      ret += "declare " + x.toString() + " :: Int ∈ " + x.queryRangeDescription() +
+      ret += "declare " + x.toString() + " :: Number ∈ " + x.queryRangeDescription() +
+        printParameterList(x.queryParameters()) + "\n";
+    }
+    return ret;
+  }
+
+  /** This returns a human-readable presentation of the declared parametrised binary variables. */
+  private String printParametrisedBinaryDeclarations() {
+    String ret = "";
+    for (ParamBinaryVar x : _parambinaryvars.values()) {
+      ret += "declare " + x.toString() + " :: " + x.queryDeclarationDescription() +
         printParameterList(x.queryParameters()) + "\n";
     }
     return ret;
@@ -173,7 +248,9 @@ public class VariableList {
     String ret = printBasicBooleanVariableDeclarations() +
                  printParametrisedBooleanVariableDeclarations() +
                  printBasicRangeDeclarations() +
-                 printParametrisedRangeDeclarations();
+                 printParametrisedRangeDeclarations() +
+                 printBasicBinaryDeclarations() +
+                 printParametrisedBinaryDeclarations();
     return ret;
   }
 }

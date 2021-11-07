@@ -640,9 +640,11 @@ public class InputReader {
     verifyChildIsToken(tree, 0, "DECLARE", "declare keyword");
     String kind = checkChild(tree, 1);
     if (kind.equals("rule boolvardec")) readBoolVarDec(tree.getChild(1), lst);
-    else if (kind.equals("rule intvardec")) readIntVarDec(tree.getChild(1), lst);
+    else if (kind.equals("rule rangevardec")) readRangeVarDec(tree.getChild(1), lst);
+    else if (kind.equals("rule binaryvardec")) readBinaryVarDec(tree.getChild(0), lst);
     else if (kind.equals("rule paramboolvardec")) readParamBoolVarDec(tree.getChild(1), lst);
-    else if (kind.equals("rule paramintvardec")) readParamIntVarDec(tree.getChild(1), lst);
+    else if (kind.equals("rule paramrangevardec")) readParamRangeVarDec(tree.getChild(1), lst);
+    else if (kind.equals("rule parambinaryvardec")) readParamBinaryVarDec(tree.getChild(0), lst);
     else throw buildError(tree, "encountered " + kind + ", expected a kind of declaration.");
   }
 
@@ -675,7 +677,7 @@ public class InputReader {
     }
   }
 
-  private void readIntVarDec(ParseTree tree, VariableList lst) throws ParserException {
+  private void readRangeVarDec(ParseTree tree, VariableList lst) throws ParserException {
     // IDENTIFIER TYPEOF RANGETYPE IN range
     verifyChildIsToken(tree, 0, "IDENTIFIER", "an identifier (variable name)");
     verifyChildIsToken(tree, 1, "TYPEOF", "typeof symbol ::");
@@ -687,6 +689,51 @@ public class InputReader {
     Parameter param = readParameterRange(name, tree.getChild(4));
     verifyRangeUsesOnlyAllowedParameters(param, null, tree);
     lst.registerRangeVariable(param);
+  }
+
+  /**
+   * Given Int<num> or Nat<num>, this returns the number parsed to an int, provided it is between
+   * 1 and 63; if not, a parser exception is thrown.
+   */
+  private int readLengthFromType(ParseTree tree) throws ParserException {
+    String num = tree.toString().substring(3);
+    int k;
+    try { k = Integer.parseInt(num); }
+    catch (NumberFormatException exc) {
+      throw new ParserException(firstToken(tree), "Could not parse integer " + num + ".");
+    }
+    if (k <= 0 || k > 63) throw new ParserException(firstToken(tree), "Binary integer " +
+      "variables should be given a length between 1 and 63.");
+    return k;
+  }
+
+  private void readBinaryVarDec(ParseTree tree, VariableList lst) throws ParserException {
+    // IDENTIFIER TYPEOF INTTYPE
+    // IDENTIFIER TYPEOF NATTYPE
+    // IDENTIFIER TYPEOF FREEINTTYPE IN BRACEOPEN pexpression DOTS pexpression BRACECLOSE
+    verifyChildIsToken(tree, 0, "IDENTIFIER", "an identifier (variable name)");
+    verifyChildIsToken(tree, 1, "TYPEOF", "typeof symbol ::");
+    String name = tree.getChild(0).getText();
+    checkDeclarationAllowed(name, "binary integer", lst, tree);
+    String kind = checkChild(tree, 2);
+    if (kind.equals("token INTTYPE") || kind.equals("token NATTYPE")) {
+      int k = readLengthFromType(tree.getChild(2));
+      boolean allowNegative = kind.equals("token INTTYPE");
+      lst.registerBinaryVariable(name, k, allowNegative);
+    }
+    else {
+      verifyChildIsRule(tree, 5, "pexpression", "parameter expression");
+      verifyChildIsRule(tree, 7, "pexpression", "parameter expression");
+      PExpression min = readPExpression(tree.getChild(5), null);
+      PExpression max = readPExpression(tree.getChild(7), null);
+      Set<String> pars = min.queryParameters();
+      pars.addAll(max.queryParameters());
+      if (pars.size() != 0) {
+        throw new ParserException(firstToken(tree), "You cannot use free parameters in the " +
+          "range of a variable declaration (" + pars.toString() + ").");
+      }
+      lst.registerBinaryVariable(name, min.evaluate(null), max.evaluate(null));
+    }
   }
 
   private void readParamBoolVarDec(ParseTree tree, VariableList lst) throws ParserException {
@@ -702,7 +749,7 @@ public class InputReader {
     lst.registerParametrisedBooleanVariable(name, params);
   }
 
-  private void readParamIntVarDec(ParseTree tree, VariableList lst) throws ParserException {
+  private void readParamRangeVarDec(ParseTree tree, VariableList lst) throws ParserException {
     // paramvar TYPEOF RANGETYPE IN range FOR parameterlist
     verifyChildIsRule(tree, 0, "paramvar", "a parametrised variable x[i1,...,in]");
     verifyChildIsToken(tree, 1, "TYPEOF", "typeof symbol ::");
@@ -719,6 +766,38 @@ public class InputReader {
     lst.registerParametrisedRangeVariable(range, params);
   }
 
+  private void readParamBinaryVarDec(ParseTree tree, VariableList lst) throws ParserException {
+    // paramvar TYPEOF INTTYPE FOR parameterlist
+    // paramvar TYPEOF NATTYPE FOR parameterlist
+    // paramvar TYPEOF FREEINTTYPE IN BRACEOPEN pexpression DOTS pexpression BRACECLOSE FOR parameterlist
+    verifyChildIsRule(tree, 0, "paramvar", "a parametrised variable x[i1,...,in]");
+    verifyChildIsToken(tree, 1, "TYPEOF", "typeof symbol ::");
+    verifyChildIsRule(tree, tree.getChildCount()-1, "parameterlist", "a list of parameters");
+    ParameterList params = readParameterList(tree.getChild(tree.getChildCount()-1));
+    String name = readParamVarForDeclaration(tree.getChild(0), params, lst);
+    checkDeclarationAllowed(name, "parametrised binary", lst, tree);
+    String kind = checkChild(tree, 2);
+    if (kind.equals("token INTTYPE") || kind.equals("token NATTYPE")) {
+      int length = readLengthFromType(tree.getChild(2));
+      boolean allowNegative = kind.equals("token INTTYPE");
+      lst.registerParametrisedBinaryVariable(name, params, length, allowNegative);
+    }
+    else {
+      verifyChildIsRule(tree, 5, "pexpression", "parameter expression");
+      verifyChildIsRule(tree, 7, "pexpression", "parameter expression");
+      PExpression min = readPExpression(tree.getChild(5), null);
+      PExpression max = readPExpression(tree.getChild(7), null);
+      Set<String> pars = min.queryParameters();
+      pars.addAll(max.queryParameters());
+      for (int i = 0; i < params.size(); i++) pars.remove(params.get(i).queryName());
+      if (pars.size() != 0) {
+        throw new ParserException(firstToken(tree), "You cannot use free parameters in the " +
+          "range of a variable declaration (" + pars.toString() + ").");
+      }
+      lst.registerParametrisedBinaryVariable(name, params, min, max);
+    }
+  }
+
   /**
    * Meant for internal use in the program: reading a declaration from string.  This means the
    * declare keyword is omitted, and the input ends after the declaration.
@@ -727,9 +806,11 @@ public class InputReader {
     verifyChildIsToken(tree, 1, "EOF", "end of input");
     String kind = checkChild(tree, 0);
     if (kind.equals("rule boolvardec")) readBoolVarDec(tree.getChild(0), lst);
-    else if (kind.equals("rule intvardec")) readIntVarDec(tree.getChild(0), lst);
+    else if (kind.equals("rule rangevardec")) readRangeVarDec(tree.getChild(0), lst);
+    else if (kind.equals("rule binaryvardec")) readBinaryVarDec(tree.getChild(0), lst);
     else if (kind.equals("rule paramboolvardec")) readParamBoolVarDec(tree.getChild(0), lst);
-    else if (kind.equals("rule paramintvardec")) readParamIntVarDec(tree.getChild(0), lst);
+    else if (kind.equals("rule paramrangevardec")) readParamRangeVarDec(tree.getChild(0), lst);
+    else if (kind.equals("rule parambinaryvardec")) readParamBinaryVarDec(tree.getChild(0), lst);
     else throw buildError(tree, "encountered " + kind +
       ", expected rule boolvardec or rule paramboolvardec");
   }

@@ -101,13 +101,23 @@ onlyparameter       : parameter EOF
 boolvardec          : IDENTIFIER TYPEOF BOOLTYPE
                     ;
 
-intvardec           : IDENTIFIER TYPEOF RANGETYPE IN range
+rangevardec         : IDENTIFIER TYPEOF RANGETYPE IN range
+                    ;
+
+binaryvardec        : IDENTIFIER TYPEOF INTTYPE
+                    | IDENTIFIER TYPEOF NATTYPE
+                    | IDENTIFIER TYPEOF FREEINTTYPE IN BRACEOPEN pexpression DOTS pexpression BRACECLOSE
                     ;
 
 paramboolvardec     : paramvar TYPEOF BOOLTYPE FOR parameterlist
                     ;
 
-paramintvardec      : paramvar TYPEOF RANGETYPE IN range FOR parameterlist
+paramrangevardec    : paramvar TYPEOF RANGETYPE IN range FOR parameterlist
+                    ;
+
+parambinaryvardec   : paramvar TYPEOF INTTYPE FOR parameterlist
+                    | paramvar TYPEOF NATTYPE FOR parameterlist
+                    | paramvar TYPEOF FREEINTTYPE IN BRACEOPEN pexpression DOTS pexpression BRACECLOSE FOR parameterlist
                     ;
 
 type                : BOOLTYPE
@@ -115,15 +125,19 @@ type                : BOOLTYPE
                     ;
 
 declaration         : DECLARE boolvardec
-                    | DECLARE intvardec
+                    | DECLARE rangevardec
+                    | DECLARE binaryvardec
                     | DECLARE paramboolvardec
-                    | DECLARE paramintvardec
+                    | DECLARE paramrangevardec
+                    | DECLARE parambinaryvardec
                     ;
 
 internaldeclaration : boolvardec EOF
-                    | intvardec EOF
+                    | rangevardec EOF
+                    | binaryvardec EOF
                     | paramboolvardec EOF
-                    | paramintvardec EOF
+                    | paramrangevardec EOF
+                    | parambinaryvardec EOF
                     ;
 
 /********** Formula **********/

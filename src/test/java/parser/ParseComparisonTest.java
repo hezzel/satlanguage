@@ -12,7 +12,7 @@ public class ParseComparisonTest {
   @Test
   public void testReadSimpleGeq() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("x :: Int ∈ {1..10}", vars);
+    InputReader.declare("x :: Number ∈ {1..10}", vars);
     Formula form = InputReader.readFormulaFromString("x ≥ 6", vars);
     assertTrue(form.toString().equals("x ≥ 6"));
   }
@@ -20,7 +20,7 @@ public class ParseComparisonTest {
   @Test
   public void testReadSimpleLeq() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("x[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
     Formula form = InputReader.readFormulaFromString("x[i] <= 6", vars);
     assertTrue(form.toString().equals("6 ≥ x[i]"));
   }
@@ -28,7 +28,7 @@ public class ParseComparisonTest {
   @Test
   public void testReadSimpleSmaller() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {i..10} for i ∈ {1..5}", vars);
+    InputReader.declare("x[i] :: Number ∈ {i..10} for i ∈ {1..5}", vars);
     Formula form = InputReader.readFormulaFromString("x[8]<x[a]", vars);
     assertTrue(form.toString().equals("x[8] < x[a]"));
   }
@@ -43,7 +43,7 @@ public class ParseComparisonTest {
   @Test
   public void testReadSimpleEquals() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("x[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
     Formula form = InputReader.readFormulaFromString("3+i = x[4]", vars);
     assertTrue(form.toString().equals("3+i = x[4]"));
   }
@@ -51,8 +51,8 @@ public class ParseComparisonTest {
   @Test
   public void testReadSimpleNeq() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("y :: Int ∈ {0..1}", vars);
-    InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("y :: Number ∈ {0..1}", vars);
+    InputReader.declare("x[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
     Formula form = InputReader.readFormulaFromString("y != x[4]", vars);
     assertTrue(form.toString().equals("y ≠ x[4]"));
   }
@@ -60,7 +60,7 @@ public class ParseComparisonTest {
   @Test
   public void testEqualityWithExtraPluses() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("x[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
     Formula form = InputReader.readFormulaFromString("3+x[1]+7 = x[4]", vars);
     assertTrue(form.toString().equals("x[1] ⊕ 3+7 = x[4]"));
   }
@@ -68,8 +68,8 @@ public class ParseComparisonTest {
   @Test
   public void testGeqWithMultipleVariables() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
-    InputReader.declare("y    :: Int ∈ {1..10}", vars);
+    InputReader.declare("x[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("y    :: Number ∈ {1..10}", vars);
     Formula form = InputReader.readFormulaFromString("0 >= x[1] ⊕ y + x[4]", vars);
     assertTrue(form.toString().equals("0 ≥ x[1] ⊕ y ⊕ x[4]"));
   }
@@ -77,7 +77,7 @@ public class ParseComparisonTest {
   @Test
   public void testSmallerWithMinus() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("y    :: Int ∈ {1..10}", vars);
+    InputReader.declare("y    :: Number ∈ {1..10}", vars);
     Formula form = InputReader.readFormulaFromString("y < i - 1", vars);
     assertTrue(form.toString().equals("y < i-1"));
   }
@@ -85,7 +85,7 @@ public class ParseComparisonTest {
   @Test
   public void testNeqWithUnnecessaryRangePlus() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("y    :: Int ∈ {1..10}", vars);
+    InputReader.declare("y    :: Number ∈ {1..10}", vars);
     Formula form = InputReader.readFormulaFromString("y != i ⊕ 1", vars);
     assertTrue(form.toString().equals("y ≠ i+1"));
   }
@@ -95,7 +95,7 @@ public class ParseComparisonTest {
     VariableList vars = new VariableList();
     InputReader.declare("x    :: Bool", vars);
     InputReader.declare("y[i] :: Bool for i ∈ {1..5}", vars);
-    InputReader.declare("z[i] :: Int ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("z[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
     Formula form = InputReader.readFormulaFromString("x?3 > (¬x → y[j]) ? z[a+1]", vars);
     assertTrue(form.toString().equals("(¬x → y[j]) ? z[a+1] < x ? 3"));
   }
@@ -114,7 +114,7 @@ public class ParseComparisonTest {
     VariableList vars = new VariableList();
     DefinitionData dd = new DefinitionData();
     InputReader.readMacroFromString("define A 5", dd);
-    InputReader.declare("x :: Int ∈ {1..10}", vars);
+    InputReader.declare("x :: Number ∈ {1..10}", vars);
     Formula form = InputReader.readClosedFormulaFromString("x ≥ A", vars, dd);
     assertTrue(form.toString().equals("x ≥ 5"));
   }
@@ -128,7 +128,7 @@ public class ParseComparisonTest {
   @Test(expected = language.parser.ParserException.class)
   public void testEqualityWithNestedVariables() throws ParserException {
     VariableList vars = new VariableList();
-    InputReader.declare("x[i] :: Int ∈ {1..10} for i ∈ {1..10}", vars);
+    InputReader.declare("x[i] :: Number ∈ {1..10} for i ∈ {1..10}", vars);
     Formula form = InputReader.readFormulaFromString("x[x[4]] = 3", vars);
   }
 

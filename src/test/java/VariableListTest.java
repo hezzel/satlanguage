@@ -2,11 +2,14 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import logic.sat.Variable;
+import logic.parameter.PExpression;
 import logic.parameter.Parameter;
 import logic.parameter.ParameterList;
 import logic.parameter.ParamBoolVar;
 import logic.number.range.RangeVariable;
 import logic.number.range.ParamRangeVar;
+import logic.number.binary.BinaryVariable;
+import logic.number.binary.ParamBinaryVar;
 import language.parser.InputReader;
 import language.parser.ParserException;
 import logic.VariableList;
@@ -48,7 +51,15 @@ public class VariableListTest {
     assertTrue(i.toString().equals("i"));
     assertTrue(i.queryMinimum() == 1);
     assertTrue(i.queryMaximum() == 10);
-    assertTrue(lst.toString().equals("declare i :: Int ∈ {1..10}\n"));
+    assertTrue(lst.toString().equals("declare i :: Number ∈ {1..10}\n"));
+  }
+
+  @Test
+  public void testContainsBasicBinaryAfterRegistering() {
+    VariableList lst = new VariableList();
+    BinaryVariable x = lst.registerBinaryVariable("x", 8, true);
+    assertTrue(x.toString().equals("x"));
+    assertTrue(lst.toString().equals("declare x :: Int? ∈ { -256..255 }\n"));
   }
 
   @Test
@@ -77,8 +88,37 @@ public class VariableListTest {
     assertTrue(lst.isDeclared("xyz"));
     assertTrue(lst.queryParametrisedRangeVariable("xyz") == xyz);
     assertTrue(xyz.toString().equals("xyz[i,j]"));
-    assertTrue(lst.toString().equals("declare xyz[i,j] :: Int ∈ {0..5} with j ≠ xyz " +
+    assertTrue(lst.toString().equals("declare xyz[i,j] :: Number ∈ {0..5} with j ≠ xyz " +
       "for i ∈ {0..5}, j ∈ {i+1..7}\n"));
+  }
+
+  @Test
+  public void testContainsParamIntegerAfterBasicNatRegistration() throws ParserException {
+    VariableList lst = new VariableList();
+    Parameter i = InputReader.readParameterFromString("i ∈ {0..5}");
+    Parameter j = InputReader.readParameterFromString("j ∈ {i+1..7}");
+    ParameterList params = new ParameterList(i, j);
+    ParamBinaryVar z = lst.registerParametrisedBinaryVariable("z", params, 5, false);
+    assertTrue(lst.isDeclared("z"));
+    assertTrue(lst.queryParametrisedBinaryVariable("z") == z);
+    assertTrue(z.toString().equals("z[i,j]"));
+    assertTrue(lst.toString().equals("declare z[i,j] :: Nat5 for i ∈ {0..5}, j ∈ {i+1..7}\n"));
+  }
+
+  @Test
+  public void testContainsParamIntegerAfterMinMaxRegistration() throws ParserException {
+    VariableList lst = new VariableList();
+    Parameter i = InputReader.readParameterFromString("i ∈ {0..3}");
+    Parameter j = InputReader.readParameterFromString("j ∈ {i..4}");
+    ParameterList params = new ParameterList(i, j);
+    PExpression min = InputReader.readPExpressionFromString("i");
+    PExpression max = InputReader.readPExpressionFromString("2*j");
+    ParamBinaryVar z = lst.registerParametrisedBinaryVariable("z", params, min, max);
+    assertTrue(lst.isDeclared("z"));
+    assertTrue(lst.queryParametrisedBinaryVariable("z") == z);
+    assertTrue(z.toString().equals("z[i,j]"));
+    assertTrue(lst.toString().equals(
+      "declare z[i,j] :: Int? ∈ { i..2*j } for i ∈ {0..3}, j ∈ {i..4}\n"));
   }
 
   @Test
