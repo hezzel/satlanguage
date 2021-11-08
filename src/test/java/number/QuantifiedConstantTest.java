@@ -6,14 +6,14 @@ import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
-import logic.number.QuantifiedRangeInteger;
-import logic.number.QuantifiedRangeConstant;
-import logic.number.range.RangeConstant;
+import logic.number.QuantifiedInteger;
+import logic.number.QuantifiedConstant;
+import logic.number.ConstantInteger;
 import language.parser.InputReader;
 import language.parser.ParserException;
 import java.util.Set;
 
-public class QRangeConstantTest {
+public class QuantifiedConstantTest {
   private Atom truth() {
     return new Atom(new Variable("TRUE"), true);
   }
@@ -23,8 +23,8 @@ public class QRangeConstantTest {
     catch (ParserException e) { return null; }
   }
 
-  private QuantifiedRangeConstant createConstant() {
-    return new QuantifiedRangeConstant(expr("a + b - 3 * a"), truth());
+  private QuantifiedConstant createConstant() {
+    return new QuantifiedConstant(expr("a + b - 3 * a"), truth());
   }
 
   @Test
@@ -43,14 +43,14 @@ public class QRangeConstantTest {
   @Test
   public void testClosed() {
     assertFalse(createConstant().queryClosed());
-    QuantifiedRangeConstant c = new QuantifiedRangeConstant(expr("1"), truth());
+    QuantifiedConstant c = new QuantifiedConstant(expr("1"), truth());
     assertTrue(c.queryClosed());
   }
 
   @Test
   public void testSubstitute() {
     Substitution subst = new Substitution("a", expr("a * c"));
-    QuantifiedRangeInteger c = createConstant().substitute(subst);
+    QuantifiedInteger c = createConstant().substitute(subst);
     assertTrue(c.toString().equals("a*c+b-3*a*c"));
     assertTrue(c.queryParameters().size() == 3);
   }
@@ -58,15 +58,15 @@ public class QRangeConstantTest {
   @Test
   public void testInstantiate() {
     Assignment ass = new Assignment("a", 1, "b", 3);
-    RangeConstant c = createConstant().instantiate(ass);
+    ConstantInteger c = createConstant().instantiate(ass);
     assertTrue(c.queryMinimum() == 1);
     assertTrue(c.queryMaximum() == 1);
   }
 
   @Test
   public void testNullInstantiate() {
-    QuantifiedRangeConstant q = new QuantifiedRangeConstant(expr("1+2"), truth());
-    RangeConstant c = q.instantiate(null);
+    QuantifiedConstant q = new QuantifiedConstant(expr("1+2"), truth());
+    ConstantInteger c = q.instantiate(null);
     assertTrue(c.queryMinimum() == 3);
     assertTrue(c.queryMaximum() == 3);
   }

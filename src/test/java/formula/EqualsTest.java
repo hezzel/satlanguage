@@ -5,7 +5,8 @@ import logic.sat.Variable;
 import logic.sat.Atom;
 import logic.parameter.*;
 import logic.number.*;
-import logic.number.range.*;
+import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
 import logic.formula.Formula;
 import logic.formula.Equals;
 import logic.VariableList;
@@ -13,39 +14,43 @@ import language.parser.InputReader;
 import language.parser.ParserException;
 
 public class EqualsTest {
-  private QuantifiedRangeInteger makeVar(String name, int min, int max) {
-    RangeInteger ri = new RangeVariable(name, min, max, new Atom(new Variable("TRUE"), true));
-    return new QuantifiedRangeWrapper(ri);
+  private Atom truth() {
+    return new Atom(new Variable("TRUE"), true);
   }
 
-  private QuantifiedRangeInteger makeConstant(int num) {
-    return new QuantifiedRangeWrapper(new RangeConstant(num, new Atom(new Variable("TRUE"), true)));
+  private QuantifiedInteger makeRangeVar(String name, int min, int max) {
+    RangeVariable ri = new RangeVariable(name, min, max, truth());
+    return new VariableInteger(ri);
   }
 
-  /** Helper function for tests that compare an integer with a constant. */
+  private QuantifiedInteger makeConstant(int num) {
+    return new QuantifiedConstant(new ConstantExpression(num), truth());
+  }
+
+  /** Helper function for tests that compare a range variable with a constant. */
   private ClauseCollector setupIntegerRangeTest(int min, int max, boolean eq, int c) {
     Variable.reset();
-    Equals formula = new Equals(makeVar("x", min, max), makeConstant(c), eq);
+    Equals formula = new Equals(makeRangeVar("x", min, max), makeConstant(c), eq);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     formula.addClauses(col);
     return col;
   }
 
-  /** Helper function for tests that compare a constant with an integer. */
+  /** Helper function for tests that compare a constant with a range variable. */
   private ClauseCollector setupIntegerRangeTest(int c, boolean eq, int min, int max) {
     Variable.reset();
-    Equals formula = new Equals(makeConstant(c), makeVar("x", min, max), eq);
+    Equals formula = new Equals(makeConstant(c), makeRangeVar("x", min, max), eq);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     formula.addClauses(col);
     return col;
   }
 
-  /** Helper function for tests that compare two variables in different ranges. */
+  /** Helper function for tests that compare two range variables in different ranges. */
   private ClauseCollector setupRangeRangeTest(int min1, int max1, boolean eq, int min2, int max2) {
     Variable.reset();
-    Equals formula = new Equals(makeVar("x", min1, max1), makeVar("y", min2, max2), eq);
+    Equals formula = new Equals(makeRangeVar("x", min1, max1), makeRangeVar("y", min2, max2), eq);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     col.addToMemory("rangevar y");
@@ -55,7 +60,7 @@ public class EqualsTest {
 
   @Test
   public void testBasicToString() {
-    Equals eq = new Equals(makeVar("x", 0, 3), makeConstant(4), true);
+    Equals eq = new Equals(makeRangeVar("x", 0, 3), makeConstant(4), true);
     assertTrue(eq.toString().equals("x = 4"));
     assertTrue(eq.negate().toString().equals("x ≠ 4"));
   }
@@ -209,7 +214,8 @@ public class EqualsTest {
   @Test
   public void testAddClausesEqualsRelevantBound() {
     Variable.reset();
-    QuantifiedRangeInteger plus = new QuantifiedRangePlus(makeVar("x", 0, 5), makeVar("y", 0, 5));
+    QuantifiedInteger plus = new QuantifiedPlus(makeRangeVar("x", 0, 5), makeRangeVar("y", 0, 5),
+                                                ClosedInteger.RANGE, truth());
     Equals formula = new Equals(makeConstant(1), plus, true);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
@@ -232,7 +238,7 @@ public class EqualsTest {
   @Test
   public void testAddClausesDefSingleAtom() {
     Variable.reset();
-    Equals formula = new Equals(makeVar("x", 1, 5), makeConstant(3), true);
+    Equals formula = new Equals(makeRangeVar("x", 1, 5), makeConstant(3), true);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     Atom atom = new Atom(new Variable("myvar"), true);
@@ -246,7 +252,7 @@ public class EqualsTest {
   @Test
   public void testAddClausesDefMultipleAtoms() {
     Variable.reset();
-    Equals formula = new Equals(makeVar("x", 1, 5), makeVar("y", 3, 7), false);
+    Equals formula = new Equals(makeRangeVar("x", 1, 5), makeRangeVar("y", 3, 7), false);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     col.addToMemory("rangevar y");
@@ -274,8 +280,8 @@ public class EqualsTest {
     ParamRangeVar x = vars.queryParametrisedRangeVariable("x");
     Substitution subst = new Substitution("i", InputReader.readPExpressionFromString("a+j"),
                                           "j", InputReader.readPExpressionFromString("b"));
-    QuantifiedRangeVariable xajb = new QuantifiedRangeVariable(x, subst);
-    QuantifiedRangeVariable xij = new QuantifiedRangeVariable(x, new Substitution());
+    QuantifiedVariable xajb = new QuantifiedVariable(x, subst);
+    QuantifiedVariable xij = new QuantifiedVariable(x, new Substitution());
     Equals eq = new Equals(xajb, xij, true);    // x[a+j,c] ≥ x[i,j]
 
     assertTrue(eq.toString().equals("x[a+j,b] = x[i,j]"));

@@ -68,9 +68,10 @@ public class PlusInteger implements ClosedInteger {
   }
 
   public String toString() {
-    if (_kind == ClosedInteger.RANGE) return _left.toString() + " ⊕ " + _right.toString();
-    if (_kind == ClosedInteger.BINARY) return _left.toString() + " ⊞ " + _right.toString();
-    return _left.toString() + " + " + _right.toString();
+    String symbol = " + ";
+    if (_kind == ClosedInteger.RANGE) symbol = " ⊕ ";
+    if (_kind == ClosedInteger.BINARY) symbol = " ⊞ ";
+    return "(" + _left.toString() + symbol + _right.toString() + ")";
   }
 }
 

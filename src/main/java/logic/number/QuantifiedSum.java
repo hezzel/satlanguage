@@ -7,33 +7,32 @@ import logic.parameter.ConstantExpression;
 import logic.parameter.Parameter;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
-import logic.number.range.RangeInteger;
-import logic.number.range.RangeConstant;
-import logic.number.range.RangePlus;
 import java.util.Set;
 import java.util.ArrayList;
 
 /**
- * A QuantifiedRangeSum represents a conditional sum Σ{ <expr> | parameters in ranges } which is
+ * A QuantifiedSum represents a conditional sum Σ{ <expr> | parameters in ranges } which is
  * essentially a big plus, but easier for the user to write down.
  */
-public class QuantifiedRangeSum implements QuantifiedRangeInteger {
+public class QuantifiedSum implements QuantifiedInteger {
   private ArrayList<Parameter> _params;
-  private QuantifiedRangeInteger _expression;
+  private QuantifiedInteger _expression;
   private Atom _truth;
+  private int _kind;
 
-  public QuantifiedRangeSum(ArrayList<Parameter> params, QuantifiedRangeInteger expr,
-                            Atom truth) {
+  public QuantifiedSum(ArrayList<Parameter> params, QuantifiedInteger expr, int kind, Atom truth) {
     _params = new ArrayList<Parameter>(params);
     _expression = expr;
     _truth = truth;
+    _kind = kind;
   }
 
-  public QuantifiedRangeSum(Parameter param, QuantifiedRangeInteger expr, Atom truth) {
+  public QuantifiedSum(Parameter param, QuantifiedInteger expr, int kind, Atom truth) {
     _params = new ArrayList<Parameter>();
     _params.add(param);
     _expression = expr;
     _truth = truth;
+    _kind = kind;
   }
 
   public Set<String> queryParameters() {
@@ -51,7 +50,7 @@ public class QuantifiedRangeSum implements QuantifiedRangeInteger {
     return queryParameters().size() == 0;
   }
 
-  public QuantifiedRangeSum substitute(Substitution subst) {
+  public QuantifiedSum substitute(Substitution subst) {
     Substitution gamma = new Substitution(subst);
     ArrayList<Parameter> newparams = new ArrayList<Parameter>();
     for (int i = 0; i < _params.size(); i++) {
@@ -61,12 +60,12 @@ public class QuantifiedRangeSum implements QuantifiedRangeInteger {
       PConstraint phi = _params.get(i).queryRestriction().substitute(gamma);
       newparams.add(new Parameter(_params.get(i).queryName(), min, max, phi));
     }
-    QuantifiedRangeInteger expr = _expression.substitute(gamma);
-    return new QuantifiedRangeSum(newparams, expr, _truth);
+    QuantifiedInteger expr = _expression.substitute(gamma);
+    return new QuantifiedSum(newparams, expr, _kind, _truth);
   }
 
   /** Public for the sake of unit-testing. */
-  public void addComponents(int paramindex, Assignment ass, ArrayList<RangeInteger> sofar) {
+  public void addComponents(int paramindex, Assignment ass, ArrayList<ClosedInteger> sofar) {
     if (paramindex >= _params.size()) {
       sofar.add(_expression.instantiate(ass));
       return;
@@ -84,20 +83,20 @@ public class QuantifiedRangeSum implements QuantifiedRangeInteger {
     else ass.put(p.queryName(), backup);
   }
 
-  /** Returns parts[start] +...+ parts[end] by splitting the parts evenly and using RangePlus. */
-  private RangeInteger split(ArrayList<RangeInteger> parts, int start, int end) {
+  /** Returns parts[start] +...+ parts[end] by splitting the parts evenly and using PlusInteger. */
+  private ClosedInteger split(ArrayList<ClosedInteger> parts, int start, int end) {
     if (start == end) return parts.get(start);
     int middle = (start + end) / 2;
-    RangeInteger part1 = split(parts, start, middle);
-    RangeInteger part2 = split(parts, middle + 1, end);
-    return new RangePlus(part1, part2);
+    ClosedInteger part1 = split(parts, start, middle);
+    ClosedInteger part2 = split(parts, middle + 1, end);
+    return new PlusInteger(part1, part2, _kind, _truth);
   }
 
-  public RangeInteger instantiate(Assignment ass) {
-    ArrayList<RangeInteger> parts = new ArrayList<RangeInteger>();
+  public ClosedInteger instantiate(Assignment ass) {
+    ArrayList<ClosedInteger> parts = new ArrayList<ClosedInteger>();
     if (ass == null) ass = new Assignment();
     addComponents(0, ass, parts);
-    if (parts.size() == 0) return new RangeConstant(0, _truth);
+    if (parts.size() == 0) return new ConstantInteger(0, _truth);
     return split(parts, 0, parts.size()-1);
   }
 

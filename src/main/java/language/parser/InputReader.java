@@ -919,8 +919,8 @@ public class InputReader {
   private Formula readIntegerComparison(ParseTree tree, VariableList lst) throws ParserException {
     verifyChildIsRule(tree, 0, "intexpression", "an integer expression");
     verifyChildIsRule(tree, 2, "intexpression", "an integer expression");
-    QuantifiedRangeInteger left = readIntegerExpression(tree.getChild(0), lst);
-    QuantifiedRangeInteger right = readIntegerExpression(tree.getChild(2), lst);
+    QuantifiedInteger left = readIntegerExpression(tree.getChild(0), lst);
+    QuantifiedInteger right = readIntegerExpression(tree.getChild(2), lst);
     String kind = checkChild(tree, 1);
     if (kind.equals("token GEQ")) return new Geq(left, right, true);
     if (kind.equals("token LEQ")) return new Geq(right, left, true);
@@ -931,24 +931,25 @@ public class InputReader {
     throw buildError(tree, "expected (in)equality token");
   }
 
-  private QuantifiedRangeInteger readIntegerExpression(ParseTree tree, VariableList lst)
+  private QuantifiedInteger readIntegerExpression(ParseTree tree, VariableList lst)
                                                                           throws ParserException {
-    QuantifiedRangeInteger expr = getConstantPart(tree, lst);
-    QuantifiedRangeInteger ret = getNonConstantPart(tree, lst);
+    QuantifiedInteger expr = getConstantPart(tree, lst);
+    QuantifiedInteger ret = getNonConstantPart(tree, lst);
     if (expr == null && ret == null) {
-      throw buildError(tree, "Encountered QuantifiedRangeInteger with no substantive parts: " +
+      throw buildError(tree, "Encountered QuantifiedInteger with no substantive parts: " +
                        tree.getText());
     }
     if (expr == null) return ret;
     if (ret == null) return expr;
-    return new QuantifiedRangePlus(ret, expr);
+    return new QuantifiedPlus(ret, expr, ClosedInteger.RANGE,
+                              new Atom(lst.queryTrueVariable(), true));
   }
 
   /**
    * This filters all the pexpressions out of an integer expression, and combines them into a
    * single constant.  If there are no pexpressions in there, null is returned.
    */
-  private QuantifiedRangeConstant getConstantPart(ParseTree tree, VariableList lst)
+  private QuantifiedConstant getConstantPart(ParseTree tree, VariableList lst)
                                                                           throws ParserException {
     PExpression expr = null;
     for (int i = 0; i < tree.getChildCount(); i += 2) {
@@ -965,27 +966,27 @@ public class InputReader {
       }
     }
     if (expr == null) return null;
-    return new QuantifiedRangeConstant(expr, new Atom(lst.queryTrueVariable(), true));
+    return new QuantifiedConstant(expr, new Atom(lst.queryTrueVariable(), true));
   }
 
   /**
    * This filters all the non-pexpressions out of an integer expression, and combines them into a
-   * single QuantifiedRangeInteger.  If there are only pexpressions in there, null is returned.
+   * single QuantifiedInteger.  If there are only pexpressions in there, null is returned.
    */
-  private QuantifiedRangeInteger getNonConstantPart(ParseTree tree, VariableList lst)
+  private QuantifiedInteger getNonConstantPart(ParseTree tree, VariableList lst)
                                                                           throws ParserException {
     Atom truth = new Atom(lst.queryTrueVariable(), true);
-    ArrayList<QuantifiedRangeInteger> ret = new ArrayList<QuantifiedRangeInteger>();
+    ArrayList<QuantifiedInteger> ret = new ArrayList<QuantifiedInteger>();
     for (int i = 0; i < tree.getChildCount(); i += 2) {
       ParseTree child = tree.getChild(i);
       String kind = checkChild(child, 0);
-      QuantifiedRangeInteger found = null;
+      QuantifiedInteger found = null;
       // IDENTIFIER (used to catch an integer variable; parameters and macros are handled as
       // PExpressions in getConstantPart
       if (kind.equals("token IDENTIFIER")) {
         String name = child.getText();
         RangeVariable x = lst.queryRangeVariable(name);
-        if (x != null) ret.add(new QuantifiedRangeWrapper(x));
+        if (x != null) ret.add(new VariableInteger(x));
       }
       // BRACKETOPEN intexpression BRACKETCLOSE
       if (kind.equals("token BRACKETOPEN")) {
@@ -997,9 +998,9 @@ public class InputReader {
       if (kind.equals("rule condition")) {
         verifyChildIsToken(child, 1, "QUESTION", "a question mark");
         verifyChildIsRule(child, 2, "intexpression", "an integer expression");
-        QuantifiedRangeInteger expr = readIntegerExpression(child.getChild(2), lst);
+        QuantifiedInteger expr = readIntegerExpression(child.getChild(2), lst);
         Formula form = readCondition(child.getChild(0), lst);
-        return new QuantifiedConditionalRangeInteger(form, expr, truth);
+        return new QuantifiedConditionalInteger(form, expr, truth);
       }
       // SUM BRACEOPEN intexpression MID parameterlist (MID formula)? BRACECLOSE
       if (kind.equals("token SUM")) {
@@ -1007,29 +1008,29 @@ public class InputReader {
         verifyChildIsRule(child, 2, "intexpression", "integer expression");
         verifyChildIsToken(child, 3, "MID", "|");
         verifyChildIsRule(child, 4, "parameterlist", "a parameter list");
-        QuantifiedRangeInteger expr = readIntegerExpression(child.getChild(2), lst);
+        QuantifiedInteger expr = readIntegerExpression(child.getChild(2), lst);
         ArrayList<Parameter> params = readOpenParameterList(child.getChild(4));
         if (child.getChildCount() == 6) {
           verifyChildIsToken(child, 5, "BRACECLOSE", "closing brace }");
-          return new QuantifiedRangeSum(params, expr, truth);
+          return new QuantifiedSum(params, expr, ClosedInteger.RANGE, truth);
         }
         verifyChildIsToken(child, 5, "MID", "|");
         verifyChildIsRule(child, 6, "formula", "a formula");
         verifyChildIsToken(child, 7, "BRACECLOSE", "closing brace }");
         Formula formula = readFormula(child.getChild(6), lst);
-        expr = new QuantifiedConditionalRangeInteger(formula, expr, truth);
-        return new QuantifiedRangeSum(params, expr, truth);
+        expr = new QuantifiedConditionalInteger(formula, expr, truth);
+        return new QuantifiedSum(params, expr, ClosedInteger.RANGE, truth);
       }
       // paramvar
       if (kind.equals("rule paramvar")) {
         ArrayList<PExpression> args = new ArrayList<PExpression>();
         ParamRangeVar x = readQuantifiedRangeVariable(child.getChild(0), lst, args, false);
-        ret.add(new QuantifiedRangeVariable(x, args));
+        ret.add(new QuantifiedVariable(x, args));
       }
     }
     if (ret.size() == 0) return null;
     if (ret.size() == 1) return ret.get(0);
-    return new QuantifiedRangePlus(ret);
+    return new QuantifiedPlus(ret, ClosedInteger.RANGE, truth);
   }
 
   private Formula readCondition(ParseTree tree, VariableList lst) throws ParserException {

@@ -7,15 +7,15 @@ import logic.sat.ClauseCollection;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.number.range.RangeInteger;
-import logic.number.QuantifiedRangeInteger;
+import logic.number.QuantifiedInteger;
 import java.util.ArrayList;
 
 public class Geq extends Formula {
-  private QuantifiedRangeInteger _left;
-  private QuantifiedRangeInteger _right;
+  private QuantifiedInteger _left;
+  private QuantifiedInteger _right;
   private boolean _negated;
 
-  public Geq(QuantifiedRangeInteger left, QuantifiedRangeInteger right, boolean value) {
+  public Geq(QuantifiedInteger left, QuantifiedInteger right, boolean value) {
     super();
     _left = left;
     _right = right;
@@ -38,8 +38,8 @@ public class Geq extends Formula {
 
   /** Instantiates the current conjunction with an assignment. */
   public Formula substitute(Substitution subst) {
-    QuantifiedRangeInteger left = _left.substitute(subst);
-    QuantifiedRangeInteger right = _right.substitute(subst);
+    QuantifiedInteger left = _left.substitute(subst);
+    QuantifiedInteger right = _right.substitute(subst);
     return new Geq(left, right, !_negated);
   }
 
@@ -108,8 +108,8 @@ public class Geq extends Formula {
     if (!queryClosed()) {
       throw new Error("Trying to addClauses for Geq formula with parameters: " + toString());
     }
-    RangeInteger l = _left.instantiate(null);
-    RangeInteger r = _right.instantiate(null);
+    RangeInteger l = _left.instantiate(null).getRange();
+    RangeInteger r = _right.instantiate(null).getRange();
     // if r ∈ {min..max}, then l ≥ r <-> MIN(l,max) ≥ r <-> MAX(l,min-1) ≥ r:
     // * MIN(l,max) ≥ r <-> max ≥ l ≥ r ∨ l > max ≥ r; in both cases l ≥ r, and if l ≥ r one of
     //   the cases is satisfied (since max ≥ r holds regardless)
@@ -141,8 +141,8 @@ public class Geq extends Formula {
       throw new Error("Trying to addClausesIfThisIsImpliedBy for Geq formula with parameters: " +
         toString());
     }
-    RangeInteger l = _left.instantiate(null);
-    RangeInteger r = _right.instantiate(null);
+    RangeInteger l = _left.instantiate(null).getRange();
+    RangeInteger r = _right.instantiate(null).getRange();
     l = l.setPracticalBounds(r.queryMinimum()-1, r.queryMaximum());
     r = r.setPracticalBounds(l.queryMinimum(), l.queryMaximum()+1);
     l.addWelldefinednessClauses(col);
@@ -164,8 +164,8 @@ public class Geq extends Formula {
       throw new Error("Trying to addClausesIfThisIsImpliedBy for Geq formula with parameters: " +
         toString());
     }
-    RangeInteger l = _left.instantiate(null);
-    RangeInteger r = _right.instantiate(null);
+    RangeInteger l = _left.instantiate(null).getRange();
+    RangeInteger r = _right.instantiate(null).getRange();
     l = l.setPracticalBounds(r.queryMinimum()-1, r.queryMaximum());
     r = r.setPracticalBounds(l.queryMinimum(), l.queryMaximum()+1);
     l.addWelldefinednessClauses(col);

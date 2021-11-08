@@ -1,43 +1,49 @@
-package logic.formula;
+package logic.number.range;
 
 import logic.sat.*;
-import logic.number.range.RangeInteger;
+import logic.number.general.ClauseAdder;
 import java.util.TreeMap;
 
 /**
- * An expression of the form if <variable> then <value> else 0
+ * An expression of the form if <atom> then <value> else 0
  * The expression can also optionally be given bounds, so that it is increased to the given minimum
  * if necessary, and lowered to the given maximum.
  */
-public class ConditionalRangeInteger implements RangeInteger {
+public class RangeConditional implements RangeInteger {
   private Atom _condition;
-  private Formula _fullCondition;
   private RangeInteger _value;
   private Atom _truth;
   private int _minimum;
   private int _maximum;
   private TreeMap<Integer,Variable> _variables;
+  private ClauseAdder _adder;
 
   /** A shared helper for all the constructors. */
-  private void setup(Formula cond, RangeInteger value, Atom truth) {
-    _condition = cond.queryAtom();
-    if (_condition == null) {
-      _condition = new Atom(new Variable("⟦" + cond.toString() + "⟧"), true);
-    }
-    _fullCondition = cond;
+  private void setup(Atom cond, RangeInteger value, Atom truth, ClauseAdder adder) {
+    _condition = cond;
     _value = value;
     _truth = truth;
     _minimum = 0 < value.queryMinimum() ? 0 : value.queryMinimum();
     _maximum = 0 < value.queryMaximum() ? value.queryMaximum() : 0;
+    _adder = adder;
     _variables = null;
   }
 
-  public ConditionalRangeInteger(Formula cond, RangeInteger value, Atom truth) {
-    setup(cond, value, truth);
+  /**
+   * Creates the expression: if cond then value else 0.
+   * The ClauseAdder is essentially a function pointer that is called when the well-definedness
+   * clauses have to be generated.  This should be used in the event that well-definedness clauses
+   * should be added for cond.  (We use a function pointer here mostly to avoid a dependency on
+   * Formula, which occurs in a different package).  If adder == null, then no additional
+   * well-definedness clauses will be added on top of those defining the RangeConditional.
+   */
+  public RangeConditional(Atom cond, RangeInteger value, Atom truth, ClauseAdder adder) {
+    setup(cond, value, truth, adder);
   }
 
-  public ConditionalRangeInteger(Formula cond, RangeInteger value, Atom truth, int min, int max) {
-    setup(cond, value, truth);
+  public RangeConditional(Atom cond, RangeInteger value, Atom truth, int min, int max,
+                          ClauseAdder adder) {
+    setup(cond, value, truth, adder);
     if (min > _minimum) _minimum = min;
     if (max < _maximum) _maximum = max;
     if (_minimum > _maximum) _minimum = _maximum;
@@ -53,12 +59,12 @@ public class ConditionalRangeInteger implements RangeInteger {
 
   public RangeInteger setPracticalBounds(int newmin, int newmax) {
     if (newmin <= _minimum && newmax >= _maximum) return this;
-    return new ConditionalRangeInteger(_fullCondition, _value, _truth, newmin, newmax);
+    return new RangeConditional(_condition, _value, _truth, newmin, newmax, _adder);
   }
 
   private void makeVariables() {
     _variables = new TreeMap<Integer,Variable>();
-    // we create one variable for each i in {minvalue..maxvalue}
+    // we create one variable for each i in {minvalue+1..maxvalue}
     int minval = _value.queryMinimum();
     int maxval = _value.queryMaximum();
     if (minval < _minimum) minval = _minimum;
@@ -86,11 +92,9 @@ public class ConditionalRangeInteger implements RangeInteger {
     if (col.isInMemory("conditional: " + toString())) return;
     col.addToMemory("conditional: " + toString());
 
+    if (_adder != null) _adder.add(col);
+
     if (_variables == null) makeVariables();
-    if (_fullCondition.queryAtom() == null && !col.isInMemory(_condition.toString())) {
-      col.addToMemory(_condition.toString());
-      _fullCondition.addClausesDef(_condition, col);
-    }
     int minval = _value.queryMinimum();
     int maxval = _value.queryMaximum();
     if (minval < _minimum) minval = _minimum;

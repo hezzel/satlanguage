@@ -1,9 +1,12 @@
 package logic.number;
 
+import logic.parameter.Assignment;
+import logic.parameter.Substitution;
 import logic.number.range.RangeVariable;
 import logic.number.binary.BinaryVariable;
+import java.util.TreeSet;
 
-public class VariableInteger implements ClosedInteger {
+public class VariableInteger implements ClosedInteger, QuantifiedInteger {
   private RangeVariable _r;
   private BinaryVariable _b;
 
@@ -15,6 +18,22 @@ public class VariableInteger implements ClosedInteger {
   public VariableInteger(BinaryVariable bi) {
     _r = null;
     _b = bi;
+  }
+
+  public TreeSet<String> queryParameters() {
+    return new TreeSet<String>();
+  }
+
+  public boolean queryClosed() {
+    return true;
+  }
+
+  public VariableInteger substitute(Substitution subst) {
+    return this;
+  }
+
+  public VariableInteger instantiate(Assignment ass) {
+    return this;
   }
 
   public int queryMinimum() {

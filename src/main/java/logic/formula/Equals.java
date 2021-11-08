@@ -7,15 +7,15 @@ import logic.sat.ClauseCollection;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.number.range.RangeInteger;
-import logic.number.QuantifiedRangeInteger;
+import logic.number.QuantifiedInteger;
 import java.util.ArrayList;
 
 public class Equals extends Formula {
-  private QuantifiedRangeInteger _left;
-  private QuantifiedRangeInteger _right;
+  private QuantifiedInteger _left;
+  private QuantifiedInteger _right;
   private boolean _negated;
 
-  public Equals(QuantifiedRangeInteger left, QuantifiedRangeInteger right, boolean value) {
+  public Equals(QuantifiedInteger left, QuantifiedInteger right, boolean value) {
     super();
     _left = left;
     _right = right;
@@ -35,8 +35,8 @@ public class Equals extends Formula {
 
   /** Instantiates the current conjunction with an assignment. */
   public Formula substitute(Substitution subst) {
-    QuantifiedRangeInteger left = _left.substitute(subst);
-    QuantifiedRangeInteger right = _right.substitute(subst);
+    QuantifiedInteger left = _left.substitute(subst);
+    QuantifiedInteger right = _right.substitute(subst);
     return new Equals(left, right, !_negated);
   }
 
@@ -74,8 +74,8 @@ public class Equals extends Formula {
     if (!queryClosed()) {
       throw new Error("Trying to addClauses for Equals formula with parameters: " + toString());
     }
-    RangeInteger l = _left.instantiate(null);
-    RangeInteger r = _right.instantiate(null);
+    RangeInteger l = _left.instantiate(null).getRange();
+    RangeInteger r = _right.instantiate(null).getRange();
     l = l.setPracticalBounds(r.queryMinimum() - 1, r.queryMaximum() + 1);
     r = r.setPracticalBounds(l.queryMinimum() - 1, l.queryMaximum() + 1);
     l.addWelldefinednessClauses(col);
@@ -96,8 +96,8 @@ public class Equals extends Formula {
       throw new Error("Trying to addClausesIfThisIsImpliedBy for Equals formula with parameters: "
         + toString());
     }
-    RangeInteger l = _left.instantiate(null);
-    RangeInteger r = _right.instantiate(null);
+    RangeInteger l = _left.instantiate(null).getRange();
+    RangeInteger r = _right.instantiate(null).getRange();
     l = l.setPracticalBounds(r.queryMinimum() - 1, r.queryMaximum() + 1);
     r = r.setPracticalBounds(l.queryMinimum() - 1, l.queryMaximum() + 1);
     l.addWelldefinednessClauses(col);
@@ -119,8 +119,8 @@ public class Equals extends Formula {
       throw new Error("Trying to addClausesIfThisIsImpliedBy for Equals formula with parameters: "
         + toString());
     }
-    RangeInteger l = _left.instantiate(null);
-    RangeInteger r = _right.instantiate(null);
+    RangeInteger l = _left.instantiate(null).getRange();
+    RangeInteger r = _right.instantiate(null).getRange();
     l = l.setPracticalBounds(r.queryMinimum() - 1, r.queryMaximum() + 1);
     r = r.setPracticalBounds(l.queryMinimum() - 1, l.queryMaximum() + 1);
     l.addWelldefinednessClauses(col);

@@ -7,28 +7,32 @@ import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.parameter.Parameter;
-import logic.number.*;
-import logic.number.range.RangeInteger;
 import logic.number.range.ParamRangeVar;
+import logic.number.ClosedInteger;
+import logic.number.QuantifiedInteger;
+import logic.number.QuantifiedConstant;
+import logic.number.QuantifiedVariable;
+import logic.number.QuantifiedPlus;
+import logic.number.QuantifiedSum;
 import logic.VariableList;
 import language.parser.InputReader;
 import language.parser.ParserException;
 import java.util.Set;
 import java.util.ArrayList;
 
-public class QRangeSumTest {
+public class QuantifiedSumTest {
   private PExpression expr(String txt) {
     try { return InputReader.readPExpressionFromString(txt); }
     catch (ParserException e) { return null; }
   }
 
-  private QuantifiedRangeVariable createVariable(String index) {
+  private QuantifiedVariable createVariable(String index) {
     try {
       VariableList lst = new VariableList();
       InputReader.declare("v[i] :: Number ∈ {0..i} for i ∈ {1..10}", lst);
       ParamRangeVar v = lst.queryParametrisedRangeVariable("v");
       PExpression par = InputReader.readPExpressionFromString(index);
-      return new QuantifiedRangeVariable(v, new Substitution("i", par));
+      return new QuantifiedVariable(v, new Substitution("i", par));
     } catch (ParserException e) { return null; }
   }
 
@@ -36,8 +40,8 @@ public class QRangeSumTest {
     return new Atom(new Variable("TRUE"), true);
   }
 
-  private QuantifiedRangeConstant createConstant(String txt) {
-    return new QuantifiedRangeConstant(expr(txt), truth());
+  private QuantifiedConstant createConstant(String txt) {
+    return new QuantifiedConstant(expr(txt), truth());
   }
 
   private ArrayList<Parameter> params(String p1, String p2, String p3) {
@@ -52,18 +56,19 @@ public class QRangeSumTest {
 
   @Test
   public void testSimpleToString() {
-    QuantifiedRangeVariable x = createVariable("i");
+    QuantifiedVariable x = createVariable("i");
     Parameter p = new Parameter("i", 1, 10);
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(p, x, truth());
+    QuantifiedSum sum = new QuantifiedSum(p, x, ClosedInteger.RANGE, truth());
     assertTrue(sum.toString().equals("Σ { v[i] | i ∈ {1..10} }"));
   }
 
   @Test
   public void testComplexToString() {
     ArrayList<Parameter> ps = params("i ∈ {1..5}", "j ∈ {0..i} with i % 2 = 0", "k ∈ {a..b}");
-    QuantifiedRangeVariable x = createVariable("a+j");
-    QuantifiedRangeInteger expr = new QuantifiedRangePlus(x, createConstant("j - 1"));
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, expr, truth());
+    QuantifiedVariable x = createVariable("a+j");
+    QuantifiedInteger expr =
+      new QuantifiedPlus(x, createConstant("j - 1"), ClosedInteger.RANGE, truth());
+    QuantifiedSum sum = new QuantifiedSum(ps, expr, ClosedInteger.RANGE, truth());
     assertTrue(sum.toString().equals(
       "Σ { v[a+j] ⊕ j-1 | i ∈ {1..5}, j ∈ {0..i} with i%2 = 0, k ∈ {a..b} }"));
   }
@@ -71,8 +76,8 @@ public class QRangeSumTest {
   @Test
   public void testParametersOnlyInArgumentsList() {
     ArrayList<Parameter> ps = params("i ∈ {1..a}", "j ∈ {b..2} with j % c + i = 0", null);
-    QuantifiedRangeVariable x = createVariable("1");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
+    QuantifiedVariable x = createVariable("1");
+    QuantifiedSum sum = new QuantifiedSum(ps, x, ClosedInteger.RANGE, truth());
     Set<String> parameters = sum.queryParameters();
     assertTrue(parameters.size() == 3);
     assertTrue(parameters.contains("a"));
@@ -83,8 +88,8 @@ public class QRangeSumTest {
   @Test
   public void testLaterParameterOccursInEarlier() {
     ArrayList<Parameter> ps = params("i ∈ {1..j}", "j ∈ {1..3} with j != k", "k ∈ {i..4}");
-    QuantifiedRangeVariable x = createVariable("1");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
+    QuantifiedVariable x = createVariable("1");
+    QuantifiedSum sum = new QuantifiedSum(ps, x, ClosedInteger.RANGE, truth());
     Set<String> parameters = sum.queryParameters();
     assertTrue(parameters.size() == 2);
     assertTrue(parameters.contains("j"));
@@ -94,8 +99,8 @@ public class QRangeSumTest {
   @Test
   public void testQuantifiersRemovedFromParameters() {
     ArrayList<Parameter> ps = params("i ∈ {1..5}", "j ∈ {1..5}", null);
-    QuantifiedRangeVariable x = createVariable("i+j-k");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
+    QuantifiedVariable x = createVariable("i+j-k");
+    QuantifiedSum sum = new QuantifiedSum(ps, x, ClosedInteger.RANGE, truth());
     Set<String> parameters = sum.queryParameters();
     assertTrue(parameters.size() == 1);
     assertTrue(parameters.contains("k"));
@@ -105,16 +110,16 @@ public class QRangeSumTest {
   public void testSubstitute() {
     ArrayList<Parameter> ps = params("i ∈ {a..b} with c != i", "j ∈ {i..5} with i + 1 != j",
                                      "k ∈ {1..j}");
-    QuantifiedRangeVariable x = createVariable("i+j-k+a+b");
-    QuantifiedRangeConstant u = createConstant("u+c");
-    QuantifiedRangePlus plus = new QuantifiedRangePlus(u, x);
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, plus, truth());
+    QuantifiedVariable x = createVariable("i+j-k+a+b");
+    QuantifiedConstant u = createConstant("u+c");
+    QuantifiedPlus plus = new QuantifiedPlus(u, x, ClosedInteger.RANGE, truth());
+    QuantifiedSum sum = new QuantifiedSum(ps, plus, ClosedInteger.RANGE, truth());
     Substitution subst = new Substitution("i", expr("1"), "j", expr("2"), "k", expr("x"));
     subst.put("a", expr("3"));
     subst.put("b", expr("4"));
     subst.put("c", expr("y"));
     subst.put("u", expr("z"));
-    QuantifiedRangeInteger s = sum.substitute(subst);
+    QuantifiedInteger s = sum.substitute(subst);
     assertTrue(s.toString().equals(
       "Σ { z+y ⊕ v[i+j-k+7] | i ∈ {3..4} with y ≠ i, j ∈ {i..5} with i+1 ≠ j, k ∈ {1..j} }"));
   }
@@ -122,13 +127,14 @@ public class QRangeSumTest {
   @Test
   public void testAddComponents() {
     ArrayList<Parameter> ps = params("i ∈ {1..a} with b != i", "j ∈ {i..3}", null);
-    QuantifiedRangeVariable x = createVariable("i+2*j-1");
-    QuantifiedRangeConstant u = createConstant("u");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, new QuantifiedRangePlus(x, u), truth());
+    QuantifiedVariable x = createVariable("i+2*j-1");
+    QuantifiedConstant u = createConstant("u");
+    QuantifiedSum sum = new QuantifiedSum(ps, new QuantifiedPlus(x, u, ClosedInteger.RANGE,
+                                          truth()), ClosedInteger.RANGE, truth());
     Assignment ass = new Assignment("a", 4, "b", 3, "u", 0);
     ass.put("i", 2);
     ass.put("j", 3);
-    ArrayList<RangeInteger> components = new ArrayList<RangeInteger>();
+    ArrayList<ClosedInteger> components = new ArrayList<ClosedInteger>();
     sum.addComponents(0, ass, components);
     assertTrue(components.size() == 5);
     assertTrue(components.get(0).toString().equals("v[2]"));    // i = 1, j = 1
@@ -142,23 +148,12 @@ public class QRangeSumTest {
   @Test
   public void testInstantiate() {
     ArrayList<Parameter> ps = params("i ∈ {1..k}", "j ∈ {0..k-1}", null);
-    QuantifiedRangeVariable x = createVariable("k*j+i");
-    QuantifiedRangeSum sum = new QuantifiedRangeSum(ps, x, truth());
+    QuantifiedVariable x = createVariable("k*j+i");
+    QuantifiedSum sum = new QuantifiedSum(ps, x, ClosedInteger.RANGE, truth());
     Assignment ass = new Assignment("k", 3);
-    RangeInteger result = sum.instantiate(ass);
+    ClosedInteger result = sum.instantiate(ass);
     assertTrue(result.toString().equals(
-      "bplus(0, 45, " + // (v[1] + v[4] + v[7] + v[2] + v[5]) + (v[8] + v[3] + v[6] + v[9])
-        "bplus(0, 19, " + // (v[1] + v[4] + v[7]) + (v[2] + v[5])
-          "bplus(0, 12, " + // (v[1] + v[4]) + v[7]
-            "bplus(0, 5, v[1] ⊕ v[4]) ⊕ " +
-            "v[7]" +
-          ") ⊕ " +
-          "bplus(0, 7, v[2] ⊕ v[5])" +
-        ") ⊕ " +
-        "bplus(0, 26, " +                 // (v[3] + v[8]) + (v[6] + v[9])
-          "bplus(0, 11, v[8] ⊕ v[3]) ⊕ " +
-          "bplus(0, 15, v[6] ⊕ v[9])" +
-        "))"));
+      "((((v[1] ⊕ v[4]) ⊕ v[7]) ⊕ (v[2] ⊕ v[5])) ⊕ ((v[8] ⊕ v[3]) ⊕ (v[6] ⊕ v[9])))"));
   }
 }
 

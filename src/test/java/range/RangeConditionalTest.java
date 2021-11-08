@@ -1,57 +1,55 @@
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import logic.sat.Variable;
-import logic.sat.Atom;
-import logic.sat.Clause;
-import logic.number.range.RangeInteger;
-import logic.number.range.RangeConstant;
-import logic.number.range.RangeVariable;
-import logic.formula.Formula;
-import logic.formula.And;
-import logic.formula.AtomicFormula;
-import logic.formula.ConditionalRangeInteger;
+import logic.sat.*;
+import logic.number.general.ClauseAdder;
+import logic.number.range.*;
 import java.util.ArrayList;
 
-public class ConditionalRangeIntegerTest {
-  private Atom truth() {
-    return new Atom(new Variable("TRUE"), true);
+public class RangeConditionalTest {
+  private Atom makeAtom(String varname, boolean value) {
+    return new Atom(new Variable(varname), value);
   }
 
-  private Formula makeAtom(String varname, boolean value) {
-    Variable x = new Variable(varname);
-    return new AtomicFormula(new Atom(x, value));
+  private Atom truth() {
+    return makeAtom("TRUE", true);
+  }
+
+  private ClauseAdder emptyAdder() {
+    return new ClauseAdder() {
+      public void add(ClauseCollection col) {
+      }
+    };
   }
 
   @Test
   public void testUnboundedToString() {
     RangeInteger a = new RangeVariable("a", 1, 5, truth());
-    Formula z = makeAtom("z", true);
-    RangeInteger cri = new ConditionalRangeInteger(z, a, truth());
+    RangeInteger cri = new RangeConditional(makeAtom("z", true), a, truth(), emptyAdder());
     assertTrue(cri.toString().equals("z?a"));
   }
 
   @Test
   public void testSemiBoundedToString() {
     RangeInteger a = new RangeVariable("a", 1, 5, truth());
-    Formula z = new And(makeAtom("z", true), makeAtom("q", false));
-    RangeInteger cri = new ConditionalRangeInteger(z, a, truth(), 0, 6);
-    assertTrue(cri.toString().equals("⟦z ∧ ¬q⟧?a"));
+    Atom z = makeAtom("z", true);
+    RangeInteger cri = new RangeConditional(z, a, truth(), 0, 6, emptyAdder());
+    assertTrue(cri.toString().equals("z?a"));
   }
 
   @Test
   public void testBoundedToString() {
     RangeInteger a = new RangeVariable("a", 1, 5, truth());
-    Formula z = makeAtom("z", true);
-    RangeInteger cri = new ConditionalRangeInteger(z, a, truth(), 0, 4);
+    Atom z = makeAtom("z", true);
+    RangeInteger cri = new RangeConditional(z, a, truth(), 0, 4, emptyAdder());
     assertTrue(cri.toString().equals("cond(0, 4, z?a)"));
   }
 
   @Test
   public void testPositiveConstant() {
     RangeInteger n = new RangeConstant(4, truth());
-    Formula x = makeAtom("x", true);
-    RangeInteger cri = new ConditionalRangeInteger(x, n, truth());
+    Atom x = makeAtom("x", true);
+    RangeInteger cri = new RangeConditional(x, n, truth(), emptyAdder());
     assertTrue(cri.queryGeqAtom(-1).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(0).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(1).toString().equals("x"));
@@ -66,28 +64,24 @@ public class ConditionalRangeIntegerTest {
   @Test
   public void testNegativeConstant() {
     RangeInteger n = new RangeConstant(-4, truth());
-    Formula x = new And(makeAtom("x", false), makeAtom("y", true));
-    RangeInteger cri = new ConditionalRangeInteger(x, n, truth());
+    Atom x = makeAtom("x", false);
+    RangeInteger cri = new RangeConditional(x, n, truth(), emptyAdder());
     assertTrue(cri.queryGeqAtom(1).toString().equals("¬TRUE"));
-    assertTrue(cri.queryGeqAtom(0).toString().equals("¬⟦¬x ∧ y⟧"));
-    assertTrue(cri.queryGeqAtom(-3).toString().equals("¬⟦¬x ∧ y⟧"));
+    assertTrue(cri.queryGeqAtom(0).toString().equals("x"));
+    assertTrue(cri.queryGeqAtom(-3).toString().equals("x"));
     assertTrue(cri.queryGeqAtom(-4).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(-5).toString().equals("TRUE"));
 
     ClauseCollector col = new ClauseCollector();
     cri.addWelldefinednessClauses(col);
-    assertTrue(col.size() == 3);    // only the clauses defining ⟦x ∧ y⟧
-    assertTrue(col.contains("x ∨ ¬y ∨ ⟦¬x ∧ y⟧"));
-    assertTrue(col.contains("¬x ∨ ¬⟦¬x ∧ y⟧"));
-    assertTrue(col.contains("y ∨ ¬⟦¬x ∧ y⟧"));
+    assertTrue(col.size() == 0);
   }
 
   @Test
   public void testPositiveRange() {
-    Variable.reset();
-    Formula x = makeAtom("x", true);
+    Atom x = makeAtom("x", true);
     RangeInteger y = new RangeVariable("y", 2, 5, truth());
-    RangeInteger cri = new ConditionalRangeInteger(x, y, truth());
+    RangeInteger cri = new RangeConditional(x, y, truth(), emptyAdder());
     assertTrue(cri.queryGeqAtom(-1).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(0).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(1).toString().equals("x"));
@@ -108,31 +102,30 @@ public class ConditionalRangeIntegerTest {
   @Test
   public void testNegativeRange() {
     Variable.reset();
-    Formula x = new And(makeAtom("x", true), makeAtom("q", false));
+    Atom x = makeAtom("x", true);
     RangeInteger y = new RangeVariable("y", -3, -1, truth());
-    RangeInteger cri = new ConditionalRangeInteger(x, y, truth());
+    RangeInteger cri = new RangeConditional(x, y, truth(), emptyAdder());
     assertTrue(cri.queryGeqAtom(1).toString().equals("¬TRUE"));
-    assertTrue(cri.queryGeqAtom(0).toString().equals("¬⟦x ∧ ¬q⟧"));
-    assertTrue(cri.queryGeqAtom(-1).toString().equals("⟦x ∧ ¬q⟧?y≥-1"));
-    assertTrue(cri.queryGeqAtom(-2).toString().equals("⟦x ∧ ¬q⟧?y≥-2"));
+    assertTrue(cri.queryGeqAtom(0).toString().equals("¬x"));
+    assertTrue(cri.queryGeqAtom(-1).toString().equals("x?y≥-1"));
+    assertTrue(cri.queryGeqAtom(-2).toString().equals("x?y≥-2"));
     assertTrue(cri.queryGeqAtom(-3).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(-4).toString().equals("TRUE"));
 
     ClauseCollector col = new ClauseCollector();
-    col.addToMemory("⟦x ∧ ¬q⟧");
     cri.addWelldefinednessClauses(col);
     assertTrue(col.size() == 6);  // 3 clauses for each of the variables we defined
-    assertTrue(col.contains("y≥-2 ∨ ¬⟦x ∧ ¬q⟧ ∨ ¬⟦x ∧ ¬q⟧?y≥-2"));     // x?y≥-2 <-> ¬x \/ y≥-2
-    assertTrue(col.contains("⟦x ∧ ¬q⟧ ∨ ⟦x ∧ ¬q⟧?y≥-2"));
-    assertTrue(col.contains("¬y≥-2 ∨ ⟦x ∧ ¬q⟧?y≥-2"));
+    assertTrue(col.contains("¬x ∨ y≥-2 ∨ ¬x?y≥-2"));     // x?y≥-2 <-> ¬x \/ y≥-2
+    assertTrue(col.contains("x ∨ x?y≥-2"));
+    assertTrue(col.contains("¬y≥-2 ∨ x?y≥-2"));
   }
 
   @Test
   public void testNegativePositiveRange() {
     Variable.reset();
-    Formula x = makeAtom("x", true);
+    Atom x = makeAtom("x", true);
     RangeInteger y = new RangeVariable("y", -3, 4, truth());
-    RangeInteger cri = new ConditionalRangeInteger(x, y, truth());
+    RangeInteger cri = new RangeConditional(x, y, truth(), emptyAdder());
     assertTrue(cri.queryGeqAtom(-3).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(-2).toString().equals("x?y≥-2"));
     assertTrue(cri.queryGeqAtom(0).toString().equals("x?y≥0"));
@@ -153,8 +146,8 @@ public class ConditionalRangeIntegerTest {
   @Test
   public void testRangeWithBounds() {
     RangeInteger a = new RangeVariable("a", -10, 10, truth());
-    Formula z = makeAtom("z", true);
-    RangeInteger cri = new ConditionalRangeInteger(z, a, truth(), 2, 5);
+    Atom z = makeAtom("z", true);
+    RangeInteger cri = new RangeConditional(z, a, truth(), 2, 5, emptyAdder());
     assertTrue(cri.queryGeqAtom(-1).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(1).toString().equals("TRUE"));
     assertTrue(cri.queryGeqAtom(3).toString().equals("z?a≥3"));
@@ -169,13 +162,31 @@ public class ConditionalRangeIntegerTest {
   @Test
   public void testAvoidDuplicateWelldefinednessClauses() {
     RangeInteger a = new RangeVariable("a", -10, 10, truth());
-    Formula form = new And(makeAtom("z", true), makeAtom("x", true));
-    RangeInteger cri = new ConditionalRangeInteger(form, a, truth(), 2, 5);
+    Atom z = makeAtom("z", true);
+    RangeInteger cri = new RangeConditional(z, a, truth(), 2, 5, emptyAdder());
     ClauseCollector col = new ClauseCollector();
     cri.addWelldefinednessClauses(col);
-    assertTrue(col.size() == 12);   // this is the usual number
+    assertTrue(col.size() == 9);   // this is the usual number
     cri.addWelldefinednessClauses(col);
-    assertTrue(col.size() == 12);   // nothing should have been added
+    assertTrue(col.size() == 9);   // nothing should have been added
+  }
+
+  @Test
+  public void testExtraClausesAreAdded() {
+    ClauseAdder ca = new ClauseAdder() {
+      public void add(ClauseCollection col) {
+        col.addClause(new Clause(makeAtom("BING", false)));
+      }
+    };
+    Atom x = makeAtom("x", true);
+    RangeInteger y = new RangeVariable("y", 2, 5, truth());
+    RangeInteger cri = new RangeConditional(x, y, truth(), ca);
+    ClauseCollector col = new ClauseCollector();
+    cri.addWelldefinednessClauses(col);
+    assertTrue(col.size() == 10);
+    assertTrue(col.contains("¬BING"));
+    cri.addWelldefinednessClauses(col);
+    assertTrue(col.size() == 10);
   }
 }
 

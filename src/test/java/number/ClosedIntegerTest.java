@@ -61,7 +61,7 @@ public class ClosedIntegerTest {
     assertTrue(p.queryMinimum() == -10);
     assertTrue(p.queryMaximum() == 10);
     assertTrue(p.queryKind() == ClosedInteger.RANGE);
-    assertTrue(p.toString().equals("x ⊕ y"));
+    assertTrue(p.toString().equals("(x ⊕ y)"));
     assertTrue(p.getBinary() == null);
     assertTrue(p.getRange() instanceof RangePlus);
     assertTrue(p.getRange().toString().equals("bplus(-10, 10, x ⊕ y)"));
@@ -75,7 +75,7 @@ public class ClosedIntegerTest {
     assertTrue(p.queryMinimum() == 0);
     assertTrue(p.queryMaximum() == 17);
     assertTrue(p.queryKind() == ClosedInteger.BINARY);
-    assertTrue(p.toString().equals("x ⊞ y"));
+    assertTrue(p.toString().equals("(x ⊞ y)"));
     assertTrue(p.getRange() == null);
     assertTrue(p.getBinary() instanceof BinaryPlus);
     assertTrue(p.getBinary().toString().equals("(x⊞y)"));

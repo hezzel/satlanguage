@@ -5,7 +5,8 @@ import logic.sat.Variable;
 import logic.sat.Atom;
 import logic.parameter.*;
 import logic.number.*;
-import logic.number.range.*;
+import logic.number.range.RangeVariable;
+import logic.number.range.ParamRangeVar;
 import logic.formula.Formula;
 import logic.formula.Geq;
 import logic.VariableList;
@@ -13,36 +14,40 @@ import language.parser.InputReader;
 import language.parser.ParserException;
 
 public class GeqTest {
-  private QuantifiedRangeInteger makeVar(String name, int min, int max) {
-    RangeInteger ri = new RangeVariable(name, min, max, new Atom(new Variable("TRUE"), true));
-    return new QuantifiedRangeWrapper(ri);
+  private Atom truth() {
+    return new Atom(new Variable("TRUE"), true);
   }
 
-  private QuantifiedRangeInteger makeConstant(int num) {
-    return new QuantifiedRangeWrapper(new RangeConstant(num, new Atom(new Variable("TRUE"), true)));
+  private QuantifiedInteger makeRangeVar(String name, int min, int max) {
+    RangeVariable ri = new RangeVariable(name, min, max, truth());
+    return new VariableInteger(ri);
   }
 
-  /** Helper function for tests that compare an integer with a constant. */
+  private QuantifiedInteger makeConstant(int num) {
+    return new QuantifiedConstant(new ConstantExpression(num), truth());
+  }
+
+  /** Helper function for tests that compare a range variable with a constant. */
   private ClauseCollector setupIntegerRangeTest(int min, int max, boolean geq, int c) {
-    Geq formula = new Geq(makeVar("x", min, max), makeConstant(c), geq);
+    Geq formula = new Geq(makeRangeVar("x", min, max), makeConstant(c), geq);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     formula.addClauses(col);
     return col;
   }
 
-  /** Helper function for tests that compare a constant with an integer. */
+  /** Helper function for tests that compare a constant with a range variable. */
   private ClauseCollector setupReverseIntegerRangeTest(int min, int max, boolean geq, int c) {
-    Geq formula = new Geq(makeConstant(c), makeVar("x", min, max), geq);
+    Geq formula = new Geq(makeConstant(c), makeRangeVar("x", min, max), geq);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     formula.addClauses(col);
     return col;
   }
 
-  /** Helper function for tests that compare two variables in different ranges. */
+  /** Helper function for tests that compare two range variables in different ranges. */
   private ClauseCollector setupRangeRangeTest(int min1, int max1, boolean geq, int min2, int max2) {
-    Geq formula = new Geq(makeVar("x", min1, max1), makeVar("y", min2, max2), geq);
+    Geq formula = new Geq(makeRangeVar("x", min1, max1), makeRangeVar("y", min2, max2), geq);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     col.addToMemory("rangevar y");
@@ -52,7 +57,7 @@ public class GeqTest {
 
   @Test
   public void testBasicToString() {
-    Geq geq = new Geq(makeVar("x", 0, 3), makeConstant(4), true);
+    Geq geq = new Geq(makeRangeVar("x", 0, 3), makeConstant(4), true);
     assertTrue(geq.toString().equals("x ≥ 4"));
     geq = geq.negate();
     assertTrue(geq.toString().equals("x < 4"));
@@ -285,7 +290,7 @@ public class GeqTest {
 
   @Test
   public void testAddClausesDefSingleAtom() {
-    Geq formula = new Geq(makeVar("x", 1, 5), makeConstant(3), true);
+    Geq formula = new Geq(makeRangeVar("x", 1, 5), makeConstant(3), true);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     Atom atom = new Atom(new Variable("myvar"), true);
@@ -298,8 +303,9 @@ public class GeqTest {
   @Test
   public void testAddClausesGeqRelevantBoundRight() {
     Variable.reset();
-    QuantifiedRangeInteger plus = new QuantifiedRangePlus(makeVar("x", 0, 5), makeVar("y", 0, 5));
-    QuantifiedRangeInteger z = makeVar("z", 1, 2); 
+    QuantifiedInteger plus = new QuantifiedPlus(makeRangeVar("x", 0, 5), makeRangeVar("y", 0, 5),
+                                                ClosedInteger.RANGE, truth());
+    QuantifiedInteger z = makeRangeVar("z", 1, 2); 
     Geq formula = new Geq(plus, z, true); 
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
@@ -323,8 +329,9 @@ public class GeqTest {
   @Test
   public void testAddClausesGeqRelevantBoundLeft() {
     Variable.reset();
-    QuantifiedRangeInteger plus = new QuantifiedRangePlus(makeVar("x", 0, 5), makeVar("y", 0, 5));
-    QuantifiedRangeInteger z = makeVar("z", 1, 2); 
+    QuantifiedInteger plus = new QuantifiedPlus(makeRangeVar("x", 0, 5), makeRangeVar("y", 0, 5),
+                                                ClosedInteger.RANGE, truth());
+    QuantifiedInteger z = makeRangeVar("z", 1, 2); 
     Geq formula = new Geq(z, plus, true); 
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
@@ -352,7 +359,7 @@ public class GeqTest {
   @Test
   public void testAddClausesDefMultipleAtoms() {
     Variable.reset();
-    Geq formula = new Geq(makeVar("x", 1, 5), makeVar("y", 3, 7), false);
+    Geq formula = new Geq(makeRangeVar("x", 1, 5), makeRangeVar("y", 3, 7), false);
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");
     col.addToMemory("rangevar y");
@@ -377,8 +384,8 @@ public class GeqTest {
     ParamRangeVar x = vars.queryParametrisedRangeVariable("x");
     Substitution subst = new Substitution("i", InputReader.readPExpressionFromString("a+j"),
                                           "j", InputReader.readPExpressionFromString("b"));
-    QuantifiedRangeVariable xajb = new QuantifiedRangeVariable(x, subst);
-    QuantifiedRangeVariable xij = new QuantifiedRangeVariable(x, new Substitution());
+    QuantifiedVariable xajb = new QuantifiedVariable(x, subst);
+    QuantifiedVariable xij = new QuantifiedVariable(x, new Substitution());
     Geq geq = new Geq(xajb, xij, true);    // x[a+j,c] ≥ x[i,j]
 
     assertTrue(geq.toString().equals("x[a+j,b] ≥ x[i,j]"));
