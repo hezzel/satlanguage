@@ -3,7 +3,7 @@ package logic.number;
 import logic.sat.Atom;
 import logic.number.general.ClauseAdder;
 import logic.number.range.RangeConditional;
-import logic.number.binary.BinaryInteger;
+import logic.number.binary.BinaryConditional;
 
 public class ConditionalInteger implements ClosedInteger {
   private Atom _condition;
@@ -31,12 +31,13 @@ public class ConditionalInteger implements ClosedInteger {
   }
 
   public RangeConditional getRange() {
+    if (_value.queryKind() == ClosedInteger.BINARY) return null;
     return new RangeConditional(_condition, _value.getRange(), _truth, _adder);
   }
 
-  public BinaryInteger getBinary() {
-    // TODO
-    return null;
+  public BinaryConditional getBinary() {
+    if (_value.queryKind() == ClosedInteger.RANGE) return null;
+    return new BinaryConditional(_condition, _value.getBinary(), _truth, _adder);
   }
 
   public String toString() {

@@ -89,8 +89,8 @@ public class RangeConditional implements RangeInteger {
   }
 
   public void addWelldefinednessClauses(ClauseCollection col) {
-    if (col.isInMemory("conditional: " + toString())) return;
-    col.addToMemory("conditional: " + toString());
+    if (col.isInMemory("rconditional: " + toString())) return;
+    col.addToMemory("rconditional: " + toString());
 
     if (_adder != null) _adder.add(col);
 

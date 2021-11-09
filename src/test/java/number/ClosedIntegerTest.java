@@ -3,11 +3,14 @@ import static org.junit.Assert.*;
 
 import logic.sat.Variable;
 import logic.sat.Atom;
+import logic.sat.ClauseCollection;
+import logic.number.general.ClauseAdder;
 import logic.number.range.*;
 import logic.number.binary.*;
 import logic.number.ClosedInteger;
 import logic.number.ConstantInteger;
 import logic.number.VariableInteger;
+import logic.number.ConditionalInteger;
 import logic.number.PlusInteger;
 
 public class ClosedIntegerTest {
@@ -51,6 +54,35 @@ public class ClosedIntegerTest {
     assertTrue(w.toString().equals("x"));
     assertTrue(w.getRange() == null);
     assertTrue(w.getBinary() == x);
+  }
+
+  @Test
+  public void testConditionalIntegerWithBinaryVariable() {
+    BinaryVariable v = new BinaryVariable("var", 4, true, truth());
+    ClosedInteger w = new VariableInteger(v);
+    Atom myatom = new Atom(new Variable("x"), true);
+    ClauseAdder adder = new ClauseAdder() { public void add(ClauseCollection col) { } };
+    ConditionalInteger ci = new ConditionalInteger(myatom, w, truth(), adder);
+    assertTrue(ci.queryMinimum() == -16);
+    assertTrue(ci.queryMaximum() == 15);
+    assertTrue(ci.queryKind() == ClosedInteger.BINARY);
+    assertTrue(ci.getRange() == null);
+    assertTrue(ci.getBinary().toString().equals("x?var"));
+    assertTrue(ci.toString().equals("x?var"));
+  }
+
+  @Test
+  public void testConditionalIntegerWithConstant() {
+    ConstantInteger w = new ConstantInteger(7, truth());
+    Atom myatom = new Atom(new Variable("x"), true);
+    ClauseAdder adder = new ClauseAdder() { public void add(ClauseCollection col) { } };
+    ConditionalInteger ci = new ConditionalInteger(myatom, w, truth(), adder);
+    assertTrue(ci.queryMinimum() == 0);
+    assertTrue(ci.queryMaximum() == 7);
+    assertTrue(ci.queryKind() == ClosedInteger.BOTH);
+    assertTrue(ci.getRange().queryGeqAtom(3).equals(myatom));
+    assertTrue(ci.getBinary().queryBit(2).equals(myatom));
+    assertTrue(ci.toString().equals("x?7"));
   }
 
   @Test
