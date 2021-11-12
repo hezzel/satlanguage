@@ -75,5 +75,27 @@ class ClauseCollector extends ClauseCollection {
     }
     return size() == 0;
   }
+
+  /**
+   * This performs a triviale satisfiability check, just by trying things out.  This is not at all
+   * efficient, and should only be used when there are very few variables.
+   */
+  boolean checkSatisfiable() {
+    if (unitPropagate()) return _solution != null;
+    // make a copy
+    ClauseCollector col = new ClauseCollector();
+    for (int i = 0; i < size(); i++) col.addClause(_clauses.get(i));
+    // in the copy, force the very first atom we find to be the value to make that clause true
+    Atom p = _clauses.get(0).getParts().get(0);
+    Variable x = p.queryVariable();
+    if (p.queryNegative()) col.force(x.toString(), false);
+    else col.force(x.toString(), true);
+    // if that works -- great!
+    if (col.checkSatisfiable()) return true;
+    // if not, we force that atom to false, and keep going
+    if (p.queryNegative()) force(x.toString(), true);
+    else force(x.toString(), false);
+    return checkSatisfiable();
+  }
 }
 

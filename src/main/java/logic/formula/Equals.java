@@ -7,6 +7,7 @@ import logic.sat.ClauseCollection;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.number.range.RangeInteger;
+import logic.number.range.RangeComparison;
 import logic.number.QuantifiedInteger;
 import java.util.ArrayList;
 
@@ -40,36 +41,6 @@ public class Equals extends Formula {
     return new Equals(left, right, !_negated);
   }
 
-  /** Returns the clauses that imply a = b. */
-  private ArrayList<Clause> generateEqualClauses(RangeInteger a, RangeInteger b) {
-    // a = b <-> a ≥ b and b ≥ a
-    ArrayList<Clause> ret = Geq.generateGeqClauses(a, b);
-    ret.addAll(Geq.generateGeqClauses(b, a));
-    return ret;
-  }
-
-  /** Returns the clauses that imply a ≠ b. */
-  private ArrayList<Clause> generateNeqClauses(RangeInteger a, RangeInteger b) {
-    ArrayList<Clause> ret = new ArrayList<Clause>();
-    // a != b <-> for all i: if a = i then b != i
-    //        <-> for all i ∈ {amin..amax}: if a = i then b != i (as otherwise a = i does not hold)
-    for (int i = a.queryMinimum(); i <= a.queryMaximum(); i++) {
-      // if b cannot be equal to a, then we don't need clauses to get b != i
-      if (i < b.queryMinimum() || i > b.queryMaximum()) continue;
-      // a = i → b ≠ i <--> a ≥ i ∧ a < i+1 → b < i ∨ b ≥ i+1
-      //               <--> ¬(a≥i) ∨ a≥i+1 ∨ ¬b≥i ∨ b≥i+1
-      // (and don't add atoms that evaluate to false anyway)
-      ArrayList<Atom> parts = new ArrayList<Atom>();
-      if (i > a.queryMinimum()) parts.add(a.queryGeqAtom(i).negate());
-      if (i < a.queryMaximum()) parts.add(a.queryGeqAtom(i+1));
-      if (i > b.queryMinimum()) parts.add(b.queryGeqAtom(i).negate());
-      if (i < b.queryMaximum()) parts.add(b.queryGeqAtom(i+1));
-      if (parts.size() == 0) parts.add(a.queryGeqAtom(a.queryMaximum()+1));
-      ret.add(new Clause(parts));
-    }
-    return ret;
-  }
-
   public void addClauses(ClauseCollection col) {
     if (!queryClosed()) {
       throw new Error("Trying to addClauses for Equals formula with parameters: " + toString());
@@ -82,11 +53,11 @@ public class Equals extends Formula {
     r.addWelldefinednessClauses(col);
 
     if (!_negated) {  // l = r
-      ArrayList<Clause> clauses = generateEqualClauses(l, r);
+      ArrayList<Clause> clauses = RangeComparison.generateEqualClauses(l, r);
       for (int i = 0; i < clauses.size(); i++) col.addClause(clauses.get(i));
     }
     else {  // l != r
-      ArrayList<Clause> clauses = generateNeqClauses(l, r);
+      ArrayList<Clause> clauses = RangeComparison.generateNeqClauses(l, r);
       for (int i = 0; i < clauses.size(); i++) col.addClause(clauses.get(i));
     }
   }
@@ -105,8 +76,8 @@ public class Equals extends Formula {
 
     ArrayList<Clause> clauses;
     // a → (b1 ∧ ... ∧ bn) iff (¬a ∨ b1) ∧ ... ∧ (¬a ∨ bn)
-    if (!_negated) clauses = generateEqualClauses(l, r);
-    else clauses = generateNeqClauses(l, r);
+    if (!_negated) clauses = RangeComparison.generateEqualClauses(l, r);
+    else clauses = RangeComparison.generateNeqClauses(l, r);
     Atom aneg = a.negate();
 
     for (int i = 0; i < clauses.size(); i++) {
@@ -129,8 +100,8 @@ public class Equals extends Formula {
     ArrayList<Clause> clauses;
     // X → c iff ¬X ∨ c, and if ¬X is equivalent to x1 ∧ ... ∧ xn, then ¬X ∨ c is equivalent to
     // (x1 ∨ c) ∧ ... ∧ (xn ∨ c)
-    if (_negated) clauses = generateEqualClauses(l, r);
-    else clauses = generateNeqClauses(l, r);
+    if (_negated) clauses = RangeComparison.generateEqualClauses(l, r);
+    else clauses = RangeComparison.generateNeqClauses(l, r);
 
     for (int i = 0; i < clauses.size(); i++) {
       col.addClause(new Clause(a, clauses.get(i)));
