@@ -23,7 +23,6 @@ import java.util.ArrayList;
 public class QuantifiedConditionalInteger implements QuantifiedInteger {
   private Formula _condition;
   private QuantifiedInteger _value;
-  private Atom _conditionAtom;
   private Atom _truth;
 
   public QuantifiedConditionalInteger(Formula formula, QuantifiedInteger value, Atom truth) {
@@ -49,23 +48,26 @@ public class QuantifiedConditionalInteger implements QuantifiedInteger {
   }
 
   public ClosedInteger instantiate(Assignment ass) {
+    // variables used in a function pointer must be effectively final, so we set them here and
+    // don't change them afterwards
     Formula cond = _condition.instantiate(ass);
+    Atom conditionAtom = cond.queryAtom() != null ? null :
+                            new Atom(new Variable("⟦" + cond.toString() + "⟧"), true);
+
     ClosedInteger val = _value.instantiate(ass);
     if (!cond.queryClosed()) {
       throw new Error("Quantified conditional " + toString() + " is not closed when " +
         "instantiated with " + ass);
     }
-    _conditionAtom = cond.queryAtom();
-    if (_conditionAtom != null) return new ConditionalInteger(_conditionAtom, val, _truth, null);
-    _conditionAtom = new Atom(new Variable("⟦" + cond.toString() + "⟧"), true);
+    if (conditionAtom == null) return new ConditionalInteger(cond.queryAtom(), val, _truth, null);
     ClauseAdder adder = new ClauseAdder() {
       public void add(ClauseCollection col) {
         if (col.isInMemory(cond.toString())) return;
         col.addToMemory(_condition.toString());
-        cond.addClausesDef(_conditionAtom, col);
+        cond.addClausesDef(conditionAtom, col);
       }
     };
-    return new ConditionalInteger(_conditionAtom, val, _truth, adder);
+    return new ConditionalInteger(conditionAtom, val, _truth, adder);
   }
 
   public String toString() {
