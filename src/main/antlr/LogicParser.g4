@@ -149,10 +149,10 @@ formula             : smallformula
                     ;
 
 smallformula        : BRACKETOPEN formula BRACKETCLOSE
-                    | (NOT | MINUS) smallformula
                     | ITE BRACKETOPEN formula COMMA formula COMMA formula BRACKETCLOSE
                     | intcomparison
                     | variable
+                    | (NOT | MINUS) smallformula
                     ;
 
 junction            : smallformula AND formula
@@ -176,11 +176,9 @@ intcomparison       : intexpression GEQ intexpression
                     | intexpression NEQ intexpression
                     ;
 
-intexpression       : intexpressionmain (rangeplus intexpressionmain)*
-                    ;
-
-rangeplus           : RANGEPLUS
-                    | PLUS
+intexpression       : intexpressionmain (RANGEPLUS intexpressionmain)*
+                    | intexpressionmain (BINARYPLUS intexpressionmain)*
+                    | intexpressionmain (PLUS intexpressionmain)*
                     ;
 
 intexpressionmain   : IDENTIFIER
@@ -203,6 +201,7 @@ onlyformula         : formula EOF
 /********** The execution language **********/
 
 statement           : ifstatement
+                    | letstatement
                     | forstatement
                     | printstatement
                     | block
@@ -210,6 +209,9 @@ statement           : ifstatement
 
 ifstatement         : IF pconstraint THEN statement
                     | IF pconstraint THEN statement ELSE statement
+                    ;
+
+letstatement        : IDENTIFIER INITIATE pexpression
                     ;
 
 forstatement        : FOR IDENTIFIER INITIATE pexpression TO pexpression DO statement

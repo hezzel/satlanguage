@@ -4,9 +4,10 @@ import java.util.TreeSet;
 
 public interface Statement {
   public static final int PRINT = 0;
-  public static final int IF = 1;
-  public static final int FOR = 2;
-  public static final int BLOCK = 3;
+  public static final int LET = 1;
+  public static final int IF = 2;
+  public static final int FOR = 3;
+  public static final int BLOCK = 4;
 
   /**
    * Executes the statement in the given program state.  This may cause the state to be updated.

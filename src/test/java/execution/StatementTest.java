@@ -68,6 +68,19 @@ public class StatementTest {
   }
 
   @Test
+  public void testAssign() {
+    Statement let1 = new Let("i", new ConstantExpression(5));
+    Statement let2 = new Let("i", (new ParameterExpression("i")).add(1));
+    assertTrue(let1.toString().equals("i := 5"));
+    assertTrue(let2.toString("  ").equals("  i := i+1"));
+    Solution sol = new Solution(new TreeSet<Integer>());
+    ProgramState stat = new ProgramState(sol);
+    let1.execute(stat);
+    let2.execute(stat);
+    assertTrue(stat.get("i") == 6);
+  }
+
+  @Test
   public void testIfThenElse() {
     Output o = new Output();
     Print pr1 = new NewPrint(o, new StringExpression("a"));

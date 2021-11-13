@@ -10,9 +10,7 @@ import logic.parameter.Parameter;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
 import logic.number.general.ClauseAdder;
-import logic.number.ClosedInteger;
-import logic.number.ConditionalInteger;
-import logic.number.QuantifiedInteger;
+import logic.number.*;
 import java.util.Set;
 import java.util.ArrayList;
 
@@ -47,6 +45,10 @@ public class QuantifiedConditionalInteger implements QuantifiedInteger {
     return new QuantifiedConditionalInteger(formula, value, _truth);
   }
 
+  public int queryKind() {
+    return _value.queryKind();
+  }
+
   public ClosedInteger instantiate(Assignment ass) {
     // variables used in a function pointer must be effectively final, so we set them here and
     // don't change them afterwards
@@ -71,10 +73,18 @@ public class QuantifiedConditionalInteger implements QuantifiedInteger {
   }
 
   public String toString() {
+    String cond, val;
+
     if ((_condition instanceof QuantifiedAtom) || _condition instanceof AtomicFormula) {
-      return _condition.toString() + " ? " + _value.toString();
+      cond = _condition.toString();
     }
-    else return "(" + _condition.toString() + ") ? " + _value.toString();
+    else cond = "(" + _condition.toString() + ")";
+
+    if ((_value instanceof QuantifiedConstant) || (_value instanceof VariableInteger) ||
+        (_value instanceof QuantifiedVariable)) val = _value.toString();
+    else val = "(" + _value + ")";
+
+    return cond + " ? " + val;
   }
 }
 

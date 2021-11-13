@@ -19,6 +19,9 @@ public interface QuantifiedInteger {
   /** Replaces parameters by their associated expression. */
   public QuantifiedInteger substitute(Substitution subst);
 
+  /** Returns the kind of QuantifiedInteger this will yield, by definitions in ClosedInteger. */
+  public int queryKind();
+
   /**
    * Replaces all parameters in the quantified integer by their value, and returns the
    * corresponding closed integer.  An Error is thrown if some parameter is missing.  If the

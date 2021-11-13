@@ -63,6 +63,10 @@ public class QuantifiedPlus implements QuantifiedInteger {
     return makePlus(createAddition(parts, start, middle), createAddition(parts, middle + 1, end));
   }
 
+  public int queryKind() {
+    return _kind;
+  }
+
   public ClosedInteger instantiate(Assignment ass) {
     int constant = 0;
     ArrayList<ClosedInteger> evalparts = new ArrayList<ClosedInteger>();

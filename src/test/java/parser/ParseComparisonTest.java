@@ -66,12 +66,21 @@ public class ParseComparisonTest {
   }
 
   @Test
-  public void testGeqWithMultipleVariables() throws ParserException {
+  public void testGeqWithMultipleRangeVariables() throws ParserException {
     VariableList vars = new VariableList();
     InputReader.declare("x[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
     InputReader.declare("y    :: Number ∈ {1..10}", vars);
-    Formula form = InputReader.readFormulaFromString("0 >= x[1] ⊕ y + x[4]", vars);
+    Formula form = InputReader.readFormulaFromString("0 >= x[1] ⊕ y ⊕ x[4]", vars);
     assertTrue(form.toString().equals("0 ≥ x[1] ⊕ y ⊕ x[4]"));
+  }
+
+  @Test
+  public void testGeqWithMultipleBinaryVariables() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i] :: Int? ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("y    :: Int? ∈ {1..10}", vars);
+    Formula form = InputReader.readFormulaFromString("0 >= x[1] ⊞ y ⊞ x[4]", vars);
+    assertTrue(form.toString().equals("0 ≥ x[1] ⊞ y ⊞ x[4]"));
   }
 
   @Test
@@ -96,8 +105,8 @@ public class ParseComparisonTest {
     InputReader.declare("x    :: Bool", vars);
     InputReader.declare("y[i] :: Bool for i ∈ {1..5}", vars);
     InputReader.declare("z[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
-    Formula form = InputReader.readFormulaFromString("x?3 > (¬x → y[j]) ? z[a+1]", vars);
-    assertTrue(form.toString().equals("(¬x → y[j]) ? z[a+1] < x ? 3"));
+    Formula form = InputReader.readFormulaFromString("-1 + x?3> ((¬x → y[j]) ? z[a+1]) + 9", vars);
+    assertTrue(form.toString().equals("(¬x → y[j]) ? z[a+1] ⊕ 9 < x ? 3 + -1"));
   }
 
   @Test
@@ -138,6 +147,14 @@ public class ParseComparisonTest {
     InputReader.declare("x :: Bool", vars);
     InputReader.declare("y :: Bool", vars);
     Formula form = InputReader.readFormulaFromString("3 = x ∧ y ? 4", vars);
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testGeqWithIllegalOperators() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i] :: Number ∈ {1..10} for i ∈ {1..5}", vars);
+    InputReader.declare("y    :: Number ∈ {1..10}", vars);
+    Formula form = InputReader.readFormulaFromString("0 >= x[1] ⊞ y ⊞ x[4]", vars);
   }
 }
 

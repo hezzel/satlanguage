@@ -1,110 +1,64 @@
-###################################################################################################
-#                                                                                                 #
-# This program is used for creating a pairing of fighters, which is similar to a pool system in   #
-# the difficulty of opponents, but also works if the number of fighters does not allow for a full #
-# division into pools (specifically: tournaments with 7-9 fighters).                              #
-#                                                                                                 #
-###################################################################################################
-
-# The program will attempt to give everyone roughly the same total difficulty in their fights.
-# Keep these numbers relatively low; making them higher than 10 will turn the program quite slow.
-data Fighter(Weight) {
-  "Mary"    ⇒ 3 ;
-  "Tanya"   ⇒ 3 ;
-  "Emily"   ⇒ 3 ;
-  "Carol"   ⇒ 3 ;
-  "Ilse"    ⇒ 2 ;
-  "Betty"   ⇒ 2 ;
-  "Paula"   ⇒ 2 ;
-  "Sophie"  ⇒ 1 ;
-  "Heloise" ⇒ 1 ;
+data Components(Width, Height) {
+  "0" ⇒ ( 4,  5) ;
+  "1" ⇒ ( 4,  6) ;
+  "2" ⇒ ( 5, 20) ;
+  "3" ⇒ ( 6,  9) ;
+  "4" ⇒ ( 6, 10) ;
+  "5" ⇒ ( 6, 11) ;
+  "6" ⇒ ( 7,  8) ;
+  "7" ⇒ ( 7, 12) ;
+  "8" ⇒ (10, 10) ;
+  "9" ⇒ (10, 20) ;
+  "P" ⇒ ( 4,  3) ;
+  "Q" ⇒ ( 4,  3) ;
 }
 
-# Set this value to the sum of all the fighter weights. (Sorry; can't do this automatically yet.)
-define TotalFighterWeight 20
+define NumComponents |Components|
 
-# It is not possible to give an odd number of fighters 5 fights each, because every fight contains
-# an even number of fighters.  Hence, if you want 5 fights each, one fighter (or 3, 5, or 7) should
-# be given 6 or 4 fights instead.  Use this function to specify how many fights everyone gets.
-function FightsPP(fighter) {
-  "Carol" ⇒ 6 ;
-  _       ⇒ 5
-}
+define ChipHeight 30
+define ChipWidth  30
 
-# To calculate the total number of fights, add FightsPP(fighter) for all the fighters, and divide
-# by 2.
-define NumFights (6 * 1 + 5 * 8) / 2
+define MinDistance 17
 
-# Use this to set how much the expected total weight per player is allowed to deviate from the
-# average.  With a higher value, the problem becomes easier to solve, but a lower value gives a
-# better fight division.  The deviation is a percentage, so should be between 0 and 10.
-define Deviation 0
+===================================================================================================
 
-# Use this to set the gap between fights each player should have
-define MINGAP 2
-define MAXGAP 4
+declare xl[component] :: Number ∈ {1..ChipWidth-1}  for component ∈ {1..NumComponents}
+declare xr[component] :: Number ∈ {2..ChipWidth}    for component ∈ {1..NumComponents}
+declare yt[component] :: Number ∈ {1..ChipHeight-1} for component ∈ {1..NumComponents}
+declare yb[component] :: Number ∈ {2..ChipHeight}   for component ∈ {1..NumComponents}
 
-# Do not change; this is used to quantify over the fighters.
-define NumFighters |Fighter|
+# the relation between xl and xr, and between yt and yb, is as expected from the size of the component (might may be turned 90 degrees)
+∀ comp ∈ {1..NumComponents}. (xr[comp] = xl[comp] + Width(comp) - 1 ∧ yb[comp] = yt[comp] + Height(comp) - 1) ∨
+                             (xr[comp] = xl[comp] + Height(comp) - 1 ∧ yb[comp] = yt[comp] + Width(comp) - 1)
 
-# Do not change.  This is the expected total weight per person.
-function MinimalWeightPP(fighter) {
-  _ ⇒ TotalFighterWeight * (FightsPP(fighter) + 1) * (100 - Deviation) / (NumFighters * 100)
-}
-function MaximalWeightPP(fighter) {
-  _ ⇒ (TotalFighterWeight * (FightsPP(fighter) + 1) * (100 + Deviation) + NumFighters * 100 - 1) / (NumFighters * 100)
-}
+# the components do not overlap
+∀ c1 ∈ {1..NumComponents-1}. ∀ c2 ∈ {c1+1..NumComponents}.
+  xr[c1] < xl[c2] ∨ xl[c1] > xr[c2] ∨ yt[c1] > yb[c2] ∨ yb[c1] < yt[c2]
 
-# This is used for a division into rounds: each player fights at most once per round.
-define RoundSize NumFighters / 2
-define NumRounds (NumFights + RoundSize - 1) / RoundSize
+# every regular component touches a power component
+∀ comp ∈ {"0".."9"}. ∃ p ∈ {"P".."Q"}.
+  (xr[comp] + 1 = xl[p] ∧ yt[comp] ≤ yb[p] ∧ yt[p] ≤ yb[comp]) ∨
+  (xl[comp] + -1 = xr[p] ∧ yt[comp] ≤ yb[p] ∧ yt[p] ≤ yb[comp]) ∨
+  (yb[comp] + 1 = yt[p] ∧ xl[comp] ≤ xr[p] ∧ xl[p] ≤ xr[comp]) ∨
+  (yt[comp] + -1 = yb[p] ∧ xl[comp] ≤ xr[p] ∧ xl[p] ≤ xr[comp])
+
+# the distance between the centres of the two components is at least MinDistance
+# since "the centre" is not necessarily an integer, we instead consider whether the distance between 2 * the center is at least 2 * MinDistance
+# since the two power components are identical in size, we say P must be the smaller one
+(xl["P"] + xr["P"] + 2 * MinDistance ≤ xl["Q"] + xr["Q"]) ∨
+(yt["P"] + yb["P"] + 2 * MinDistance ≤ yt["Q"] + yb["Q"])
 
 ===============================================================================
 
-declare fights[x,y] :: Bool for x ∈ {1..NumFighters}, y ∈ {1..NumFighters}
-declare totalweight[x] :: Number ∈ {MinimalWeightPP(x)..MaximalWeightPP(x)} for x ∈ {1..NumFighters}
-declare player1[i] :: Number ∈ {1..NumFighters-1} for i ∈ {1..NumFights}
-declare player2[i] :: Number ∈ {2..NumFighters} for i ∈ {1..NumFights}
-
-# you cannot fight yourself
-∀ x ∈ {1..NumFighters}. ¬fights[x,x]
-
-# fights are symmetric: if I fight you, then you fight me
-∀ x ∈ {1..NumFighters}. ∀ y ∈ {1..NumFighters}. fights[x,y] → fights[y,x]
-
-# everyone has the given number of fights
-∀ x ∈ {1..NumFighters}. Σ { 1 | y ∈ {1..NumFighters} | fights[x,y] } = FightsPP(x) + 0    # + 0 because otherwise (x) is parsed as a formula!
-
-# the totalweight variable represents the weights of everyone's fights, plus their own
-# (ue to the way the variables are declared, this immediately guarantees that the sum is in the expected range)
-∀ x ∈ {1..NumFighters}. totalweight[x] = Weight(x) + Σ { Weight(y) | y ∈ {1..NumFighters} | fights[x,y] }
-
-# every scheduled fight contains two distinct fighters
-∀ i ∈ {1..NumFights}. player1[i] < player2[i]
-
-# if two players are set to fight, then there is a moment when this fight takes place
-∀ x ∈ {1..NumFighters-1}. ∀ y ∈ {x+1..NumFighters}. fights[x,y] → ∃ i ∈ {1..NumFights}. player1[i] = x ∧ player2[i] = y
-
-# if I fight now, I do not have to fight in the next MINGAP rounds
-∀ k ∈ {1..MINGAP}. ∀ i ∈ {1..NumFights-k}. ∀ x ∈ {1..NumFighters}. player1[i] != player1[i+k] ∧ player1[i] != player2[i+k] ∧ player2[i] != player1[i+k] ∧ player2[i] != player2[i+k]
-
-# ... but I do fight again in the next MAXGAP+1 rounds
-∀ i ∈ {1..NumFights-MAXGAP-1}. ∀ x ∈ {1..NumFighters-1}. player1[i] = x → ∃ k ∈ {MINGAP+1..MAXGAP+1}. player1[i+k] = x ∨ player2[i+k] = x
-∀ i ∈ {1..NumFights-MAXGAP-1}. ∀ x ∈ {2..NumFighters}. player2[i] = x → ∃ k ∈ {MINGAP+1..MAXGAP+1}. player1[i+k] = x ∨ player2[i+k] = x
-
-# There is a system of rounds: in each round, a player fights at most once
-∀ r ∈ {0..NumRounds-1}. ∀ x ∈ {1..NumFighters}. Σ { 1 | i ∈ {1..NumFights} with (i-1)/RoundSize = r | player1[i] = x ∨ player2[i] = x } ≤ 1
-
-===============================================================================
-
-for x := 1 to NumFighters do {
-  println(Fighter(x), " (", totalweight[x], " ∈ {", MinimalWeightPP(x), "..", MaximalWeightPP(x), "}): ")
-  for y := 1 to NumFighters do {
-    if fights[x,y] then println("  ", Fighter(y))
+for y := 1 to ChipHeight do {
+  for x := 1 to ChipWidth do {
+    u := 0
+    for c := 1 to NumComponents do {
+      if xl[c] ≤ x ∧ x ≤ xr[c] ∧ yt[c] ≤ y ∧ y ≤ yb[c] then u := c
+    }
+    if u = 0 then print(" ")
+    else print(Components(u))
   }
-}
-
-for i := 1 to NumFights do {
-  println("Fight ", i, ": ", Fighter(player1[i]), "--", Fighter(player2[i]))
+  println()
 }
 

@@ -85,6 +85,8 @@ PLUS                : '+' ;
 
 RANGEPLUS           : '⊕' | '(+)' | '\\oplus' ;
 
+BINARYPLUS          : '⊞' | '[+]' | '\\boxplus' ;
+
 MINUS               : '-' ;
 
 TIMES               : '*' ;

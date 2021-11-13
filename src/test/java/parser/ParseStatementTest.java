@@ -31,6 +31,20 @@ public class ParseStatementTest {
   }
 
   @Test
+  public void testReadAssignment() throws ParserException {
+    VariableList vars = new VariableList();
+    Statement stat = InputReader.readStatementFromString("i := i * j", vars);
+    assertTrue(stat.toString().equals("i := i*j"));
+  }
+
+  @Test(expected = language.parser.ParserException.class)
+  public void testAssignWithDeclaredName() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("i :: Int ∈ {1..10}", vars);
+    Statement stat = InputReader.readStatementFromString("i := 12", vars);
+  }
+
+  @Test
   public void testSimpleIf() throws ParserException {
     VariableList vars = new VariableList();
     Statement stat = InputReader.readStatementFromString("if i > 0 then println()", vars);

@@ -32,6 +32,10 @@ public class QuantifiedConstant implements QuantifiedInteger {
     return new QuantifiedConstant(_constant.substitute(subst), _truth);
   }
 
+  public int queryKind() {
+    return ClosedInteger.BOTH;
+  }
+
   public ConstantInteger instantiate(Assignment ass) {
     return new ConstantInteger(_constant.evaluate(ass), _truth);
   }

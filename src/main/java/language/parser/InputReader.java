@@ -178,60 +178,6 @@ public class InputReader {
   }
 
   /**
-   * Returns the parametrised range variable represented by the identifier starting the tree, and
-   * updates the given arguments list to add all the pexpressions in the arguments list to the
-   * variable.  (The args list is expected to be empty before the call.)
-   * If there is no ParamRangeVar declared with that name, or if the length of the arguments list
-   * does not match the expected number of parameters, a ParserException is thrown instead.  If
-   * ivarsInParams is false, then the parameters of the range var should be pure PExpressions; that
-   * is, they are not allowed to contain integer variables.  If ivarsInParams is true, then we
-   * should read the arguments as extended PExpressions.
-   */
-  private ParamRangeVar readQuantifiedRangeVariable(ParseTree tree, VariableList lst,
-                       ArrayList<PExpression> args, boolean ivarsInParams) throws ParserException {
-    String name = splitParamVar(tree, args, ivarsInParams ? lst : null);
-    ParamRangeVar x = lst.queryParametrisedRangeVariable(name);
-    if (x == null) {
-      if (lst.isDeclared(name)) {
-        throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
-          "as a parametrised range variable but was not declared as such.");
-      }
-      else {
-        throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
-      }
-    }
-    checkParameterSize(tree, name, x.queryParameters().size(), args.size());
-    return x;
-  }
-
-  /**
-   * Returns the parametrised binary variable represented by the identifier starting the tree, and
-   * updates the given arguments list to add all the pexpressions in the arguments list to the
-   * variable.  (The args list is expected to be empty before the call.)
-   * If there is no ParamRangeVar declared with that name, or if the length of the arguments list
-   * does not match the expected number of parameters, a ParserException is thrown instead.  If
-   * ivarsInParams is false, then the parameters of the range var should be pure PExpressions; that
-   * is, they are not allowed to contain integer variables.  If ivarsInParams is true, then we
-   * should read the arguments as extended PExpressions.
-   */
-  private ParamBinaryVar readQuantifiedBinaryVariable(ParseTree tree, VariableList lst,
-                       ArrayList<PExpression> args, boolean ivarsInParams) throws ParserException {
-    String name = splitParamVar(tree, args, ivarsInParams ? lst : null);
-    ParamBinaryVar x = lst.queryParametrisedBinaryVariable(name);
-    if (x == null) {
-      if (lst.isDeclared(name)) {
-        throw new ParserException(firstToken(tree), "Illegal use of variable " + name + ": used " +
-          "as a parametrised bbinary variable but was not declared as such.");
-      }
-      else {
-        throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
-      }
-    }
-    checkParameterSize(tree, name, x.queryParameters().size(), args.size());
-    return x;
-  }
-
-  /**
    * Returns the parametrised boolean variable represented by the identifier starting the tree,
    * and updates the given arguments list to add all the pexpressions in the arguments list to the
    * variable.  (The args list is expected to be empty before the call.)
@@ -688,10 +634,10 @@ public class InputReader {
     String kind = checkChild(tree, 1);
     if (kind.equals("rule boolvardec")) readBoolVarDec(tree.getChild(1), lst);
     else if (kind.equals("rule rangevardec")) readRangeVarDec(tree.getChild(1), lst);
-    else if (kind.equals("rule binaryvardec")) readBinaryVarDec(tree.getChild(0), lst);
+    else if (kind.equals("rule binaryvardec")) readBinaryVarDec(tree.getChild(1), lst);
     else if (kind.equals("rule paramboolvardec")) readParamBoolVarDec(tree.getChild(1), lst);
     else if (kind.equals("rule paramrangevardec")) readParamRangeVarDec(tree.getChild(1), lst);
-    else if (kind.equals("rule parambinaryvardec")) readParamBinaryVarDec(tree.getChild(0), lst);
+    else if (kind.equals("rule parambinaryvardec")) readParamBinaryVarDec(tree.getChild(1), lst);
     else throw buildError(tree, "encountered " + kind + ", expected a kind of declaration.");
   }
 
@@ -931,6 +877,33 @@ public class InputReader {
     throw buildError(tree, "expected (in)equality token");
   }
 
+  /**
+   * Given that tree is an addition, using either RANGEPLUS, BINARYPLUS or just PLUS, this parses
+   * the given components into a QuantifiedPlus with the correct kind.
+   * If there is an inconsistency in the kinds, a ParserException is thrown.
+   */
+  private QuantifiedPlus makePlus(ParseTree tree, ArrayList<QuantifiedInteger> parts,
+                                  Atom truth) throws ParserException {
+    int k;
+    String kind = checkChild(tree, 1);
+    if (kind.equals("token RANGEPLUS")) k = ClosedInteger.RANGE;
+    else if (kind.equals("token BINARYPLUS")) k = ClosedInteger.BINARY;
+    else {
+      verifyChildIsToken(tree, 1, "PLUS", "free plus operator +");
+      k = ClosedInteger.BOTH;
+    }
+    for (int i = 0; i < parts.size(); i++) {
+      if (parts.get(i).queryKind() != k) {
+        if (k == ClosedInteger.BOTH) k = parts.get(i).queryKind();
+        else if (parts.get(i).queryKind() != ClosedInteger.BOTH) {
+          throw new ParserException(firstToken(tree), "Inconsistent integer expression: binary " +
+            "and range integers are mixed!");
+        }
+      }
+    }
+    return new QuantifiedPlus(parts, k, truth);
+  }
+
   private QuantifiedInteger readIntegerExpression(ParseTree tree, VariableList lst)
                                                                           throws ParserException {
     QuantifiedInteger expr = getConstantPart(tree, lst);
@@ -941,8 +914,10 @@ public class InputReader {
     }
     if (expr == null) return ret;
     if (ret == null) return expr;
-    return new QuantifiedPlus(ret, expr, ClosedInteger.RANGE,
-                              new Atom(lst.queryTrueVariable(), true));
+    ArrayList<QuantifiedInteger> parts = new ArrayList<QuantifiedInteger>();
+    parts.add(ret);
+    parts.add(expr);
+    return makePlus(tree, parts, new Atom(lst.queryTrueVariable(), true));
   }
 
   /**
@@ -956,11 +931,12 @@ public class InputReader {
       ParseTree child = tree.getChild(i);
       String kind = checkChild(child, 0);
       if (kind.equals("rule pexpressionminus")) {
-        PExpression e = readPExpressionMinus(child.getChild(0), lst);
+        PExpression e = readPExpressionMinus(child.getChild(0), null);
         if (expr == null) expr = e; else expr = new SumExpression(expr, e);
       }
       else if (kind.equals("token IDENTIFIER") &&
-               lst.queryRangeVariable(child.getText()) == null) {
+               lst.queryRangeVariable(child.getText()) == null &&
+               lst.queryBinaryVariable(child.getText()) == null) {
         PExpression e = readPExpressionUnit(child, null);
         if (expr == null) expr = e; else expr = new SumExpression(expr, e);
       }
@@ -987,6 +963,8 @@ public class InputReader {
         String name = child.getText();
         RangeVariable x = lst.queryRangeVariable(name);
         if (x != null) ret.add(new VariableInteger(x));
+        BinaryVariable y = lst.queryBinaryVariable(name);
+        if (y != null) ret.add(new VariableInteger(y));
       }
       // BRACKETOPEN intexpression BRACKETCLOSE
       if (kind.equals("token BRACKETOPEN")) {
@@ -1019,18 +997,38 @@ public class InputReader {
         verifyChildIsToken(child, 7, "BRACECLOSE", "closing brace }");
         Formula formula = readFormula(child.getChild(6), lst);
         expr = new QuantifiedConditionalInteger(formula, expr, truth);
-        return new QuantifiedSum(params, expr, ClosedInteger.RANGE, truth);
+        return new QuantifiedSum(params, expr, expr.queryKind(), truth);
       }
       // paramvar
       if (kind.equals("rule paramvar")) {
         ArrayList<PExpression> args = new ArrayList<PExpression>();
-        ParamRangeVar x = readQuantifiedRangeVariable(child.getChild(0), lst, args, false);
-        ret.add(new QuantifiedVariable(x, args));
+        String name = splitParamVar(child.getChild(0), args, null);
+        ParamRangeVar x = null;
+        ParamBinaryVar y = null;
+        x = lst.queryParametrisedRangeVariable(name);
+        if (x == null) y = lst.queryParametrisedBinaryVariable(name);
+        if (x == null && y == null) {
+          if (lst.isDeclared(name)) {
+            throw new ParserException(firstToken(tree), "Illegal use of variable " + name +
+              ": used as a parametrised integer variable but was not declared as such.");
+          }
+          else {
+            throw new ParserException(firstToken(tree), "Encountered undeclared variable " + name);
+          }
+        }
+        if (x != null) {
+          checkParameterSize(tree, name, x.queryParameters().size(), args.size());
+          ret.add(new QuantifiedVariable(x, args));
+        }
+        else {
+          checkParameterSize(tree, name, y.queryParameters().size(), args.size());
+          ret.add(new QuantifiedVariable(y, args));
+        }
       }
     }
     if (ret.size() == 0) return null;
     if (ret.size() == 1) return ret.get(0);
-    return new QuantifiedPlus(ret, ClosedInteger.RANGE, truth);
+    return makePlus(tree, ret, truth);
   }
 
   private Formula readCondition(ParseTree tree, VariableList lst) throws ParserException {
@@ -1131,6 +1129,7 @@ public class InputReader {
   private Statement readStatement(ParseTree tree, VariableList lst) throws ParserException {
     String kind = checkChild(tree, 0);
     if (kind.equals("rule ifstatement")) return readIf(tree.getChild(0), lst);
+    if (kind.equals("rule letstatement")) return readLet(tree.getChild(0), lst);
     if (kind.equals("rule forstatement")) return readFor(tree.getChild(0), lst);
     if (kind.equals("rule printstatement")) return readPrint(tree.getChild(0), lst);
     verifyChildIsRule(tree, 0, "block", "a block");
@@ -1152,6 +1151,24 @@ public class InputReader {
       el = readStatement(tree.getChild(5), lst);
     }
     return new If(constr, th, el);
+  }
+
+  private Statement readLet(ParseTree tree, VariableList lst) throws ParserException {
+    // IDENTIFIER INITIATE pexpression
+    verifyChildIsToken(tree, 0, "IDENTIFIER", "a parameter name");
+    verifyChildIsToken(tree, 1, "INITIATE", ":=");
+    verifyChildIsRule(tree, 2, "pexpression", "a pexpression");
+    String name = tree.getChild(0).getText();
+    if (lst.isDeclared(name)) {
+      throw new ParserException(firstToken(tree), "You cannot assign a value to " + name + "' " +
+        "as it is declared as a variable.");
+    }
+    if (_defs.defines(name)) {
+      throw new ParserException(firstToken(tree), "You cannot assign a new value to " + name +
+        "' as it is defined as a " + _defs.definedAsWhat(name) + ".");
+    }
+    PExpression expr = readPExpression(tree.getChild(2), lst);
+    return new Let(name, expr);
   }
 
   private Statement readFor(ParseTree tree, VariableList lst) throws ParserException {

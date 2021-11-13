@@ -13,6 +13,7 @@ import logic.number.ClosedInteger;
 import logic.number.QuantifiedInteger;
 import logic.number.QuantifiedConstant;
 import logic.number.QuantifiedVariable;
+import logic.number.QuantifiedPlus;
 import logic.formula.Formula;
 import logic.formula.AtomicFormula;
 import logic.formula.Or;
@@ -70,6 +71,17 @@ public class QuantifiedConditionalIntegerTest {
   public void testBasics() {
     QuantifiedInteger test = createTest();
     assertTrue(test.toString().equals("(x ∨ bvar[j-1]) ? ivar[i+3]"));
+  }
+
+  @Test
+  public void testBrackets() {
+    Formula formula = makeAtom("x", false);
+    QuantifiedInteger v1 = createVariable("i");
+    QuantifiedInteger v2 = createVariable("j");
+    Atom truth = new Atom(new Variable("TRUE"), true);
+    QuantifiedInteger plus = new QuantifiedPlus(v1, v2, ClosedInteger.RANGE, truth);
+    QuantifiedInteger q = new QuantifiedConditionalInteger(formula, plus, truth);
+    assertTrue(q.toString().equals("¬x ? (ivar[i] ⊕ ivar[j])"));
   }
 
   @Test

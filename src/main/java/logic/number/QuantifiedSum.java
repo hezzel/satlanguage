@@ -92,6 +92,10 @@ public class QuantifiedSum implements QuantifiedInteger {
     return new PlusInteger(part1, part2, _kind, _truth);
   }
 
+  public int queryKind() {
+    return _kind;
+  }
+
   public ClosedInteger instantiate(Assignment ass) {
     ArrayList<ClosedInteger> parts = new ArrayList<ClosedInteger>();
     if (ass == null) ass = new Assignment();

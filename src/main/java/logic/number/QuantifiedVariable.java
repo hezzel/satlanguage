@@ -86,6 +86,11 @@ public class QuantifiedVariable implements QuantifiedInteger {
     return queryParameters().size() == 0;
   }
 
+  public int queryKind() {
+    if (_rvar != null) return ClosedInteger.RANGE;
+    else return ClosedInteger.BINARY;
+  }
+
   public QuantifiedVariable substitute(Substitution subst) {
     Substitution newsubst = new Substitution();
     for (int i = 0; i < _parameters.size(); i++) {
