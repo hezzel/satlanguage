@@ -7,6 +7,8 @@ import logic.parameter.*;
 import logic.number.*;
 import logic.number.range.RangeVariable;
 import logic.number.range.ParamRangeVar;
+import logic.number.binary.BinaryVariable;
+import logic.number.binary.ParamBinaryVar;
 import logic.formula.Formula;
 import logic.formula.Equals;
 import logic.VariableList;
@@ -32,6 +34,34 @@ public class EqualsTest {
     Equals eq = new Equals(makeRangeVar("x", 0, 3), makeConstant(4), true);
     assertTrue(eq.toString().equals("x = 4"));
     assertTrue(eq.negate().toString().equals("x ≠ 4"));
+  }
+
+  @Test
+  public void testBasics() throws ParserException {
+    VariableList vars = new VariableList();
+    InputReader.declare("x[i,j] :: Number ∈ {0..10} for i ∈ {1..3}, j ∈ {i+1..4}", vars);
+    ParamRangeVar x = vars.queryParametrisedRangeVariable("x");
+    Substitution subst = new Substitution("i", InputReader.readPExpressionFromString("a+j"),
+                                          "j", InputReader.readPExpressionFromString("b"));
+    QuantifiedVariable xajb = new QuantifiedVariable(x, subst);
+    QuantifiedVariable xij = new QuantifiedVariable(x, new Substitution());
+    Equals eq = new Equals(xajb, xij, true);    // x[a+j,c] ≥ x[i,j]
+
+    assertTrue(eq.toString().equals("x[a+j,b] = x[i,j]"));
+    assertTrue(eq.negate().toString().equals("x[a+j,b] ≠ x[i,j]"));
+    assertTrue(eq.queryAtom() == null);
+    assertFalse(eq.queryClosed());
+
+    subst = new Substitution("a", InputReader.readPExpressionFromString("3"),
+                             "b", InputReader.readPExpressionFromString("i"));
+    Formula form = eq.substitute(subst);
+    assertTrue(form.toString().equals("x[j+3,i] = x[i,j]"));
+    assertFalse(form.queryClosed());
+
+    form = form.instantiate(new Assignment("i", 7, "j", 4));
+    assertTrue(form.toString().equals("x[7,7] = x[7,4]"));
+    assertTrue(form.queryClosed());
+    assertTrue(form.negate().toString().equals("x[7,7] ≠ x[7,4]"));
   }
 
   @Test
@@ -97,31 +127,17 @@ public class EqualsTest {
   }
 
   @Test
-  public void testBasics() throws ParserException {
-    VariableList vars = new VariableList();
-    InputReader.declare("x[i,j] :: Number ∈ {0..10} for i ∈ {1..3}, j ∈ {i+1..4}", vars);
-    ParamRangeVar x = vars.queryParametrisedRangeVariable("x");
-    Substitution subst = new Substitution("i", InputReader.readPExpressionFromString("a+j"),
-                                          "j", InputReader.readPExpressionFromString("b"));
-    QuantifiedVariable xajb = new QuantifiedVariable(x, subst);
-    QuantifiedVariable xij = new QuantifiedVariable(x, new Substitution());
-    Equals eq = new Equals(xajb, xij, true);    // x[a+j,c] ≥ x[i,j]
-
-    assertTrue(eq.toString().equals("x[a+j,b] = x[i,j]"));
-    assertTrue(eq.negate().toString().equals("x[a+j,b] ≠ x[i,j]"));
-    assertTrue(eq.queryAtom() == null);
-    assertFalse(eq.queryClosed());
-
-    subst = new Substitution("a", InputReader.readPExpressionFromString("3"),
-                             "b", InputReader.readPExpressionFromString("i"));
-    Formula form = eq.substitute(subst);
-    assertTrue(form.toString().equals("x[j+3,i] = x[i,j]"));
-    assertFalse(form.queryClosed());
-
-    form = form.instantiate(new Assignment("i", 7, "j", 4));
-    assertTrue(form.toString().equals("x[7,7] = x[7,4]"));
-    assertTrue(form.queryClosed());
-    assertTrue(form.negate().toString().equals("x[7,7] ≠ x[7,4]"));
+  public void testBinaryEqualityWithMinus() {
+    QuantifiedInteger a = new VariableInteger(new BinaryVariable("a", 0, 260, truth()));
+    QuantifiedInteger b = new VariableInteger(new BinaryVariable("b", 0, 260, truth()));
+    Equals formula1 = new Equals(a, new QuantifiedConstant(260, truth()), true);
+    Equals formula2 = new Equals(b, new QuantifiedPlus(a,
+      new QuantifiedConstant(-35, truth()), ClosedInteger.BINARY, truth()), true);
+    ClauseCollector col = new ClauseCollector();
+    formula1.addClauses(col);
+    formula2.addClauses(col);
+    col.force("TRUE", true);
+    assertTrue(col.checkSatisfiable());
   }
 }
 

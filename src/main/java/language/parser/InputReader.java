@@ -990,7 +990,7 @@ public class InputReader {
         ArrayList<Parameter> params = readOpenParameterList(child.getChild(4));
         if (child.getChildCount() == 6) {
           verifyChildIsToken(child, 5, "BRACECLOSE", "closing brace }");
-          return new QuantifiedSum(params, expr, ClosedInteger.RANGE, truth);
+          return new QuantifiedSum(params, expr, expr.queryKind(), truth);
         }
         verifyChildIsToken(child, 5, "MID", "|");
         verifyChildIsRule(child, 6, "formula", "a formula");

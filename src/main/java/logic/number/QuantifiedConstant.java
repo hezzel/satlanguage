@@ -4,6 +4,7 @@ import logic.sat.Atom;
 import logic.parameter.PExpression;
 import logic.parameter.Assignment;
 import logic.parameter.Substitution;
+import logic.parameter.ConstantExpression;
 import logic.number.ConstantInteger;
 import java.util.Set;
 
@@ -17,6 +18,11 @@ public class QuantifiedConstant implements QuantifiedInteger {
 
   public QuantifiedConstant(PExpression expression, Atom truth) {
     _constant = expression;
+    _truth = truth;
+  }
+
+  public QuantifiedConstant(int value, Atom truth) {
+    _constant = new ConstantExpression(value);
     _truth = truth;
   }
 

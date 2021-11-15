@@ -83,21 +83,27 @@ public class BinaryPlus implements BinaryInteger {
     _left.addWelldefinednessClauses(col);
     _right.addWelldefinednessClauses(col);
 
+    int len = _parts.size();
+    if (_left.length() > len) len = _left.length();
+    if (_right.length() > len) len = _right.length();
+
     Atom carry = _truth.negate();
-    for (int i = 0; i < _parts.size(); i++) {
+    for (int i = 0; i < len; i++) {
       Atom c1 = carry, c0 = carry.negate();
       Atom l1 = _left.queryBit(i), l0 = _left.queryBit(i).negate();
       Atom r1 = _right.queryBit(i), r0 = _right.queryBit(i).negate();
-      Atom p1 = _parts.get(i), p0 = _parts.get(i).negate();
-      // _parts[i] = carry XOR left[i] XOR right[i]
-      makeC(c0, l0, r0, p1, col);    // carry ∧ left[i] ∧ right[i] → p1
-      makeC(c0, l0, r1, p0, col);    // carry ∧ left[i] ∧ ¬right[i] → ¬p1
-      makeC(c0, l1, r0, p0, col);    // carry ∧ ¬left[i] ∧ right[i] → ¬p1
-      makeC(c0, l1, r1, p1, col);    // carry ∧ ¬left[i] ∧ ¬right[i] → p1
-      makeC(c1, l0, r0, p0, col);    // ¬carry ∧ left[i] ∧ right[i] → ¬p1
-      makeC(c1, l0, r1, p1, col);    // ¬carry ∧ left[i] ∧ ¬right[i] → p1
-      makeC(c1, l1, r0, p1, col);    // ¬carry ∧ ¬left[i] ∧ right[i] → p1
-      makeC(c1, l1, r1, p0, col);    // ¬carry ∧ ¬left[i] ∧ ¬right[i] → ¬p1
+      if (i < _parts.size()) {
+        Atom p1 = _parts.get(i), p0 = _parts.get(i).negate();
+        // _parts[i] = carry XOR left[i] XOR right[i]
+        makeC(c0, l0, r0, p1, col);    // carry ∧ left[i] ∧ right[i] → p1
+        makeC(c0, l0, r1, p0, col);    // carry ∧ left[i] ∧ ¬right[i] → ¬p1
+        makeC(c0, l1, r0, p0, col);    // carry ∧ ¬left[i] ∧ right[i] → ¬p1
+        makeC(c0, l1, r1, p1, col);    // carry ∧ ¬left[i] ∧ ¬right[i] → p1
+        makeC(c1, l0, r0, p0, col);    // ¬carry ∧ left[i] ∧ right[i] → ¬p1
+        makeC(c1, l0, r1, p1, col);    // ¬carry ∧ left[i] ∧ ¬right[i] → p1
+        makeC(c1, l1, r0, p1, col);    // ¬carry ∧ ¬left[i] ∧ right[i] → p1
+        makeC(c1, l1, r1, p0, col);    // ¬carry ∧ ¬left[i] ∧ ¬right[i] → ¬p1
+      }
       // newcarry = atleasttwo(carry, left[i], right[i])
       Atom nc1;
       if (i == _parts.size() - 1 && (queryMinimum() >= 0 || queryMaximum() < 0)) return;

@@ -71,7 +71,7 @@ public class BinaryComparison {
 
   /** Returns the clauses that imply a = b. */
   public static ArrayList<Clause> generateEqualClauses(BinaryInteger a, BinaryInteger b) {
-    ArrayList<Clause> ret = generateGeqClauses(a, b);
+    ArrayList<Clause> ret = new ArrayList<Clause>();
     int length = a.length() > b.length() ? a.length() : b.length();
     // a negative <-> b negative
     ret.add(new Clause(a.queryNegativeBit().negate(), b.queryNegativeBit()));

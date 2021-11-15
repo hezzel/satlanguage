@@ -1,64 +1,86 @@
-data Components(Width, Height) {
-  "0" ⇒ ( 4,  5) ;
-  "1" ⇒ ( 4,  6) ;
-  "2" ⇒ ( 5, 20) ;
-  "3" ⇒ ( 6,  9) ;
-  "4" ⇒ ( 6, 10) ;
-  "5" ⇒ ( 6, 11) ;
-  "6" ⇒ ( 7,  8) ;
-  "7" ⇒ ( 7, 12) ;
-  "8" ⇒ (10, 10) ;
-  "9" ⇒ (10, 20) ;
-  "P" ⇒ ( 4,  3) ;
-  "Q" ⇒ ( 4,  3) ;
+enum Locations { S ; A ; B ; C ; D }
+
+define TruckCapacity 250
+
+function Cost(x,y) {
+  (S,A) ⇒ 15 ;
+  (S,C) ⇒ 15 ;
+  (A,S) ⇒ 15 ;
+  (A,B) ⇒ 17 ;
+  (A,C) ⇒ 12 ;
+  (B,A) ⇒ 17 ;
+  (B,C) ⇒ 10 ;
+  (B,D) ⇒ 20 ;
+  (C,S) ⇒ 15 ;
+  (C,A) ⇒ 12 ;
+  (C,B) ⇒ 10 ;
+  (C,D) ⇒ 20 ;
+  (D,B) ⇒ 20 ;
+  (D,C) ⇒ 20 ;
+  _ ⇒ TruckCapacity + 1
 }
 
-define NumComponents |Components|
+function MaxStorage(village) {
+  A ⇒ 110 ;
+  C ⇒ 110 ;
+  _ ⇒ 160
+}
 
-define ChipHeight 30
-define ChipWidth  30
+function MinStorage(village) {
+  A ⇒ 12 ;
+  B ⇒ 10 ;
+  C ⇒ 10 ;
+  D ⇒ 20 ;
+  _ ⇒  0 ;
+}
 
-define MinDistance 17
+define STEPS 15
 
 ===================================================================================================
 
-declare xl[component] :: Number ∈ {1..ChipWidth-1}  for component ∈ {1..NumComponents}
-declare xr[component] :: Number ∈ {2..ChipWidth}    for component ∈ {1..NumComponents}
-declare yt[component] :: Number ∈ {1..ChipHeight-1} for component ∈ {1..NumComponents}
-declare yb[component] :: Number ∈ {2..ChipHeight}   for component ∈ {1..NumComponents}
+declare location[step] :: Number ∈ { S..D } for step ∈ {0..STEPS}
+declare truckstorage[step] :: Int? ∈ {0..TruckCapacity} for step ∈ {0..STEPS}
+declare storage[step,village] :: Int? ∈ {MinStorage(village)..MaxStorage(village)} for step ∈ {0..STEPS}, village ∈ {A..D}
+declare minimum :: Int? ∈ {0..320}
 
-# the relation between xl and xr, and between yt and yb, is as expected from the size of the component (might may be turned 90 degrees)
-∀ comp ∈ {1..NumComponents}. (xr[comp] = xl[comp] + Width(comp) - 1 ∧ yb[comp] = yt[comp] + Height(comp) - 1) ∨
-                             (xr[comp] = xl[comp] + Height(comp) - 1 ∧ yb[comp] = yt[comp] + Width(comp) - 1)
+# location[0] = S
+# truckstorage[0] = TruckCapacity
+# ∀ village ∈ {A..D}. storage[0,village] ≤ 80
 
-# the components do not overlap
-∀ c1 ∈ {1..NumComponents-1}. ∀ c2 ∈ {c1+1..NumComponents}.
-  xr[c1] < xl[c2] ∨ xl[c1] > xr[c2] ∨ yt[c1] > yb[c2] ∨ yb[c1] < yt[c2]
+Σ { storage[0,village] | village ∈ {A..D} } = minimum
 
-# every regular component touches a power component
-∀ comp ∈ {"0".."9"}. ∃ p ∈ {"P".."Q"}.
-  (xr[comp] + 1 = xl[p] ∧ yt[comp] ≤ yb[p] ∧ yt[p] ≤ yb[comp]) ∨
-  (xl[comp] + -1 = xr[p] ∧ yt[comp] ≤ yb[p] ∧ yt[p] ≤ yb[comp]) ∨
-  (yb[comp] + 1 = yt[p] ∧ xl[comp] ≤ xr[p] ∧ xl[p] ≤ xr[comp]) ∨
-  (yt[comp] + -1 = yb[p] ∧ xl[comp] ≤ xr[p] ∧ xl[p] ≤ xr[comp])
+∀ step ∈ {1..STEPS}. Σ { storage[step,village] | village ∈ {A..D} } ≥ minimum
 
-# the distance between the centres of the two components is at least MinDistance
-# since "the centre" is not necessarily an integer, we instead consider whether the distance between 2 * the center is at least 2 * MinDistance
-# since the two power components are identical in size, we say P must be the smaller one
-(xl["P"] + xr["P"] + 2 * MinDistance ≤ xl["Q"] + xr["Q"]) ∨
-(yt["P"] + yb["P"] + 2 * MinDistance ≤ yt["Q"] + yb["Q"])
+# cut off paths that aren't going to be useful
+∀ step1 ∈ {0..STEPS-2}. ∀ step2 ∈ {step1+2..STEPS}.
+  (location[step1] = location[step2]) → (truckstorage[step2] > truckstorage[step1]) ∨
+                                        (∃ village ∈ {A..D}. storage[step2,village] ≥ storage[step1,village])
+
+# traveling from place x to place y deducts Cost(x,y) from all villages (except the destination)
+∀ step ∈ {1..STEPS}. ∀ v1 ∈ {S..D}. ∀ v2 ∈ {S..D}.
+  ( location[step-1] = v1 ∧ location[step] = v2 → ∀ w ∈ {A..D} with w != v2. storage[step,w] = storage[step-1,w] + 0 - Cost(v1,v2) )
+
+# for the destination, we do require that it HAS that amount of food
+∀ step ∈ {1..STEPS}. ∀ v1 ∈ {S..D}. ∀ v2 ∈ {A..D}.
+  ( location[step-1] = v1 ∧ location[step] = v2 → storage[step-1,v2] ≥ Cost(v1,v2) )
+
+# however, once the food truck arrives, we can increase the amount by taking food from the truck
+∀ step ∈ {1..STEPS}. ∀ v1 ∈ {S..D}. ∀ v2 ∈ {A..D}.
+  ( location[step-1] = v1 ∧ location[step] = v2 → truckstorage[step] + storage[step,v2] = truckstorage[step-1] + storage[step-1,v2] + 0 - Cost(v1,v2) )
+
+# we also require that the truck only delivers; it does not take food from the village
+∀ step ∈ {1..STEPS}. ( location[step] != S → truckstorage[step] ≤ truckstorage[step-1] )
+
+# when we visit the deposit, we get to set the truck storage to its maximum!
+∀ step ∈ {1..STEPS}. (location[step] = S → truckstorage[step] = TruckCapacity)
 
 ===============================================================================
 
-for y := 1 to ChipHeight do {
-  for x := 1 to ChipWidth do {
-    u := 0
-    for c := 1 to NumComponents do {
-      if xl[c] ≤ x ∧ x ≤ xr[c] ∧ yt[c] ≤ y ∧ y ≤ yb[c] then u := c
-    }
-    if u = 0 then print(" ")
-    else print(Components(u))
+for step := 0 to STEPS do {
+  println("At time ", step, ":")
+  println("  Truck is at village ", Locations(location[step]), " and has ", truckstorage[step], " units of food.")
+  for i := A to D do {
+    println("  Village ", Locations(i), " has stored ", storage[step,i], " units of food.")
   }
-  println()
 }
 

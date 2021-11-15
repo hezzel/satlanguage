@@ -50,12 +50,12 @@ public class SatProblem extends ClauseCollection {
     Runtime rt = Runtime.getRuntime();
     // clean up old result, it any
     try { Process p = rt.exec("rm result"); p.waitFor(); } catch (Exception e) {}
-    // start new minisat process
+    // start new satsolver process
     try {
-      Process p = rt.exec("./minisat problem.sat result");
+      Process p = rt.exec("./satsolver problem.sat result");
       p.waitFor();
     } catch (Exception e) {
-      System.out.println("Could not execute minisat.");
+      System.out.println("Could not execute satsolver.");
       e.printStackTrace();
       return false;
     }
@@ -76,8 +76,8 @@ public class SatProblem extends ClauseCollection {
         return null;
       }
       String answer = reader.nextLine();
-      if (answer.equals("UNSAT")) return new Solution(null);
-      if (!answer.equals("SAT")) {
+      if (answer.equals("UNSAT") || answer.equals("unsat")) return new Solution(null);
+      if (!answer.equals("SAT") && !answer.equals("sat")) {
         System.out.println("Unexpected answer: " + answer);
         return null;
       }
