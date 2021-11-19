@@ -1,3 +1,3 @@
 #!/bin/bash
-yices-sat -m $1 > $2
+./minisat $1 $2
 
