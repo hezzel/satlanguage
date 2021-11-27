@@ -1,14 +1,23 @@
 import language.Program;
+import logic.sat.SatProblem;
+import java.nio.file.Paths;
+import java.nio.file.FileSystems;
 
 public class Main {
   public static void main(String[] args) {
     Program program = new Program();
+    String filename = "../inputs/test.log";
 
-    String filename = "test.log";
-    if (args.length > 0) filename = args[0];
+    for (int i = 0; i < args.length; i++) {
+      String arg = args[i];
+      if (arg.length() > 9 && arg.substring(0,9).equals("--solver=")) {
+        SatProblem.solvername = arg.substring(9);
+        System.out.println("Setting SAT solver to: " + SatProblem.solvername);
+      }
+      else filename = "../" + arg;
+    }
 
-    System.out.println("Reading file: " + filename);
-    program.readFromFile("../inputs/" + filename);
+    program.readFromFile(filename);
     program.execute(false);
 
     /*

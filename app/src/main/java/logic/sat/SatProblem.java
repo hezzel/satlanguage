@@ -10,6 +10,8 @@ import java.util.TreeSet;
  * external SAT solver.  A SatProblem is mutable (clauses can be added).
  */
 public class SatProblem extends ClauseCollection {
+  public static String solvername = "minisat";
+
   /** This yields the index of the largest variable in the SatProblem. */
   private int getNumberVariables() {
     int max = 0;
@@ -52,10 +54,10 @@ public class SatProblem extends ClauseCollection {
     try { Process p = rt.exec("rm result"); p.waitFor(); } catch (Exception e) {}
     // start new satsolver process
     try {
-      Process p = rt.exec("./satsolver problem.sat result");
+      Process p = rt.exec("./bin/" + solvername + " problem.sat result");
       p.waitFor();
     } catch (Exception e) {
-      System.out.println("Could not execute satsolver.");
+      System.out.println("Could not execute satsolver " + solvername + ".");
       e.printStackTrace();
       return false;
     }
