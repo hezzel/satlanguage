@@ -176,6 +176,7 @@ public class RangePlusTest {
 
   @Test
   public void testUnboundedClauses() {
+    Variable.reset();
     RangePlus rp = createUnboundedPlus();
     ClauseCollector col = new ClauseCollector();
     col.addToMemory("rangevar x");

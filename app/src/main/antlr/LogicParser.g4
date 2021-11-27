@@ -1,8 +1,6 @@
 parser grammar LogicParser;
 
-@header {
-package language.parser;
-}
+@header { package language.parser; }
 
 options {
   tokenVocab = LogicLexer;
