@@ -25,11 +25,16 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
+# Antlr build folder
+**/.antlr
 
 # Gradle
 .gradle
 **/build/
 !src/**/build/
+# Automatic generated binary folders
+app/bin/main
+app/bin/test
 
 # Ignore Gradle GUI config
 gradle-app.setting

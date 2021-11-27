@@ -1,4 +1,4 @@
-package language;
+import language.Program;
 
 public class Main {
   public static void main(String[] args) {
@@ -23,7 +23,15 @@ public class Main {
       "  println()" +
       "}");
     */
-    program.readFromFile("inputs/test.log");
+    program.readFromFile("../inputs/test.log");
     program.execute(false);
+
+
+    // Testing receiving application argument
+    System.out.println("Testing input arguments on running the application.");
+
+    for (int i = 0; i < args.length; i++) {
+      System.out.println("Argument passed: " + args[i]);
+    }
   }
 }

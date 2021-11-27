@@ -1,9 +1,6 @@
 lexer grammar LogicLexer;
 
-@header {
-package language.parser;
-
-}
+@header { package language.parser; }
 
 /* Lexer */
 
@@ -146,4 +143,3 @@ SEPARATOR           : '==' '='+ ;
 COMMENT             : '#' (~[\n\r])* -> skip ;
 
 WHITESPACE          : [ \t\r\n]+ -> skip ;
-
