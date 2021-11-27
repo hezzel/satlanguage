@@ -3,6 +3,14 @@ import language.Program;
 public class Main {
   public static void main(String[] args) {
     Program program = new Program();
+
+    String filename = "test.log";
+    if (args.length > 0) filename = args[0];
+
+    System.out.println("Reading file: " + filename);
+    program.readFromFile("../inputs/" + filename);
+    program.execute(false);
+
     /*
     program.declare("queen[x,y] :: Bool for x ∈ {1..8}, y ∈ {1..8}");
     // there is a queen in every row
@@ -23,15 +31,5 @@ public class Main {
       "  println()" +
       "}");
     */
-    program.readFromFile("../inputs/test.log");
-    program.execute(false);
-
-
-    // Testing receiving application argument
-    System.out.println("Testing input arguments on running the application.");
-
-    for (int i = 0; i < args.length; i++) {
-      System.out.println("Argument passed: " + args[i]);
-    }
   }
 }

@@ -79,6 +79,7 @@ public class RangeConditionalTest {
 
   @Test
   public void testPositiveRange() {
+    Variable.reset();
     Atom x = makeAtom("x", true);
     RangeInteger y = new RangeVariable("y", 2, 5, truth());
     RangeInteger cri = new RangeConditional(x, y, truth(), emptyAdder());

@@ -1,0 +1,3 @@
+#!/bin/bash
+yices-sat -m $1 > $2
+
