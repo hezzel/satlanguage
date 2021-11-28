@@ -1,4 +1,9 @@
 #!/bin/sh
 
-./gradlew run --args="$*"
-
+# Test if an argument is provided and run ./gradlew accordinly.
+if [ $# -eq 0 ]
+  then
+    ./gradlew run
+  else
+    ./gradlew run --args="$*"
+fi
