@@ -52,7 +52,7 @@ public class QuantifiedConditionalInteger implements QuantifiedInteger {
   public ClosedInteger instantiate(Assignment ass) {
     // variables used in a function pointer must be effectively final, so we set them here and
     // don't change them afterwards
-    Formula cond = _condition.instantiate(ass);
+    Formula cond = ass == null ? _condition : _condition.instantiate(ass);
     Atom conditionAtom = cond.queryAtom() != null ? null :
                             new Atom(new Variable("⟦" + cond.toString() + "⟧"), true);
 

@@ -1,2 +1,2 @@
 #!/bin/bash
-./bin/minisat $1 $2
+./bin/yicessolver $1 $2

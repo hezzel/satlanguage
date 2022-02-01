@@ -107,9 +107,7 @@ public class RangePlus implements RangeInteger {
         parts = new ArrayList<Atom>();
         if (i > _left.queryMinimum()) parts.add(_left.queryGeqAtom(i).negate());
         if (j > _right.queryMinimum()) parts.add(_right.queryGeqAtom(j).negate());
-        if (i + j > _maximum) {
-          if (_maximum > _minimum) parts.add(queryGeqAtom(_maximum));
-        }
+        if (i + j > _maximum) parts.add(queryGeqAtom(_maximum));
         else parts.add(queryGeqAtom(i + j));
         col.addClause(new Clause(parts));
         if (i + j >= _maximum) break;

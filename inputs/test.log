@@ -17,7 +17,7 @@ function Cost(x,y) {
   (C,D) ⇒ 20 ;
   (D,B) ⇒ 20 ;
   (D,C) ⇒ 20 ;
-  _ ⇒ TruckCapacity + 1
+  _ ⇒ TruckCapacity + 1 ;
 }
 
 function MaxStorage(village) {
@@ -34,22 +34,23 @@ function MinStorage(village) {
   _ ⇒  0 ;
 }
 
-define STEPS 15
+define STEPS 6
 
 ===================================================================================================
 
 declare location[step] :: Number ∈ { S..D } for step ∈ {0..STEPS}
 declare truckstorage[step] :: Int? ∈ {0..TruckCapacity} for step ∈ {0..STEPS}
 declare storage[step,village] :: Int? ∈ {MinStorage(village)..MaxStorage(village)} for step ∈ {0..STEPS}, village ∈ {A..D}
-declare minimum :: Int? ∈ {0..320}
 
-# location[0] = S
-# truckstorage[0] = TruckCapacity
-# ∀ village ∈ {A..D}. storage[0,village] ≤ 80
+location[0] = S
+truckstorage[0] = TruckCapacity
+∀ village ∈ {A..D}. storage[0,village] = 80
 
-Σ { storage[0,village] | village ∈ {A..D} } = minimum
-
-∀ step ∈ {1..STEPS}. Σ { storage[step,village] | village ∈ {A..D} } ≥ minimum
+# OBSERVATIONS
+# if we start at 95 / 50 / 50 / 50, then the problem is not solvable for STEPS = 14 (found in 29 seconds), so in the general problem we cannot have the truck driving to A, then back
+# if we start at 50 / 50 / 95 / 50, then the problem is already not solvable for STEPS = 10 (found in 3 seconds), so it also cannot go S -> C -> S
+# hence, location[2] is definitely not S!
+location[2] != S
 
 # cut off paths that aren't going to be useful
 ∀ step1 ∈ {0..STEPS-2}. ∀ step2 ∈ {step1+2..STEPS}.
@@ -83,4 +84,5 @@ for step := 0 to STEPS do {
     println("  Village ", Locations(i), " has stored ", storage[step,i], " units of food.")
   }
 }
+
 

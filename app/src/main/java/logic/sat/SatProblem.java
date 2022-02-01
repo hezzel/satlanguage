@@ -10,7 +10,7 @@ import java.util.TreeSet;
  * external SAT solver.  A SatProblem is mutable (clauses can be added).
  */
 public class SatProblem extends ClauseCollection {
-  public static String solvername = "minisat";
+  public static String solvername = "yicessolver";
 
   /** This yields the index of the largest variable in the SatProblem. */
   private int getNumberVariables() {
